@@ -117,7 +117,3 @@ if st.button("📊 Procesar Lista Completa"):
                 cols[idx].metric(f"Total Vistas {tipo}", f"{total:,}")
         else:
             st.error("No se pudo extraer información de ningún enlace. Revisa que los links sean correctos.")
-            csv = df.to_csv(index=False).encode('utf-8')
-            st.download_button("📥 Descargar Tabla en CSV (Excel)", csv, "reporte_datos.csv", "text/csv")
-        else:
-            st.error("No se pudieron extraer datos. Revisa los enlaces.")
