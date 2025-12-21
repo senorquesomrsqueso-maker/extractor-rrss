@@ -8,8 +8,7 @@ import random
 from googleapiclient.discovery import build
 import isodate
 
-# Configuración visual de la página
-st.set_page_config(page_title="Extractor Data RRSS", page_icon="📈", layout="wide")
+st.set_page_config(page_title="Extractor BS LATAM (Videos + Fotos)", page_icon="📸", layout="wide")
 
 # --- FUNCIONES DE YOUTUBE ---
 def get_yt_data(url, api_key):
@@ -25,7 +24,6 @@ def get_yt_data(url, api_key):
         
         duracion_iso = item['contentDetails']['duration']
         segundos = isodate.parse_duration(duracion_iso).total_seconds()
-        
         tipo = "Short" if ("/shorts/" in url.lower() or segundos <= 61) else "Video Largo"
         
         return {
@@ -38,12 +36,12 @@ def get_yt_data(url, api_key):
         }
     except: return None
 
-# --- FUNCIONES DE TIKTOK ---
+# --- FUNCIONES DE TIKTOK (REFORZADA PARA FOTOS) ---
 def get_tt_data(url):
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
-        'extract_flat': False, 
+        'extract_flat': True, # Crucial para que no intente "descargar" el medio y solo lea la info
         'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
     }
     
@@ -52,36 +50,37 @@ def get_tt_data(url):
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
-            # Pausa aleatoria para evitar bloqueos
-            time.sleep(random.uniform(2, 5)) 
+            time.sleep(random.uniform(2, 4))
             info = ydl.extract_info(url, download=False)
-            if not info or info.get('view_count') is None: return None
+            if not info: return None
+            
+            # Detectar si es foto o video
+            es_foto = info.get('playlist_count') is not None or info.get('entries') is not None
+            tipo_contenido = "TikTok (Foto/Carrusel)" if es_foto else "TikTok (Video)"
             
             return {
                 "Plataforma": "TikTok",
-                "Tipo": "TikTok",
-                "Título/Autor": info.get('uploader') or info.get('title', 'Video TikTok'),
-                "Vistas": int(info.get('view_count', 0)),
-                "Likes": int(info.get('like_count', 0)),
+                "Tipo": tipo_contenido,
+                "Título/Autor": info.get('uploader') or info.get('title', 'Contenido TikTok'),
+                "Vistas": int(info.get('view_count') or 0),
+                "Likes": int(info.get('like_count') or 0),
                 "Link": url
             }
-        except: return None
+        except Exception as e:
+            return None
 
-# --- INTERFAZ DE USUARIO ---
-st.title("📈 Extractor Masivo: Resultados y Fallos")
+# --- INTERFAZ ---
+st.title("📈 Extractor Pro: Videos, Shorts y Fotos")
 
 with st.sidebar:
     st.header("⚙️ Configuración")
     plataforma = st.selectbox("Elige la plataforma:", ["YouTube", "TikTok"])
-    api_key = ""
-    if plataforma == "YouTube":
-        api_key = st.text_input("YouTube API Key:", type="password")
-    
+    api_key = st.text_input("YouTube API Key:", type="password") if plataforma == "YouTube" else ""
     st.divider()
     if os.path.exists('cookies.txt'):
-        st.success("✅ 'cookies.txt' detectado.")
+        st.success("✅ Cookies detectadas")
     else:
-        st.warning("⚠️ Sin 'cookies.txt'.")
+        st.warning("⚠️ Sin cookies (necesario para fotos)")
 
 urls_input = st.text_area(f"Pega tus enlaces de {plataforma} aquí:", height=200)
 
@@ -92,45 +91,30 @@ if st.button("🚀 Procesar Todo"):
         resultados = []
         fallidos = []
         barra = st.progress(0)
-        status = st.empty()
         
         for i, url in enumerate(lista_urls):
-            status.text(f"⏳ Analizando {i+1} de {len(lista_urls)}...")
-            
             data = get_yt_data(url, api_key) if plataforma == "YouTube" else get_tt_data(url)
-            
             if data:
                 resultados.append(data)
             else:
                 fallidos.append(url)
-            
             barra.progress((i + 1) / len(lista_urls))
         
-        status.empty()
-
         if resultados:
             df = pd.DataFrame(resultados)
             st.subheader("📊 Tabla de Resultados")
             st.dataframe(df, use_container_width=True)
             
-            # --- SECCIÓN DE TOTALES ---
             st.divider()
-            st.subheader("🎯 Resumen de Métricas")
             c1, c2 = st.columns(2)
             c1.metric("🔥 SUMA TOTAL VISTAS", f"{df['Vistas'].sum():,}")
             c2.metric("👍 SUMA TOTAL LIKES", f"{df['Likes'].sum():,}")
             
             csv = df.to_csv(index=False).encode('utf-8')
-            st.download_button("📥 Descargar reporte CSV", csv, "reporte.csv", "text/csv")
+            st.download_button("📥 Descargar CSV", csv, "reporte.csv", "text/csv")
 
-        # --- SECCIÓN DE FALLIDOS (NUEVA) ---
         if fallidos:
             st.divider()
-            st.subheader("❌ Enlaces no procesados")
-            st.error(f"No se pudo obtener información de {len(fallidos)} enlaces.")
-            with st.expander("Haz clic para ver los enlaces que fallaron"):
+            with st.expander("❌ Ver enlaces que fallaron"):
                 for f in fallidos:
                     st.write(f"- {f}")
-                st.info("Sugerencia: Revisa si los enlaces son correctos o actualiza tu archivo cookies.txt.")
-        elif not resultados and not fallidos:
-            st.info("Introduce enlaces para comenzar.")
