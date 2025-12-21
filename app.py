@@ -9,7 +9,7 @@ import time
 # Configuración de página
 st.set_page_config(page_title="Data Master RRSS", page_icon="🚀", layout="wide")
 
-st.title("🚀 Extractor Masivo (Versión Robusta)")
+st.title("🚀 Extractor de enlaces (Programa de Embajadores BS LATAM)")
 st.markdown("Si un enlace falla, el programa continuará con el siguiente automáticamente.")
 
 # --- LÓGICA DE YOUTUBE ---
