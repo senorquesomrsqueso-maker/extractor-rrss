@@ -126,7 +126,7 @@ if st.button("🚀 Procesar Todo"):
         # --- SECCIÓN DE FALLIDOS (NUEVA) ---
         if fallidos:
             st.divider()
-            st.subheader("❌ Enlaces no procesados")
+            st.subheader("❌ Enlaces tipo Photo (Checarlos individualmente)")
             st.error(f"No se pudo obtener información de {len(fallidos)} enlaces.")
             with st.expander("Haz clic para ver los enlaces que fallaron"):
                 for f in fallidos:
