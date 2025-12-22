@@ -8,8 +8,7 @@ import random
 from googleapiclient.discovery import build
 import isodate
 
-# Configuración visual de la página
-st.set_page_config(page_title="Extractor Data RRSS", page_icon="📈", layout="wide")
+st.set_page_config(page_title="Extractor RRSS Pro", page_icon="📈", layout="wide")
 
 # --- FUNCIONES DE YOUTUBE ---
 def get_yt_data(url, api_key):
@@ -17,34 +16,31 @@ def get_yt_data(url, api_key):
         video_id_match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11}).*", url)
         if not video_id_match: return None
         video_id = video_id_match.group(1)
-        
         youtube = build("youtube", "v3", developerKey=api_key)
         request = youtube.videos().list(part="snippet,statistics,contentDetails", id=video_id)
         response = request.execute()
         item = response['items'][0]
-        
         duracion_iso = item['contentDetails']['duration']
         segundos = isodate.parse_duration(duracion_iso).total_seconds()
-        
         tipo = "Short" if ("/shorts/" in url.lower() or segundos <= 61) else "Video Largo"
-        
         return {
-            "Plataforma": "YouTube",
-            "Tipo": tipo,
-            "Título/Autor": item['snippet']['title'],
-            "Vistas": int(item['statistics']['viewCount']),
-            "Likes": int(item['statistics'].get('likeCount', 0)),
-            "Link": url
+            "Plataforma": "YouTube", "Tipo": tipo, "Título/Autor": item['snippet']['title'],
+            "Vistas": int(item['statistics']['viewCount']), "Likes": int(item['statistics'].get('likeCount', 0)), "Link": url
         }
     except: return None
 
-# --- FUNCIONES DE TIKTOK ---
-def get_tt_data(url):
+# --- FUNCIONES DE TIKTOK Y FACEBOOK (REFORZADA) ---
+def get_social_data(url, plataforma):
+    # Limpieza de URL para Facebook Reels
+    if "facebook.com/reel/" in url:
+        url = url.split('?')[0] # Elimina parámetros de rastreo que a veces bloquean la lectura
+
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
-        'extract_flat': False, 
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'extract_flat': False, # Cambiado a False para que intente profundizar en los datos de FB
+        'force_generic_extractor': False,
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
     }
     
     if os.path.exists('cookies.txt'):
@@ -52,36 +48,38 @@ def get_tt_data(url):
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
-            # Pausa aleatoria para evitar bloqueos
-            time.sleep(random.uniform(2, 5)) 
+            # Espera aleatoria más larga para Facebook
+            time.sleep(random.uniform(6, 10)) 
             info = ydl.extract_info(url, download=False)
-            if not info or info.get('view_count') is None: return None
+            if not info: return None
             
+            # Facebook suele guardar las vistas en 'view_count' o 'play_count'
+            vistas = info.get('view_count') or info.get('play_count') or 0
+            likes = info.get('like_count') or 0
+
             return {
-                "Plataforma": "TikTok",
-                "Tipo": "TikTok",
-                "Título/Autor": info.get('uploader') or info.get('title', 'Video TikTok'),
-                "Vistas": int(info.get('view_count', 0)),
-                "Likes": int(info.get('like_count', 0)),
+                "Plataforma": plataforma,
+                "Tipo": "Video/Reel",
+                "Título/Autor": info.get('uploader') or info.get('title', f'Contenido {plataforma}'),
+                "Vistas": int(vistas),
+                "Likes": int(likes),
                 "Link": url
             }
-        except: return None
+        except Exception as e:
+            return None
 
-# --- INTERFAZ DE USUARIO ---
-st.title("📈 Extractor Masivo: Resultados y Fallos")
+# --- INTERFAZ ---
+st.title("📈 Extractor Multi-Plataforma")
 
 with st.sidebar:
     st.header("⚙️ Configuración")
-    plataforma = st.selectbox("Elige la plataforma:", ["YouTube", "TikTok"])
-    api_key = ""
-    if plataforma == "YouTube":
-        api_key = st.text_input("YouTube API Key:", type="password")
-    
+    plataforma = st.selectbox("Plataforma:", ["YouTube", "TikTok", "Facebook"])
+    api_key = st.text_input("YouTube API Key:", type="password") if plataforma == "YouTube" else ""
     st.divider()
     if os.path.exists('cookies.txt'):
         st.success("✅ 'cookies.txt' detectado.")
     else:
-        st.warning("⚠️ Sin 'cookies.txt'.")
+        st.error("❌ Facebook REQUIERE cookies.txt para dar datos.")
 
 urls_input = st.text_area(f"Pega tus enlaces de {plataforma} aquí:", height=200)
 
@@ -89,21 +87,22 @@ if st.button("🚀 Procesar Todo"):
     lista_urls = [line.strip() for line in urls_input.split('\n') if line.strip()]
     
     if lista_urls:
-        resultados = []
-        fallidos = []
+        resultados, fallidos = [], []
         barra = st.progress(0)
         status = st.empty()
         
         for i, url in enumerate(lista_urls):
-            status.text(f"⏳ Analizando {i+1} de {len(lista_urls)}...")
+            status.text(f"⏳ Procesando {i+1} de {len(lista_urls)}...")
+            if plataforma == "YouTube":
+                data = get_yt_data(url, api_key)
+            else:
+                data = get_social_data(url, plataforma)
             
-            data = get_yt_data(url, api_key) if plataforma == "YouTube" else get_tt_data(url)
-            
-            if data:
+            # Solo agregamos si las vistas son mayores a 0 para evitar falsos positivos
+            if data and data["Vistas"] > 0:
                 resultados.append(data)
             else:
                 fallidos.append(url)
-            
             barra.progress((i + 1) / len(lista_urls))
         
         status.empty()
@@ -113,24 +112,19 @@ if st.button("🚀 Procesar Todo"):
             st.subheader("📊 Tabla de Resultados")
             st.dataframe(df, use_container_width=True)
             
-            # --- SECCIÓN DE TOTALES ---
+            # COPIADO RÁPIDO
+            st.write("📋 **Cadenas de vistas para sumar:**")
+            vistas_lista = [str(v) for v in df['Vistas'].tolist()]
+            st.code("+".join(vistas_lista), language="text")
+            
             st.divider()
-            st.subheader("🎯 Resumen de Métricas")
             c1, c2 = st.columns(2)
             c1.metric("🔥 SUMA TOTAL VISTAS", f"{df['Vistas'].sum():,}")
             c2.metric("👍 SUMA TOTAL LIKES", f"{df['Likes'].sum():,}")
-            
-            csv = df.to_csv(index=False).encode('utf-8')
-            st.download_button("📥 Descargar reporte CSV", csv, "reporte.csv", "text/csv")
-
-        # --- SECCIÓN DE FALLIDOS (NUEVA) ---
+        
         if fallidos:
             st.divider()
-            st.subheader("❌ Enlaces tipo Photo (Checarlos individualmente)")
-            st.error(f"No se pudo obtener información de {len(fallidos)} enlaces.")
-            with st.expander("Haz clic para ver los enlaces que fallaron"):
-                for f in fallidos:
-                    st.write(f"- {f}")
-                st.info("Sugerencia: Revisa si los enlaces son correctos o actualiza tu archivo cookies.txt.")
-        elif not resultados and not fallidos:
-            st.info("Introduce enlaces para comenzar.")
+            st.subheader("❌ Enlaces con Datos Protegidos (0 vistas)")
+            with st.expander("Ver enlaces que Facebook bloqueó"):
+                for f in fallidos: st.write(f"- {f}")
+                st.info("💡 Consejo: Facebook bloquea las métricas si detecta muchas peticiones. Prueba procesar de 3 en 3.")
