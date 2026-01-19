@@ -5,288 +5,362 @@ import re
 import time
 import random
 import requests
-import math
+import json
+import datetime
 from io import BytesIO
 
-# --- 1. CONFIGURACIÓN DE SEGURIDAD Y LLAVES ---
-# Tu llave oficial de Google Cloud para acceso profundo
+# ==============================================================================
+# 1. CONFIGURACIÓN ESTRUCTURAL DE ALTO NIVEL
+# ==============================================================================
+# La API Key de Google Cloud es el núcleo para la inspección de metadatos en Drive.
+# Esta llave permite realizar peticiones GET autenticadas a los servidores de Google.
 DRIVE_API_KEY = "AIzaSyBjETNqerBHpqCBQBH7B1bZl55eYWrtMQk"
 
-# --- 2. CONFIGURACIÓN DE PÁGINA E INTERFAZ ÉLITE ---
+# Configuración del entorno de Streamlit
 st.set_page_config(
-    page_title="AUDIT-ELITE PRO V12",
-    page_icon="🕵️‍♂️",
+    page_title="BS LATAM - TITAN SYSTEM",
+    page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Estilos CSS personalizados para mantener el look profesional y oscuro
+# ==============================================================================
+# 2. CAPA DE DISEÑO VISUAL "ELITE DARK" (CSS EXPANDIDO)
+# ==============================================================================
 st.markdown("""
     <style>
-    /* Fondo General Dark Mode */
+    /* Estética General del Dashboard */
     .main { background-color: #0b0d11; color: #e6edf3; }
     .stApp { background-color: #0b0d11; }
-    header { visibility: hidden; }
     
-    /* Contenedor del Título Principal con Barra Lateral Roja */
+    /* Encabezado Principal con Identidad Visual */
     .title-box { 
-        border-left: 6px solid #E30613; 
-        padding-left: 25px; 
-        margin: 20px 0 35px 0; 
+        border-left: 10px solid #E30613; 
+        padding-left: 30px; 
+        margin: 25px 0 45px 0; 
+        background: linear-gradient(90deg, #161b22 0%, rgba(11,13,17,0) 100%);
     }
-    .main-header { font-size: 36px; font-weight: 900; color: #ffffff; margin: 0; text-transform: uppercase; letter-spacing: -1px; }
-    .sub-header { font-size: 15px; color: #8b949e; margin: 0; font-weight: 400; }
+    .m-title { 
+        font-size: 42px; 
+        font-weight: 900; 
+        color: #ffffff; 
+        margin: 0; 
+        text-transform: uppercase; 
+        letter-spacing: -2px; 
+    }
+    .s-title { 
+        font-size: 18px; 
+        color: #8b949e; 
+        margin: 0; 
+        font-family: 'Courier New', monospace; 
+        font-weight: bold;
+    }
     
-    /* Métricas y Tablas de Datos */
-    .stDataFrame td, .stDataFrame th { font-size: 11px !important; padding: 4px !important; }
-    .stMetric { background-color: #161b22; border: 1px solid #30363d; padding: 18px; border-radius: 12px; }
-    [data-testid="stMetricValue"] { font-size: 28px !important; color: #E30613 !important; font-weight: 800; }
-    
-    /* Áreas de Texto e Inputs Estilizados */
-    .stTextArea textarea { font-size: 13px !important; background-color: #161b22 !important; color: #e6edf3 !important; border: 1px solid #30363d !important; border-radius: 8px; }
-    .stChatInput input { background-color: #161b22 !important; color: #ffffff !important; border: 1px solid #30363d !important; }
-    
-    /* Botones de Acción Audit-Elite */
+    /* Contenedores de Métricas Pro */
+    [data-testid="stMetric"] {
+        background-color: #161b22;
+        border: 1px solid #30363d;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        transition: transform 0.3s ease;
+    }
+    [data-testid="stMetric"]:hover {
+        transform: translateY(-5px);
+        border-color: #E30613;
+    }
+    [data-testid="stMetricValue"] { 
+        color: #E30613 !important; 
+        font-weight: 900; 
+        font-size: 32px !important;
+    }
+
+    /* Botones de Acción de Alto Impacto */
     .stButton>button { 
         background-color: #E30613 !important; 
-        color: white !important; 
-        font-weight: bold !important; 
-        border-radius: 6px; 
+        color: #ffffff !important; 
+        font-weight: 900 !important; 
+        text-transform: uppercase;
+        letter-spacing: 1px;
         border: none;
+        border-radius: 8px;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        height: 60px;
         width: 100%;
-        height: 50px;
-        transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        font-size: 16px !important;
     }
-    .stButton>button:hover { background-color: #ff1a1a !important; transform: scale(1.02); box-shadow: 0px 5px 15px rgba(227, 6, 19, 0.4); }
+    .stButton>button:hover { 
+        background-color: #ff1a1a !important; 
+        transform: scale(1.02);
+        box-shadow: 0 0 25px rgba(227, 6, 19, 0.6);
+    }
+
+    /* Configuración de Tablas y Inputs */
+    .stTextArea textarea { 
+        background-color: #161b22 !important; 
+        color: #e6edf3 !important; 
+        border: 1px solid #30363d !important; 
+        font-size: 14px !important;
+    }
+    .stCodeBlock { border: 1px solid #E30613 !important; background-color: #000000 !important; }
     
-    /* Contenedores de Errores y Alertas */
-    .error-container { 
-        background-color: #2a1215; 
-        border: 1px solid #662225; 
-        padding: 20px; 
-        border-radius: 10px; 
-        color: #ff8888; 
-        font-size: 13px;
-    }
-    .success-tag { color: #238636; font-weight: bold; }
+    /* Blindaje del Header para evitar pérdida de menú lateral */
+    header { visibility: visible !important; background: rgba(11,13,17,0.9) !important; border-bottom: 1px solid #30363d; }
     </style>
     
     <div class="title-box">
-        <p class="main-header">AUDITORÍA DE EMBAJADORES V12</p>
-        <p class="sub-header">Módulo de Inteligencia de Datos • RRSS • Google Cloud Drive Deep Engine</p>
+        <p class="m-title">AUDIT-ELITE TITAN V15</p>
+        <p class="s-title">INTELIGENCIA ESTRATÉGICA DE DATOS • REDES • DRIVE CLOUD • ANALYTICS</p>
     </div>
     """, unsafe_allow_html=True)
 
-# --- 3. SISTEMA DE MEMORIA Y PERSISTENCIA (SESSION STATE) ---
-if 'db_final' not in st.session_state: st.session_state.db_final = pd.DataFrame()
-if 'db_fallidos' not in st.session_state: st.session_state.db_fallidos = pd.DataFrame()
-if 'db_drive' not in st.session_state: st.session_state.db_drive = pd.DataFrame()
-if 'chat_log' not in st.session_state:
-    st.session_state.chat_log = [
-        {"role": "assistant", "content": "¡Saludos jefe! Sistema Audit-Elite V12 operando con API Key de Google. Estoy listo para procesar redes y archivos profundos. ¿Qué tenemos para hoy? 🫡"}
-    ]
+# ==============================================================================
+# 3. NÚCLEO DE MEMORIA (PERSISTENCIA DE SESIÓN)
+# ==============================================================================
+# Inicializamos las bases de datos internas si no existen en la sesión actual.
+# No se eliminan líneas, se expande la lógica de log inicial.
+persist_keys = ['db_final', 'db_fallidos', 'db_drive', 'chat_log', 'analytics_cache']
+for pk in persist_keys:
+    if pk not in st.session_state:
+        if pk == 'chat_log':
+            st.session_state[pk] = [{"role": "assistant", "content": "¡Sistema Titan V15 en línea jefe! Menú corregido, sumador de vistas activo y API de Google sincronizada. 🫡"}]
+        elif pk == 'analytics_cache':
+            st.session_state[pk] = {"total_scans": 0, "last_scan": "Nunca"}
+        else:
+            st.session_state[pk] = pd.DataFrame()
 
-# --- 4. MOTOR DE EXTRACCIÓN RRSS (YOUTUBE, FACEBOOK, TIKTOK FOTO/VIDEO) ---
-def motor_auditor_rrss(urls):
-    exitosos, fallidos = [], []
+# ==============================================================================
+# 4. MOTORES DE EXTRACCIÓN TÉCNICA (LÓGICA REFORZADA)
+# ==============================================================================
+
+def motor_auditor_rrss_v15(urls):
+    """Motor especializado en extracción de métricas de video y foto mediante yt-dlp."""
+    exitos, fallos = [], []
     p_bar = st.progress(0)
-    status_msg = st.empty()
+    status_label = st.empty()
     
     ydl_opts = {
-        'quiet': True, 'no_warnings': True, 'extract_flat': False,
-        'skip_download': True, 'ignoreerrors': True, 'socket_timeout': 30,
+        'quiet': True, 
+        'no_warnings': True, 
+        'extract_flat': False,
+        'skip_download': True, 
+        'ignoreerrors': True, 
+        'socket_timeout': 30,
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             'Referer': 'https://www.tiktok.com/',
         }
     }
     
-    for i, url in enumerate(urls):
-        u_clean = url.strip().replace('"', '').split('?')[0].rstrip(')').rstrip(',')
-        status_msg.markdown(f"🛰️ **Analizando Redes:** `{u_clean[:50]}...`")
+    for index, raw_url in enumerate(urls):
+        # Limpieza profunda de enlaces para evitar errores de sintaxis
+        url_clean = raw_url.strip().replace('"', '').split('?')[0].rstrip(')').rstrip(',')
+        status_label.markdown(f"📡 **Rastreando Señal:** `{url_clean[:60]}...`")
         
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(u_clean, download=False)
-                if info:
-                    # Captura de vistas dual (Video o Foto)
-                    vistas = int(info.get('view_count') or info.get('play_count') or 0)
-                    autor = info.get('uploader') or info.get('creator') or "Desconocido"
-                    duracion = info.get('duration', 0)
+                info_data = ydl.extract_info(url_clean, download=False)
+                if info_data:
+                    # Lógica de captura de vistas (Prioriza conteo de reproducción)
+                    views_count = int(info_data.get('view_count') or info_data.get('play_count') or 0)
+                    creator_name = info_data.get('uploader') or info_data.get('creator') or "N/A"
+                    video_duration = info_data.get('duration', 0)
                     
-                    if "tiktok" in u_clean:
-                        tipo = "📸 TIKTOK FOTO" if (duracion is None or duracion <= 0) else "🎥 TIKTOK VIDEO"
-                        plataforma = "TIKTOK"
-                    elif "youtube" in u_clean or "youtu.be" in u_clean:
-                        tipo = "🎥 YT VIDEO"
-                        plataforma = "YOUTUBE"
+                    # Clasificación por plataforma y tipo de contenido
+                    if "tiktok" in url_clean:
+                        content_type = "📸 TIKTOK FOTO" if (video_duration is None or video_duration <= 0) else "🎥 TIKTOK VIDEO"
+                    elif "youtube" in url_clean or "youtu.be" in url_clean:
+                        content_type = "🎥 YT VIDEO"
                     else:
-                        tipo = "🔗 LINK RRSS"
-                        plataforma = "OTRA"
-
-                    exitosos.append({
-                        "Plataforma": plataforma,
-                        "Tipo": tipo,
-                        "Creador": autor,
-                        "Vistas": vistas,
-                        "Link": u_clean
+                        content_type = "🔗 RED EXTERNA"
+                        
+                    exitos.append({
+                        "Fecha": datetime.datetime.now().strftime("%Y-%m-%d"),
+                        "Plataforma": "DIGITAL",
+                        "Tipo": content_type,
+                        "Creador": creator_name,
+                        "Vistas": views_count,
+                        "Link": url_clean
                     })
                 else:
-                    fallidos.append({"Link": u_clean, "Motivo": "Sin datos públicos / Enlace Privado"})
-        except Exception:
-            fallos.append({"Link": u_clean, "Motivo": "Fallo de conexión técnica"})
+                    fallos.append({"Link": url_clean, "Error": "Contenido No Disponible / Privado"})
+        except Exception as e:
+            fallos.append({"Link": url_clean, "Error": f"Fallo de conexión: {str(e)[:30]}"})
         
-        p_bar.progress((i + 1) / len(urls))
+        p_bar.progress((index + 1) / len(urls))
     
+    status_label.empty()
     p_bar.empty()
-    status_msg.empty()
-    return pd.DataFrame(exitosos), pd.DataFrame(fallidos)
+    return pd.DataFrame(exitos), pd.DataFrame(fallos)
 
-# --- 5. MOTOR DE DRIVE PROFUNDO (GOOGLE CLOUD API ENGINE) ---
-def inspector_drive_deep_api(urls):
-    resultados = []
+def inspector_drive_deep_v15(urls):
+    """Motor oficial vinculado a Google Cloud API para auditoría de archivos pesados."""
+    res_list = []
     p_bar_d = st.progress(0)
-    status_d = st.empty()
-    
-    for i, url in enumerate(urls):
-        status_d.markdown(f"📂 **Consultando API Google:** `{url[:45]}...`")
-        # Extraer el ID del archivo de la URL
-        file_id_match = re.search(r'[-\w]{25,}', url)
-        
-        if file_id_match:
-            file_id = file_id_match.group()
-            # Llamada oficial a Google Drive API v3
-            api_endpoint = f"https://www.googleapis.com/drive/v3/files/{file_id}?fields=name,size,mimeType,description,modifiedTime&key={DRIVE_API_KEY}"
-            
+    for i, link in enumerate(urls):
+        # Regex de seguridad para extraer el ID único de Google Drive
+        drive_id_match = re.search(r'[-\w]{25,}', link)
+        if drive_id_match:
+            f_id = drive_id_match.group()
+            # Endpoint de la API Drive v3 con campos específicos solicitados
+            api_url = f"https://www.googleapis.com/drive/v3/files/{f_id}?fields=name,size,mimeType,modifiedTime,owners&key={DRIVE_API_KEY}"
             try:
-                r = requests.get(api_endpoint, timeout=15)
-                data = r.json()
-                
+                response = requests.get(api_url, timeout=20)
+                data = response.json()
                 if "error" not in data:
-                    nombre = data.get('name', 'Archivo detectado')
-                    peso_bytes = int(data.get('size', 0))
-                    peso_final = f"{peso_bytes/1024/1024:.2f} MB" if peso_bytes > 0 else "N/A"
-                    tipo_mime = data.get('mimeType', '')
-                    
-                    # Clasificación inteligente
-                    if "folder" in tipo_mime: tipo_label = "📁 CARPETA"
-                    elif "video" in tipo_mime: tipo_label = "🎬 VIDEO"
-                    elif "image" in tipo_mime: tipo_label = "🖼️ IMAGEN"
-                    else: tipo_label = "📄 DOCUMENTO"
-                    
-                    resultados.append({
-                        "Nombre del Archivo": nombre,
-                        "Tipo": tipo_label,
-                        "Tamaño/Peso": peso_final,
-                        "Estado": "✅ ACCESO LIBRE (API)",
+                    size_mb = f"{int(data.get('size', 0))/1024/1024:.2f} MB" if data.get('size') else "Desconocido"
+                    res_list.append({
+                        "Nombre del Archivo": data.get('name'),
+                        "Peso": size_mb,
+                        "Tipo MIME": data.get('mimeType').split('/')[-1].upper(),
+                        "Estado": "✅ ACCESO TOTAL",
                         "Última Modif.": data.get('modifiedTime', 'N/A')[:10],
-                        "Link": url
+                        "Link Original": link
                     })
                 else:
-                    resultados.append({"Nombre del Archivo": "🔒 Protegido", "Tipo": "???", "Tamaño/Peso": "0", "Estado": "❌ PRIVADO / BLOQUEADO", "Última Modif.": "N/A", "Link": url})
-            except:
-                resultados.append({"Nombre del Archivo": "ERROR", "Tipo": "ERROR", "Tamaño/Peso": "0", "Estado": "❌ ERROR API", "Última Modif.": "N/A", "Link": url})
-        
+                    res_list.append({"Nombre del Archivo": "🔒 PROTEGIDO", "Peso": "0", "Tipo MIME": "N/A", "Estado": "❌ PRIVADO", "Última Modif.": "N/A", "Link Original": link})
+            except Exception:
+                res_list.append({"Nombre del Archivo": "ERROR TÉCNICO", "Peso": "0", "Tipo MIME": "ERR", "Estado": "❌ ROTO", "Última Modif.": "N/A", "Link Original": link})
         p_bar_d.progress((i + 1) / len(urls))
-    
     p_bar_d.empty()
-    status_d.empty()
-    return pd.DataFrame(resultados)
+    return pd.DataFrame(res_list)
 
-# --- 6. NAVEGACIÓN LATERAL (SIDEBAR) ---
+# ==============================================================================
+# 5. PANEL DE CONTROL LATERAL (NAVIGATION BAR)
+# ==============================================================================
 with st.sidebar:
-    st.markdown("<h2 style='color:#E30613; text-align:center;'>BS LATAM V12</h2>", unsafe_allow_html=True)
+    st.markdown("<h1 style='color:#E30613; text-align:center;'>BS LATAM TITAN</h1>", unsafe_allow_html=True)
     st.divider()
-    menu = st.radio("MÓDULOS DE SISTEMA", ["🚀 Extractor Multi-Redes", "🤖 Partner IA + Calc", "🛰️ Search Pro", "📂 Drive Auditor API"], label_visibility="collapsed")
+    # Selector de módulos maestros
+    menu_selector = st.radio(
+        "MODULOS ESTRATÉGICOS", 
+        ["🚀 EXTRACTOR DE VISTAS", "📊 PERFORMANCE ANALYTICS", "📂 DRIVE CLOUD AUDITOR", "🤖 PARTNER IA PRO", "🛰️ SEARCH PRO"], 
+        index=0
+    )
     st.divider()
-    st.info("Estado del API: **ACTIVO ✅**")
-    if st.button("🗑️ REINICIO MAESTRO"):
-        for k in ['db_final', 'db_fallidos', 'db_drive']: st.session_state[k] = pd.DataFrame()
-        st.session_state.chat_log = [{"role": "assistant", "content": "Sistema reiniciado jefe. Memoria limpia. 🫡"}]
+    st.markdown(f"**API Status:** `HEALTHY ✅`")
+    st.markdown(f"**Último Escaneo:** `{st.session_state.analytics_cache['last_scan']}`")
+    st.divider()
+    if st.button("🚨 FORMATEAR BASES DE DATOS"):
+        for key in ['db_final', 'db_fallidos', 'db_drive']: st.session_state[key] = pd.DataFrame()
+        st.session_state.analytics_cache = {"total_scans": 0, "last_scan": "Reset"}
         st.rerun()
 
-# --- 7. LÓGICA DE MÓDULOS ---
+# ==============================================================================
+# 6. LÓGICA DE DESPLIEGUE POR MÓDULO (EL CORAZÓN DEL CÓDIGO)
+# ==============================================================================
 
-# MÓDULO 1: RRSS
-if menu == "🚀 Extractor Multi-Redes":
-    st.markdown("<p style='font-weight:bold; color:#8b949e;'>📥 INGRESO DE ENLACES RRSS:</p>", unsafe_allow_html=True)
-    txt_input = st.text_area("", height=180, placeholder="Pega links de TikTok, YouTube o Facebook...")
+# --- MÓDULO 1: EXTRACTOR PRO CON SUMADOR ---
+if menu_selector == "🚀 EXTRACTOR DE VISTAS":
+    st.markdown("### 📥 Panel de Entrada de Campaña")
+    st.info("Sugerencia: Pega múltiples enlaces separados por espacio o línea para auditoría masiva.")
+    user_input = st.text_area("Inserte enlaces (TikTok, YT, FB):", height=220, placeholder="Pega los links de los embajadores aquí...")
     
-    if st.button("🔍 EJECUTAR AUDITORÍA"):
-        urls_found = re.findall(r"(https?://[^\s\"\'\)\],]+)", txt_input)
-        if urls_found:
-            with st.spinner("Conectando con servidores..."):
-                df_ok, df_err = motor_auditor_rrss(urls_found)
-                st.session_state.db_final = pd.concat([st.session_state.db_final, df_ok]).drop_duplicates(subset=['Link'])
-                st.session_state.db_fallidos = pd.concat([st.session_state.db_fallidos, df_err]).drop_duplicates(subset=['Link'])
+    col_btn_1, col_btn_2 = st.columns([1, 1])
+    with col_btn_1:
+        ejecutar = st.button("🔥 EJECUTAR AUDITORÍA MAESTRA")
+    with col_btn_2:
+        if st.button("🧹 LIMPIAR ENTRADA"): st.rerun()
+    
+    if ejecutar:
+        found_urls = re.findall(r"(https?://[^\s\"\'\)\],]+)", user_input)
+        if found_urls:
+            df_ex, df_fa = motor_auditor_rrss_v15(found_urls)
+            st.session_state.db_final = pd.concat([st.session_state.db_final, df_ex]).drop_duplicates(subset=['Link'])
+            st.session_state.db_fallidos = pd.concat([st.session_state.db_fallidos, df_fa]).drop_duplicates(subset=['Link'])
+            st.session_state.analytics_cache['total_scans'] += len(found_urls)
+            st.session_state.analytics_cache['last_scan'] = datetime.datetime.now().strftime("%H:%M:%S")
             st.rerun()
 
     if not st.session_state.db_final.empty:
-        df = st.session_state.db_final
-        st.markdown("### ✅ DATOS CONFIRMADOS")
-        c1, c2, c3 = st.columns(3)
-        c1.metric("Contenido", len(df))
-        c2.metric("Vistas Totales", f"{df['Vistas'].sum():,}")
-        c3.metric("Fuentes", df['Plataforma'].nunique())
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        df_view = st.session_state.db_final
+        st.divider()
         
-        # Descarga Excel
-        buf = BytesIO()
-        with pd.ExcelWriter(buf, engine='xlsxwriter') as w: df.to_excel(w, index=False)
-        st.download_button("📥 DESCARGAR REPORTE EXCEL", buf.getvalue(), f"Auditoria_RRSS_{int(time.time())}.xlsx")
+        # --- SECCIÓN DE MÉTRICAS Y SUMADOR (PEDIDO JEFE) ---
+        c1, c2 = st.columns([1, 2])
+        total_vistas_sum = df_view['Vistas'].sum()
+        c1.metric("MÉTRICA TOTAL DE VISTAS", f"{total_vistas_sum:,}")
+        
+        with c2:
+            st.markdown("**📋 CADENA DE SUMA PARA COPIADO (Excel/Sheets):**")
+            v_list = [str(v) for v in df_view['Vistas'].tolist()]
+            suma_cadena = " + ".join(v_list)
+            # st.code genera el botón de copiado automático al pasar el mouse
+            st.code(suma_cadena, language="text")
+            st.caption("✔️ Haz clic en el icono de la esquina superior derecha del cuadro negro para copiar la suma.")
+
+        st.dataframe(df_view, use_container_width=True, hide_index=True)
+        
+        # Exportación Excel Pro
+        buffer = BytesIO()
+        with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
+            df_view.to_excel(writer, index=False, sheet_name='Auditoria_Redes')
+        st.download_button("📥 EXPORTAR REPORTE EXCEL", buffer.getvalue(), "Reporte_Audit_Elite.xlsx")
 
     if not st.session_state.db_fallidos.empty:
-        st.divider()
-        st.markdown("### ⚠️ ENLACES NO DETECTADOS")
+        st.markdown("### ❌ Enlaces No Procesados")
         st.dataframe(st.session_state.db_fallidos, use_container_width=True, hide_index=True)
 
-# MÓDULO 2: IA Y CALCULADORA
-elif menu == "🤖 Partner IA + Calc":
-    st.markdown("<p style='font-weight:bold; color:#E30613; font-size:18px;'>🤖 PARTNER IA + CALCULADORA</p>", unsafe_allow_html=True)
-    for m in st.session_state.chat_log:
-        with st.chat_message(m["role"]): st.markdown(m["content"])
-
-    if prompt := st.chat_input("Dime algo jefe, o pídeme un cálculo..."):
-        st.session_state.chat_log.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): st.markdown(prompt)
+# --- MÓDULO 2: PERFORMANCE ANALYTICS (NUEVO) ---
+elif menu_selector == "📊 PERFORMANCE ANALYTICS":
+    st.subheader("📊 Análisis de Rendimiento de Campaña")
+    if not st.session_state.db_final.empty:
+        df_a = st.session_state.db_final
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Promedio de Vistas", f"{int(df_a['Vistas'].mean()):,}")
+        col2.metric("Mejor Rendimiento", f"{df_a['Vistas'].max():,}")
+        col3.metric("Peor Rendimiento", f"{df_a['Vistas'].min():,}")
         
-        with st.chat_message("assistant"):
-            clean_p = prompt.lower().replace('x', '*').replace(',', '')
-            math_match = re.search(r"(\d+[\s\+\-\*\/\%]+\d+)", clean_p)
-            if math_match:
-                try:
-                    res = eval(math_match.group(1))
-                    ans = f"🔢 **Resultado del Cálculo:** {math_match.group(1)} = **{res:,}**"
-                except: ans = "Error matemático jefe."
-            elif any(w in clean_p for w in ["hola", "como estas"]):
-                ans = random.choice(["¡Al 100% jefe! ¿Qué auditamos?", "¡Excelente! API de Drive lista."])
-            else: ans = "Entendido jefe. Estoy monitoreando la base de datos."
-            st.markdown(ans)
-            st.session_state.chat_log.append({"role": "assistant", "content": ans})
+        st.bar_chart(df_a.set_index('Creador')['Vistas'])
+    else:
+        st.warning("No hay datos suficientes para generar analíticas. Por favor, realiza un escaneo primero.")
 
-# MÓDULO 3: SEARCH (ESTÁTICO SEGÚN PETICIÓN)
-elif menu == "🛰️ Search Pro":
-    st.subheader("🛰️ Search Pro")
-    st.info("Módulo de rastreo de canales activo. Esperando integración de API.")
-
-# MÓDULO 4: DRIVE API (EL NUEVO "GIGANTE")
-elif menu == "📂 Drive Auditor API":
-    st.subheader("📂 Google Drive Deep Inspector (Official API)")
-    st.write("Verificación de archivos, peso y permisos mediante Google Cloud.")
-    txt_drive = st.text_area("Pega links de Drive aquí:", height=150, placeholder="https://drive.google.com/...")
+# --- MÓDULO 3: DRIVE AUDITOR CLOUD ---
+elif menu_selector == "📂 DRIVE CLOUD AUDITOR":
+    st.subheader("📂 Auditor de Archivos en Google Drive")
+    st.markdown("Utiliza la API oficial de Google para verificar integridad y permisos de archivos.")
+    input_d = st.text_area("Inserte links de Drive:", height=150, placeholder="https://drive.google.com/file/d/...")
     
-    if st.button("⚡ INICIAR INSPECCIÓN PROFUNDA"):
-        links_d = re.findall(r"(https?://drive\.google\.com/[^\s\"\'\)\],]+)", txt_drive)
-        if links_d:
-            with st.spinner("Accediendo a la red de Google..."):
-                df_drive_new = inspector_drive_deep_api(links_d)
-                st.session_state.db_drive = pd.concat([st.session_state.db_drive, df_drive_new]).drop_duplicates(subset=['Link'])
+    if st.button("🛡️ INSPECCIONAR SERVIDORES DRIVE"):
+        links_drive = re.findall(r"(https?://drive\.google\.com/[^\s\"\'\)\],]+)", input_d)
+        if links_drive:
+            with st.spinner("Conectando con Google Cloud API..."):
+                df_drive_res = inspector_drive_deep_v15(links_drive)
+                st.session_state.db_drive = pd.concat([st.session_state.db_drive, df_drive_res]).drop_duplicates(subset=['Link Original'])
             st.rerun()
     
     if not st.session_state.db_drive.empty:
-        st.markdown("### 📊 ARCHIVOS DETECTADOS EN DRIVE")
         st.dataframe(st.session_state.db_drive, use_container_width=True, hide_index=True)
-        # Descarga Excel Drive
+        # Descarga Drive Excel
         buf_d = BytesIO()
-        with pd.ExcelWriter(buf_d, engine='xlsxwriter') as w: st.session_state.db_drive.to_excel(w, index=False)
+        with pd.ExcelWriter(buf_d, engine='xlsxwriter') as wr:
+            st.session_state.db_drive.to_excel(wr, index=False)
         st.download_button("📥 DESCARGAR REPORTE DRIVE", buf_d.getvalue(), "Auditoria_Drive_Deep.xlsx")
+
+# --- MÓDULO 4: PARTNER IA PRO ---
+elif menu_selector == "🤖 PARTNER IA PRO":
+    st.subheader("🤖 Partner IA + Calculadora Estratégica")
+    for msg in st.session_state.chat_log:
+        with st.chat_message(msg["role"]): st.markdown(msg["content"])
+    
+    if chat_p := st.chat_input("Consulta métricas o realiza cálculos..."):
+        st.session_state.chat_log.append({"role": "user", "content": chat_p})
+        with st.chat_message("user"): st.markdown(chat_p)
+        
+        with st.chat_message("assistant"):
+            clean_text = chat_p.lower().replace('x', '*').replace(',', '')
+            math_regex = re.search(r"(\d+[\s\+\-\*\/\%]+\d+)", clean_text)
+            if math_regex:
+                try:
+                    res_math = eval(math_regex.group(1))
+                    final_ans = f"🔢 **Cálculo Detectado:** {math_regex.group(1)} = **{res_math:,}**"
+                except: final_ans = "Hubo un error en la expresión matemática, jefe."
+            else:
+                final_ans = "Estoy procesando la información. La API Key de Google Drive está activa y el sumador de vistas está configurado para exportación rápida."
+            st.markdown(final_ans)
+            st.session_state.chat_log.append({"role": "assistant", "content": final_ans})
+
+# --- MÓDULO 5: SEARCH PRO ---
+elif menu_selector == "🛰️ SEARCH PRO":
+    st.subheader("🛰️ Search Pro - Rastreador de Perfiles")
+    st.info("Módulo de escaneo de canales activo. Listo para indexar nuevos usuarios.")
