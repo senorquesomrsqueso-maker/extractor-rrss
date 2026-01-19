@@ -19,7 +19,7 @@ DRIVE_API_KEY = "AIzaSyBjETNqerBHpqCBQBH7B1bZl55eYWrtMQk"
 
 # Configuración de entorno Streamlit (Layout ancho para máxima visibilidad)
 st.set_page_config(
-    page_title="AUDIT-ELITE PRO V17 - SUPREMACÍA",
+    page_title="BS LATAM - TITAN DATA",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
