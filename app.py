@@ -3,7 +3,6 @@ import yt_dlp
 import pandas as pd
 import re
 import time
-import random
 import requests
 import json
 import datetime
@@ -15,115 +14,134 @@ from io import BytesIO
 # 1. ESPECIFICACIONES TÉCNICAS Y LLAVES DE ACCESO (CORE)
 # ==============================================================================
 # API Key de Google Cloud: Esencial para la auditoría de Drive en tiempo real.
-# Esta llave permite la comunicación con el endpoint v3 de Google Drive.
 DRIVE_API_KEY = "AIzaSyBjETNqerBHpqCBQBH7B1bZl55eYWrtMQk"
 
-# Configuración de la Interfaz de Usuario (UI)
 st.set_page_config(
-    page_title="BS LATAM ",
+    page_title="BS LATAM",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ==============================================================================
-# 2. CAPA DE DISEÑO VISUAL "ELITE SUPREMACÍA" (CSS EXPANDIDO)
+# 2. CAPA DE DISEÑO VISUAL "ELITE SUPREMACÍA" (CSS CORREGIDO Y EXPANDIDO)
 # ==============================================================================
 st.markdown("""
     <style>
-    /* Estética General Dark Mode */
+    /* Estética General Dark Mode de alto nivel */
     .main { background-color: #0b0d11; color: #e6edf3; }
     .stApp { background-color: #0b0d11; }
     
-    /* Título con Identidad Corporativa BS */
+    /* Título con Identidad Corporativa BS - CORRECCIÓN DE ESPACIADO Y AMONTONAMIENTO */
     .title-box { 
         border-left: 12px solid #E30613; 
-        padding-left: 35px; 
-        margin: 30px 0 50px 0; 
+        padding: 25px 40px; 
+        margin: 25px 0 45px 0; 
         background: linear-gradient(90deg, #161b22 0%, rgba(11,13,17,0) 100%);
-        border-radius: 0 12px 12px 0;
+        border-radius: 0 15px 15px 0;
     }
     .m-title { 
-        font-size: 48px; 
+        font-size: 46px; 
         font-weight: 900; 
         color: #ffffff; 
         text-transform: uppercase; 
-        letter-spacing: -3px; 
+        letter-spacing: 3px; /* Espaciado premium para legibilidad */
         margin: 0;
+        line-height: 1.2;
     }
     .s-title { 
-        font-size: 20px; 
+        font-size: 19px; 
         color: #8b949e; 
         font-family: 'Courier New', monospace; 
         font-weight: bold;
-        margin-top: 5px;
+        margin-top: 15px;
+        letter-spacing: 1.5px;
     }
     
-    /* Tarjetas de Subtotales por Plataforma */
+    /* Tarjetas de Subtotales por Plataforma con Hover Effect */
     .subtotal-card {
         background-color: #161b22;
         border: 2px solid #30363d;
-        padding: 20px;
-        border-radius: 15px;
+        padding: 22px;
+        border-radius: 18px;
         text-align: center;
-        transition: all 0.3s ease;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
-    .subtotal-card:hover { border-color: #E30613; transform: translateY(-5px); }
-    .sub-v { color: #E30613; font-size: 28px; font-weight: 900; }
-    .sub-l { color: #8b949e; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+    .subtotal-card:hover { 
+        border-color: #E30613; 
+        transform: translateY(-8px);
+        box-shadow: 0 15px 35px rgba(227, 6, 19, 0.2);
+    }
+    .sub-v { color: #E30613; font-size: 30px; font-weight: 900; }
+    .sub-l { color: #8b949e; font-size: 14px; text-transform: uppercase; letter-spacing: 1.5px; }
 
-    /* Estilos de Métricas y Botones */
-    [data-testid="stMetric"] { background-color: #161b22; border: 2px solid #30363d; padding: 25px; border-radius: 20px; }
-    [data-testid="stMetricValue"] { color: #E30613 !important; font-weight: 900; font-size: 38px !important; }
+    /* Estilos de Métricas y Contenedores */
+    [data-testid="stMetric"] { 
+        background-color: #161b22; 
+        border: 2px solid #30363d; 
+        padding: 30px; 
+        border-radius: 22px; 
+    }
+    [data-testid="stMetricValue"] { color: #E30613 !important; font-weight: 900; font-size: 40px !important; }
 
+    /* Botonera de Acción BS LATAM */
     .stButton>button { 
         background-color: #E30613 !important; 
         color: #ffffff !important; 
         font-weight: 900 !important; 
         text-transform: uppercase;
-        border-radius: 12px;
-        height: 70px;
+        border-radius: 14px;
+        height: 75px;
         width: 100%;
         font-size: 20px !important;
-        transition: 0.4s;
+        transition: 0.3s;
+        border: none;
     }
-    .stButton>button:hover { background-color: #ff1a1a !important; box-shadow: 0 10px 35px rgba(227, 6, 19, 0.6); }
+    .stButton>button:hover { 
+        background-color: #ff1a1a !important; 
+        box-shadow: 0 10px 40px rgba(227, 6, 19, 0.6);
+        transform: scale(1.02);
+    }
 
-    /* Blindaje del Header para evitar pérdida de menú lateral */
+    /* Blindaje del Header y Menú */
     header { visibility: visible !important; background: rgba(11,13,17,0.98) !important; border-bottom: 2px solid #30363d; }
-    .stTextArea textarea { background-color: #161b22 !important; color: #e6edf3 !important; border: 2px solid #30363d !important; border-radius: 12px; }
+    .stTextArea textarea { 
+        background-color: #161b22 !important; 
+        color: #e6edf3 !important; 
+        border: 2px solid #30363d !important; 
+        border-radius: 15px; 
+        font-size: 16px !important;
+    }
     </style>
     
     <div class="title-box">
-        <p class="m-title">AUDIT-ELITE SUPREMACÍA V19</p>
-        <p class="s-title">INTELIGENCIA DE DATOS • DESGLOSE MULTI-RED • SUMA INFINITA</p>
+        <p class="m-title">AUDIT-ELITE SUPREMACÍA V21</p>
+        <p class="s-title">INTELIGENCIA DE DATOS • DESGLOSE MULTI-RED • SUMA TOTAL PRECISIÓN</p>
     </div>
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. GESTIÓN DE MEMORIA Y ESTADO (PERSISTENCIA MÁXIMA)
+# 3. GESTIÓN DE MEMORIA Y ESTADO (PERSISTENCIA TOTAL)
 # ==============================================================================
-# Inicialización de bases de datos internas para evitar errores de carga.
 if 'db_final' not in st.session_state: st.session_state.db_final = pd.DataFrame()
 if 'db_fallidos' not in st.session_state: st.session_state.db_fallidos = pd.DataFrame()
 if 'db_drive' not in st.session_state: st.session_state.db_drive = pd.DataFrame()
 if 'chat_log' not in st.session_state:
-    st.session_state.chat_log = [{"role": "assistant", "content": "¡V19 Omni-Titan Desplegada! Todo está bajo control, jefe. 🫡"}]
+    st.session_state.chat_log = [{"role": "assistant", "content": "¡V21 Desplegada! Título corregido y cálculo infinito activado. 🫡"}]
 
 # ==============================================================================
-# 4. MOTORES DE EXTRACCIÓN Y AUDITORÍA (REFORZADOS)
+# 4. MOTORES DE EXTRACCIÓN Y AUDITORÍA (EXPANDIDOS)
 # ==============================================================================
 
-def motor_auditor_universal_v19(urls):
-    """Extrae métricas, clasifica redes y enumera resultados con precisión quirúrgica."""
-    exitos, fallos = [], []
-    p_bar = st.progress(0)
+def motor_auditor_universal_v21(urls):
+    """Extrae métricas, clasifica redes y enumera resultados con precisión absoluta."""
+    exitosos, fallidos = [], []
+    progreso = st.progress(0)
     msg_status = st.empty()
     
-    # Opciones de extracción de alto rendimiento
     ydl_opts = {
         'quiet': True, 'no_warnings': True, 'extract_flat': False,
-        'skip_download': True, 'ignoreerrors': True, 'socket_timeout': 40,
+        'skip_download': True, 'ignoreerrors': True, 'socket_timeout': 45,
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             'Referer': 'https://www.tiktok.com/',
@@ -132,98 +150,94 @@ def motor_auditor_universal_v19(urls):
     
     for i, raw_u in enumerate(urls):
         url = raw_u.strip().replace('"', '').split('?')[0].rstrip(')').rstrip(',')
-        msg_status.markdown(f"📡 **Rastreando Enlace #{i+1}:** `{url[:55]}...`")
+        msg_status.markdown(f"📡 **Rastreando Enlace #{i+1}:** `{url[:50]}...`")
         
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                data = ydl.extract_info(url, download=False)
-                if data:
-                    vistas = int(data.get('view_count') or data.get('play_count') or 0)
-                    autor = data.get('uploader') or data.get('creator') or "N/A"
-                    duracion = data.get('duration', 0)
+                info = ydl.extract_info(url, download=False)
+                if info:
+                    v = int(info.get('view_count') or info.get('play_count') or 0)
+                    autor = info.get('uploader') or info.get('creator') or "N/A"
+                    duracion = info.get('duration', 0)
                     
-                    # Clasificación Lógica de Red Social
+                    # Clasificación avanzada de plataforma
                     if "tiktok" in url: plat = "TIKTOK"
                     elif "youtube" in url or "youtu.be" in url: plat = "YOUTUBE"
                     elif "facebook" in url or "fb.watch" in url: plat = "FACEBOOK"
                     elif "instagram" in url: plat = "INSTAGRAM"
-                    else: plat = "OTRO"
+                    else: plat = "RED DIGITAL"
                     
-                    # Tipo de contenido
                     t_cont = "📸 FOTO" if (plat == "TIKTOK" and (duracion is None or duracion <= 0)) else "🎥 VIDEO"
                     
-                    exitos.append({
+                    exitosos.append({
                         "#": i + 1,
                         "Red": plat,
                         "Tipo": t_cont,
                         "Creador": autor,
-                        "Vistas": vistas,
-                        "Enlace": url
+                        "Vistas": v,
+                        "Link": url
                     })
-                else:
-                    fallos.append({"Link": url, "Error": "Contenido Privado/No Disponible"})
+                else: fallos.append({"Link": url, "Error": "Contenido No Disponible"})
         except Exception as e:
-            fallos.append({"Link": url, "Error": f"Fallo de Red: {str(e)[:20]}"})
+            fallos.append({"Link": url, "Error": f"Fallo técnico: {str(e)[:20]}"})
         
-        p_bar.progress((i + 1) / len(urls))
+        progreso.progress((i + 1) / len(urls))
     
     msg_status.empty()
-    p_bar.empty()
-    return pd.DataFrame(exitos), pd.DataFrame(fallos)
+    progreso.empty()
+    return pd.DataFrame(exitosos), pd.DataFrame(fallos)
 
-def inspector_drive_deep_v19(urls):
-    """Valida integridad de archivos en Google Drive mediante API Key."""
-    resultados_d = []
+def inspector_drive_deep_v21(urls):
+    """Auditoría de archivos Google Drive mediante API v3 oficial."""
+    resultados = []
     for l in urls:
-        f_id_match = re.search(r'[-\w]{25,}', l)
-        if f_id_match:
-            f_id = f_id_match.group()
-            endpoint = f"https://www.googleapis.com/drive/v3/files/{f_id}?fields=name,size,mimeType&key={DRIVE_API_KEY}"
+        f_match = re.search(r'[-\w]{25,}', l)
+        if f_match:
+            f_id = f_match.group()
+            api_url = f"https://www.googleapis.com/drive/v3/files/{f_id}?fields=name,size,mimeType&key={DRIVE_API_KEY}"
             try:
-                resp = requests.get(endpoint, timeout=25)
-                meta = resp.json()
-                if "error" not in meta:
-                    peso_mb = f"{int(meta.get('size', 0))/1024/1024:.2f} MB" if meta.get('size') else "N/A"
-                    resultados_d.append({"Archivo": meta.get('name'), "Peso": peso_mb, "Estado": "✅ PÚBLICO", "Link": l})
-                else:
-                    resultados_d.append({"Archivo": "🔒 PRIVADO", "Peso": "0", "Estado": "❌ BLOQUEADO", "Link": l})
-            except:
-                resultados_d.append({"Archivo": "ERROR", "Peso": "0", "Estado": "❌ ROTO", "Link": l})
-    return pd.DataFrame(resultados_d)
+                rq = requests.get(api_url, timeout=20)
+                data = rq.json()
+                if "error" not in data:
+                    size_mb = f"{int(data.get('size', 0))/1024/1024:.2f} MB" if data.get('size') else "N/A"
+                    resultados.append({"Nombre": data.get('name'), "Peso": size_mb, "Estado": "✅ PÚBLICO", "Link": l})
+                else: resultados.append({"Nombre": "🔒 PROTEGIDO", "Peso": "0", "Estado": "❌ PRIVADO", "Link": l})
+            except: resultados.append({"Nombre": "ERROR", "Peso": "0", "Estado": "❌ ROTO", "Link": l})
+    return pd.DataFrame(resultados)
 
 # ==============================================================================
-# 5. NAVEGACIÓN Y PANEL LATERAL
+# 5. NAVEGACIÓN Y PANEL LATERAL (SIDEBAR)
 # ==============================================================================
 with st.sidebar:
-    st.markdown("<h1 style='color:#E30613; text-align:center;'>BS TITAN V19</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='color:#E30613; text-align:center;'>BS V21</h1>", unsafe_allow_html=True)
     st.divider()
-    menu = st.radio("MÓDULOS DEL SISTEMA", ["🚀 EXTRACTOR DE VISTAS", "📂 DRIVE AUDITOR", "🤖 PARTNER IA PRO", "🛰️ SEARCH PRO"], label_visibility="collapsed")
+    menu = st.radio("SISTEMA", ["🚀 EXTRACTOR RRSS", "📂 DRIVE AUDITOR", "🤖 PARTNER IA PRO", "🛰️ SEARCH PRO"], label_visibility="collapsed")
     st.divider()
-    if st.button("🚨 REINICIAR BASES DE DATOS"):
+    if st.button("🚨 FORMATEAR MEMORIA"):
         for k in ['db_final', 'db_fallidos', 'db_drive']: st.session_state[k] = pd.DataFrame()
-        st.session_state.chat_log = [{"role": "assistant", "content": "Sistema reiniciado. 🫡"}]
+        st.session_state.chat_log = [{"role": "assistant", "content": "Bases de datos limpias. 🫡"}]
         st.rerun()
 
 # ==============================================================================
 # 6. DESPLIEGUE DE MÓDULOS (FUNCIONALIDAD COMPLETA)
 # ==============================================================================
 
-# --- MODULO 1: EXTRACTOR PRO (ENUMERACIÓN + SUB-TOTALES) ---
-if menu == "🚀 EXTRACTOR DE VISTAS":
-    st.markdown("### 📥 Panel de Entrada Estratégica")
-    raw_input = st.text_area("Pega los enlaces de los embajadores aquí:", height=200, placeholder="TikTok, YT, FB, IG...")
+# --- MODULO 1: EXTRACTOR PRO (CORREGIDO MEZCLA + SUBTOTALES) ---
+if menu == "🚀 EXTRACTOR RRSS":
+    st.markdown("### 📥 Panel de Entrada Masiva")
+    input_text = st.text_area("Pega los enlaces de campaña aquí:", height=200, placeholder="Links de TikTok, YT, FB...")
     
     col_a, col_b = st.columns(2)
     with col_a:
-        if st.button("🔥 EJECUTAR AUDITORÍA"):
-            links_f = re.findall(r"(https?://[^\s\"\'\)\],]+)", raw_input)
+        if st.button("🔥 INICIAR AUDITORÍA PROFUNDA"):
+            links_f = re.findall(r"(https?://[^\s\"\'\)\],]+)", input_text)
             if links_f:
-                # LIMPIEZA AUTOMÁTICA DE RESULTADOS PASADOS
+                # LIMPIEZA AUTOMÁTICA DE RESULTADOS PASADOS (PEDIDO DEL JEFE)
                 st.session_state.db_final = pd.DataFrame()
                 st.session_state.db_fallidos = pd.DataFrame()
                 
                 with st.spinner("Conectando con servidores..."):
-                    df_ok, df_err = motor_auditor_universal_v19(links_f)
+                    df_ok, df_err = motor_auditor_universal_v21(links_f)
                     st.session_state.db_final = df_ok
                     st.session_state.db_fallidos = df_err
                 st.rerun()
@@ -241,37 +255,28 @@ if menu == "🚀 EXTRACTOR DE VISTAS":
         total_gen = df['Vistas'].sum()
         m1.metric("VISTAS ACUMULADAS", f"{total_gen:,}")
         with m2:
-            st.markdown("**📋 Suma para Hoja de Cálculo (General):**")
+            st.markdown("**📋 Suma Completa para Hoja de Cálculo:**")
             v_list = [str(v) for v in df['Vistas'].tolist()]
             st.code(" + ".join(v_list), language="text")
         
-        # --- SECCIÓN DE DESGLOSE POR RED (PEDIDO DEL JEFE) ---
-        st.markdown("### 📊 Desglose Detallado por Red Social")
+        # --- SECCIÓN DE SUBTOTALES POR RED (CORREGIDO) ---
+        st.markdown("### 📊 Desglose Detallado por Red")
         d1, d2, d3 = st.columns(3)
-        
         for platform, col_disp in zip(["TIKTOK", "YOUTUBE", "FACEBOOK"], [d1, d2, d3]):
             sub_df = df[df['Red'] == platform]
-            sub_vistas = sub_df['Vistas'].sum()
-            sub_cantidad = len(sub_df)
-            
+            v_sub = sub_df['Vistas'].sum()
+            n_items = len(sub_df)
             with col_disp:
-                st.markdown(f"""
-                <div class="subtotal-card">
-                    <div class="sub-l">{platform} ({sub_cantidad} ITEMS)</div>
-                    <div class="sub-v">{sub_vistas:,}</div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                if sub_vistas > 0:
+                st.markdown(f'<div class="subtotal-card"><div class="sub-l">{platform} ({n_items})</div><div class="sub-v">{v_sub:,}</div></div>', unsafe_allow_html=True)
+                if v_sub > 0:
                     st.caption(f"Copiado rápido {platform}:")
-                    sub_v_list = [str(v) for v in sub_df['Vistas'].tolist()]
-                    st.code(" + ".join(sub_v_list), language="text")
+                    st.code(" + ".join([str(v) for v in sub_df['Vistas'].tolist()]), language="text")
 
         # Tabla Principal Enumerada
         st.markdown("### 📝 Listado Completo de Auditoría")
         st.dataframe(df, use_container_width=True, hide_index=True)
         
-        # Excel
+        # Exportación
         buf = BytesIO()
         with pd.ExcelWriter(buf, engine='xlsxwriter') as wr: df.to_excel(wr, index=False)
         st.download_button("📥 DESCARGAR REPORTE EXCEL", buf.getvalue(), "Auditoria_Titan.xlsx")
@@ -284,39 +289,40 @@ elif menu == "📂 DRIVE AUDITOR":
         st.session_state.db_drive = pd.DataFrame()
         matches_d = re.findall(r"(https?://drive\.google\.com/[^\s\"\'\)\],]+)", d_input)
         if matches_d:
-            df_d_res = inspector_drive_deep_v19(matches_d)
-            st.session_state.db_drive = df_d_res
+            st.session_state.db_drive = inspector_drive_deep_v21(matches_d)
             st.rerun()
     if not st.session_state.db_drive.empty:
         st.dataframe(st.session_state.db_drive, use_container_width=True, hide_index=True)
 
-# --- MODULO 3: PARTNER IA PRO (SUMA INFINITA) ---
+# --- MODULO 3: PARTNER IA PRO (CORRECCIÓN DE SUMA INFINITA) ---
 elif menu == "🤖 PARTNER IA PRO":
-    st.subheader("🤖 Partner IA + Calculadora de Cadena")
+    st.subheader("🤖 IA Partner - Sumador Preciso")
     for msg in st.session_state.chat_log:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
     
-    if chat_p := st.chat_input("Pega tu suma o consulta algo..."):
-        st.session_state.chat_log.append({"role": "user", "content": chat_p})
-        with st.chat_message("user"): st.markdown(chat_p)
+    if prompt := st.chat_input("Pega tu suma o consulta algo..."):
+        st.session_state.chat_log.append({"role": "user", "content": prompt})
+        with st.chat_message("user"): st.markdown(prompt)
         
         with st.chat_message("assistant"):
-            clean_txt = chat_p.replace(' ', '').replace(',', '')
-            # Regex para capturar toda la tira matemática
-            math_match = re.search(r"([\d\+\-\*\/\.]+)", clean_txt)
-            if math_match:
-                try:
-                    operacion = math_match.group(1)
-                    resultado = eval(operacion)
-                    final_ans = f"🔢 **Total Calculado:** {resultado:,}\n`Detalle: {operacion}`"
-                except: final_ans = "Error en operación."
-            else:
-                final_ans = "Sistema V19 operando al 100%. Limpieza y sumador de red activos."
+            # --- CORRECCIÓN FINAL DE CÁLCULO (ERROR DE IMAGEN B520A7) ---
+            # Extraemos TODOS los números de la cadena para evitar el truncamiento
+            numbers = re.findall(r'\d+', prompt.replace(',', '').replace('.', ''))
             
-            st.markdown(final_ans)
-            st.session_state.chat_log.append({"role": "assistant", "content": final_ans})
+            if numbers:
+                try:
+                    # Sumamos todos los valores encontrados
+                    total_suma = sum(int(n) for n in numbers)
+                    operacion_vis = " + ".join(numbers)
+                    ans = f"🔢 **Suma de Cadena Detectada:**\n`{operacion_vis}` = **{total_suma:,}**"
+                except: ans = "No pude procesar la operación, jefe."
+            else:
+                ans = "Sistema V21 listo. Limpieza automática y suma por red activa. 🫡"
+            
+            st.markdown(ans)
+            st.session_state.chat_log.append({"role": "assistant", "content": ans})
 
 # --- MODULO 4: SEARCH PRO ---
 elif menu == "🛰️ SEARCH PRO":
     st.subheader("🛰️ Search Pro")
-    st.info("Módulo de rastreo de perfiles activo. Listo para indexación.")
+    st.info("Buscador de perfiles activo. Listo para indexar.")
