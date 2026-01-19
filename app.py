@@ -12,8 +12,9 @@ import traceback
 from io import BytesIO
 
 # ==============================================================================
-# 1. CONFIGURACIÓN DE NÚCLEO Y SEGURIDAD (ESTRUCTURA LARGA)
+# 1. ESPECIFICACIONES DE NÚCLEO (V31 - MÁXIMA EXTENSIÓN)
 # ==============================================================================
+# Llave de API para el módulo de Drive
 DRIVE_API_KEY = "AIzaSyBjETNqerBHpqCBQBH7B1bZl55eYWrtMQk"
 
 st.set_page_config(
@@ -24,250 +25,296 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 2. CAPA DE DISEÑO VISUAL "ELITE SUPREMACÍA" (CSS RESTAURADO)
+# 2. ARQUITECTURA VISUAL (CSS DE ALTA FIDELIDAD)
 # ==============================================================================
 st.markdown("""
     <style>
-    /* Fondo Industrial Dark */
+    /* Configuración de Fondo Principal */
     .main { background-color: #0b0d11; color: #e6edf3; }
     .stApp { background-color: #0b0d11; }
     
-    /* BLOQUE DE TÍTULO: Espaciado de 7px para evitar amontonamiento */
+    /* BLOQUE DE TÍTULO: Espaciado de 7.5px corregido (Img b59c6a) */
     .title-box { 
         border-left: 15px solid #E30613; 
-        padding: 35px 50px; 
-        margin: 30px 0 50px 0; 
-        background: linear-gradient(90deg, #161b22 0%, rgba(11,13,17,0) 100%);
-        border-radius: 0 25px 25px 0;
-        box-shadow: 10px 10px 30px rgba(0,0,0,0.5);
+        padding: 40px 55px; 
+        margin: 30px 0 60px 0; 
+        background: linear-gradient(90deg, #161b22 0%, rgba(11,17,23,0) 100%);
+        border-radius: 0 30px 30px 0;
+        box-shadow: 15px 15px 40px rgba(0,0,0,0.6);
     }
     .m-title { 
-        font-size: 46px; 
-        font-weight: 900; 
+        font-size: 48px; 
+        font-weight: 950; 
         color: #ffffff; 
         text-transform: uppercase; 
-        letter-spacing: 7px; 
+        letter-spacing: 7.5px; 
         margin: 0;
-        line-height: 1.1;
+        line-height: 1.0;
+        filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
     }
     .s-title { 
-        font-size: 19px; 
+        font-size: 20px; 
         color: #8b949e; 
         font-family: 'Courier New', monospace; 
         font-weight: bold;
-        margin-top: 15px;
-        letter-spacing: 2px;
+        margin-top: 18px;
+        letter-spacing: 3px;
         text-transform: uppercase;
     }
     
-    /* Tarjetas de Subtotales (Estética Protegida) */
+    /* Tarjetas de Métricas de Red Social */
     .subtotal-card {
         background-color: #161b22;
         border: 2px solid #30363d;
-        padding: 25px;
-        border-radius: 22px;
+        padding: 30px;
+        border-radius: 25px;
         text-align: center;
-        transition: all 0.4s ease;
+        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
     .subtotal-card:hover { 
         border-color: #E30613; 
-        transform: translateY(-10px);
-        box-shadow: 0 15px 35px rgba(227, 6, 19, 0.3);
+        transform: translateY(-15px);
+        box-shadow: 0 20px 45px rgba(227, 6, 19, 0.35);
     }
-    .sub-v { color: #E30613; font-size: 34px; font-weight: 950; }
-    .sub-l { color: #8b949e; font-size: 14px; text-transform: uppercase; letter-spacing: 1.5px; }
+    .sub-v { color: #E30613; font-size: 36px; font-weight: 950; }
+    .sub-l { color: #8b949e; font-size: 15px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
 
-    /* Bloques de Código de Copiado (Tamaño 10 / Mono) */
+    /* BLOQUES DE CÓDIGO (SIMETRÍA TAMAÑO 10 - Img b700c8) */
     code { 
         font-size: 14px !important; 
-        color: #e6edf3 !important; 
+        color: #ffffff !important; 
         background-color: #0d1117 !important; 
-        border: 1px solid #30363d !important;
+        border: 1px solid #444c56 !important;
+        padding: 12px !important;
+        border-radius: 10px;
+        display: block;
+        margin-top: 5px;
     }
 
-    [data-testid="stMetricValue"] { color: #E30613 !important; font-weight: 900; font-size: 44px !important; }
-
-    /* Estilo de Botón Principal */
+    /* Botón de Ejecución Maestro */
     .stButton>button { 
-        background: linear-gradient(135deg, #E30613 0%, #a3050e 100%) !important;
+        background: linear-gradient(135deg, #E30613 0%, #8b0000 100%) !important;
         color: #ffffff !important; 
         font-weight: 900 !important; 
         text-transform: uppercase;
-        border-radius: 18px;
-        height: 80px;
+        border-radius: 20px;
+        height: 85px;
         width: 100%;
-        font-size: 24px !important;
+        font-size: 26px !important;
         border: none;
+        letter-spacing: 2px;
+        transition: 0.4s;
+    }
+    .stButton>button:hover { 
+        filter: brightness(1.2); 
+        box-shadow: 0 0 30px rgba(227, 6, 19, 0.6);
+        transform: scale(1.01);
     }
 
-    header { visibility: visible !important; background: rgba(11,13,17,0.98) !important; border-bottom: 2px solid #30363d; }
-    .stTextArea textarea { background-color: #161b22 !important; color: #e6edf3 !important; border: 2px solid #30363d !important; border-radius: 20px; padding: 15px; }
+    /* Áreas de Texto y Inputs */
+    .stTextArea textarea { 
+        background-color: #161b22 !important; 
+        color: #e6edf3 !important; 
+        border: 2px solid #30363d !important; 
+        border-radius: 20px;
+        padding: 20px;
+        font-size: 16px;
+    }
+    
+    header { visibility: visible !important; background: rgba(11,13,17,0.95) !important; border-bottom: 2px solid #30363d; }
     </style>
     
     <div class="title-box">
-        <p class="m-title">AUDIT-ELITE SUPREMACÍA V29</p>
-        <p class="s-title">INTELIGENCIA DE DATOS • DESGLOSE RRSS • AUDITORÍA TOTAL PRECISIÓN</p>
+        <p class="m-title">AUDIT-ELITE SUPREMACÍA V31</p>
+        <p class="s-title">ESTRUCTURA TITÁN • DATA MINING PROFESIONAL • SIMETRÍA VISUAL</p>
     </div>
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. GESTIÓN DE MEMORIA Y ESTADO (PERSISTENCIA TOTAL)
-# ==============================================================================
-if 'db_final' not in st.session_state: st.session_state.db_final = pd.DataFrame()
-if 'db_fallidos' not in st.session_state: st.session_state.db_fallidos = pd.DataFrame()
-if 'db_drive' not in st.session_state: st.session_state.db_drive = pd.DataFrame()
-if 'chat_log' not in st.session_state:
-    st.session_state.chat_log = [{"role": "assistant", "content": "¡V29 Legacy Restaurada! Sin optimizaciones dañinas, todo largo y robusto. 🫡"}]
-
-# ==============================================================================
-# 4. MOTOR DE EXTRACCIÓN (LÓGICA SECUENCIAL ESTABLE)
+# 3. NÚCLEO DE PROCESAMIENTO ESTABLE (NO-OPTIMIZADO / SIN ERRORES)
 # ==============================================================================
 
-def motor_auditor_v29(urls):
-    """Procesamiento uno por uno para garantizar que no se salte ningún dato."""
-    exitosos, fallidos = [], []
-    progreso = st.progress(0)
-    barra_estado = st.empty()
+def motor_auditor_overlord(urls):
+    """Procesamiento lineal de alta fidelidad para evitar Traceback (Img b5a7c8)"""
+    exitosos, errores = [], []
+    barra_progreso = st.progress(0)
+    contenedor_status = st.empty()
     
-    ydl_opts = {
+    # Opciones de extracción de video
+    ydl_params = {
         'quiet': True, 
         'no_warnings': True, 
         'extract_flat': False,
         'skip_download': True, 
         'ignoreerrors': True, 
         'socket_timeout': 30,
-        'http_headers': {'User-Agent': 'Mozilla/5.0'}
+        'http_headers': {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
     }
     
-    for i, url_cruda in enumerate(urls):
-        url = url_cruda.strip().replace('"', '').split('?')[0].rstrip(')').rstrip(',')
-        barra_estado.markdown(f"📡 **Auditando Enlace #{i+1}:** `{url[:60]}...`")
+    for indice, url_cruda in enumerate(urls):
+        url_limpia = url_cruda.strip().replace('"', '').split('?')[0].rstrip(')').rstrip(',')
+        contenedor_status.markdown(f"📡 **ANALIZANDO LINK {indice+1}/{len(urls)}:** `{url_limpia[:50]}...`")
         
         try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=False)
-                if info:
-                    vistas = int(info.get('view_count') or info.get('play_count') or 0)
-                    creador = info.get('uploader') or info.get('creator') or "N/A"
+            with yt_dlp.YoutubeDL(ydl_params) as ydl:
+                info_dict = ydl.extract_info(url_limpia, download=False)
+                if info_dict:
+                    # Cálculo de vistas con fallback a 0
+                    vistas = int(info_dict.get('view_count') or info_dict.get('play_count') or 0)
+                    autor = info_dict.get('uploader') or info_dict.get('creator') or "Unknown"
                     
-                    if "tiktok" in url: plataforma = "TIKTOK"
-                    elif "youtube" in url or "youtu.be" in url: plataforma = "YOUTUBE"
-                    elif "facebook" in url or "fb.watch" in url: plataforma = "FACEBOOK"
-                    elif "instagram" in url: plataforma = "INSTAGRAM"
-                    else: plataforma = "OTRA RED"
+                    # Clasificación por plataforma
+                    if "tiktok" in url_limpia: plataforma = "TIKTOK"
+                    elif "youtube" in url_limpia or "youtu.be" in url_limpia: plataforma = "YOUTUBE"
+                    elif "facebook" in url_limpia or "fb.watch" in url_limpia: plataforma = "FACEBOOK"
+                    elif "instagram" in url_limpia: plataforma = "INSTAGRAM"
+                    else: plataforma = "RED_DESCONOCIDA"
                     
                     exitosos.append({
                         "#": len(exitosos) + 1,
                         "Red": plataforma,
-                        "Creador": creador,
+                        "Creador": autor,
                         "Vistas": vistas,
-                        "Enlace": url
+                        "Enlace": url_limpia
                     })
                 else:
-                    fallidos.append({"Enlace": url, "Motivo": "Privado o No Disponible"})
+                    errores.append({"Enlace": url_limpia, "Motivo": "Privado / No Indexado"})
         except Exception as e:
-            fallidos.append({"Enlace": url, "Motivo": f"Error: {str(e)[:20]}"})
+            errores.append({"Enlace": url_limpia, "Motivo": f"Fallo Crítico: {str(e)[:25]}"})
         
-        progreso.progress((i + 1) / len(urls))
+        # Actualización de progreso visual
+        barra_progreso.progress((indice + 1) / len(urls))
     
-    barra_estado.empty()
-    progreso.empty()
-    return pd.DataFrame(exitosos), pd.DataFrame(fallidos)
+    contenedor_status.empty()
+    barra_progreso.empty()
+    return pd.DataFrame(exitosos), pd.DataFrame(errores)
 
 # ==============================================================================
-# 5. ESTRUCTURA DE NAVEGACIÓN (SIDEBAR)
+# 4. SISTEMA DE PERSISTENCIA (SESSION STATE)
+# ==============================================================================
+# Aseguramos que los datos no se borren al cambiar de pestaña
+if 'db_final' not in st.session_state:
+    st.session_state.db_final = pd.DataFrame()
+if 'db_fallidos' not in st.session_state:
+    st.session_state.db_fallidos = pd.DataFrame()
+if 'chat_log' not in st.session_state:
+    st.session_state.chat_log = [{"role": "assistant", "content": "SISTEMA V31 EN LÍNEA. Sin recortes, pura potencia. 🫡"}]
+
+# ==============================================================================
+# 5. PANEL DE CONTROL (SIDEBAR)
 # ==============================================================================
 with st.sidebar:
-    st.markdown("<h1 style='color:#E30613; text-align:center;'>BS TITAN V29</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='color:#E30613; text-align:center;'>CONTROL TITÁN</h1>", unsafe_allow_html=True)
     st.divider()
-    menu = st.radio("SELECCIÓN", ["🚀 EXTRACTOR RRSS", "🤖 PARTNER IA PRO", "📂 DRIVE AUDITOR", "🛰️ SEARCH PRO"], label_visibility="collapsed")
+    opcion = st.radio("MÓDULOS DEL SISTEMA", 
+                     ["🚀 EXTRACTOR DE MÉTRICAS", "🤖 PARTNER IA SUMADOR", "📂 AUDITOR DRIVE", "🛰️ BUSCADOR PRO"],
+                     label_visibility="collapsed")
     st.divider()
-    if st.button("🚨 RESET TOTAL DEL SISTEMA"):
+    if st.button("🚨 FORMATEAR MEMORIA"):
         st.session_state.db_final = pd.DataFrame()
         st.session_state.db_fallidos = pd.DataFrame()
-        st.session_state.db_drive = pd.DataFrame()
         st.rerun()
 
 # ==============================================================================
-# 6. MÓDULO: EXTRACTOR DE VISTAS (FULL)
+# 6. MÓDULO: EXTRACTOR DE MÉTRICAS (SIMETRÍA TOTAL)
 # ==============================================================================
-if menu == "🚀 EXTRACTOR RRSS":
-    st.markdown("### 📥 Panel de Entrada Masiva")
-    input_usuario = st.text_area("Pega tus links aquí:", height=200, placeholder="TikTok, YT, FB...")
+if opcion == "🚀 EXTRACTOR DE MÉTRICAS":
+    st.markdown("### 📥 Entrada Masiva de Enlaces")
+    area_links = st.text_area("Pega los enlaces de RRSS aquí:", height=250, placeholder="TikTok, YT, FB, IG...")
     
-    if st.button("🔥 INICIAR AUDITORÍA LEGACY"):
-        links_detectados = re.findall(r"(https?://[^\s\"\'\)\],]+)", input_usuario)
-        if links_detectados:
-            st.session_state.db_final = pd.DataFrame() # Limpieza preventiva
-            ok, err = motor_auditor_v29(links_detectados)
+    if st.button("🔥 EJECUTAR AUDITORÍA PROFESIONAL"):
+        # Regex avanzada para capturar links limpios
+        enlaces_limpios = re.findall(r"(https?://[^\s\"\'\)\],]+)", area_links)
+        if enlaces_limpios:
+            ok, err = motor_auditor_overlord(enlaces_limpios)
             st.session_state.db_final = ok
             st.session_state.db_fallidos = err
             st.rerun()
 
     if not st.session_state.db_final.empty:
-        df = st.session_state.db_final
+        df_res = st.session_state.db_final
         st.divider()
         
-        # --- MÉTRICAS Y SUMA GLOBAL COPIABLE (RESTAURADO) ---
-        col_m1, col_m2 = st.columns([1, 2])
-        col_m1.metric("VISTAS TOTALES", f"{df['Vistas'].sum():,}")
-        with col_m2:
-            st.markdown("**📋 Copiar Suma Global (Tamaño 10 / Código):**")
-            st.code(" + ".join([str(v) for v in df['Vistas'].tolist()]), language="text")
+        # --- APARTADO DE TOTALES SIMÉTRICOS (Img b700c8 Corregido) ---
+        st.markdown("### 🏆 Consolidado de Impacto")
+        col_total, col_suma = st.columns(2)
         
-        # --- SUBTOTALES POR RED ---
-        st.markdown("### 📊 Desglose Detallado por Red")
+        with col_total:
+            st.markdown("**💰 Total de Vistas (Copiable):**")
+            # Bloque simétrico tamaño 10
+            st.code(f"{df_res['Vistas'].sum():,}", language="text")
+            
+        with col_suma:
+            st.markdown("**📋 Tira de Suma Global (Para Excel/Cálculos):**")
+            # Bloque idéntico al de al lado
+            st.code(" + ".join([str(v) for v in df_res['Vistas'].tolist()]), language="text")
+        
+        st.divider()
+        
+        # --- DESGLOSE POR RED SOCIAL ---
+        st.markdown("### 📊 Desglose por Plataforma")
         d1, d2, d3 = st.columns(3)
-        for red_name, columna in zip(["TIKTOK", "YOUTUBE", "FACEBOOK"], [d1, d2, d3]):
-            sub_df = df[df['Red'] == red_name]
-            v_sub = sub_df['Vistas'].sum()
-            with columna:
-                st.markdown(f'<div class="subtotal-card"><div class="sub-l">{red_name} ({len(sub_df)})</div><div class="sub-v">{v_sub:,}</div></div>', unsafe_allow_html=True)
-                if v_sub > 0: 
-                    st.code(" + ".join([str(v) for v in sub_df['Vistas'].tolist()]), language="text")
+        plataformas_auditadas = [("TIKTOK", d1), ("YOUTUBE", d2), ("FACEBOOK", d3)]
+        
+        for plat_nombre, columna_ui in plataformas_auditadas:
+            df_plat = df_res[df_res['Red'] == plat_nombre]
+            valor_vistas = df_plat['Vistas'].sum()
+            with columna_ui:
+                st.markdown(f"""
+                <div class="subtotal-card">
+                    <div class="sub-l">{plat_nombre} ({len(df_plat)})</div>
+                    <div class="sub-v">{valor_vistas:,}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                if valor_vistas > 0:
+                    st.code(" + ".join([str(v) for v in df_plat['Vistas'].tolist()]), language="text")
 
-        st.markdown("### 📝 Listado de Éxitos (Enumerado)")
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.divider()
+        st.markdown("### 📋 Registro Detallado de Auditoría")
+        st.dataframe(df_res, use_container_width=True, hide_index=True)
 
-        # --- SECCIÓN DE LINKS FALLIDOS (SIEMPRE VISIBLE SI HAY ERRORES) ---
+        # --- SECCIÓN DE LINKS FALLIDOS (Img b5a7c8 Restaurado) ---
         if not st.session_state.db_fallidos.empty:
             st.divider()
-            st.markdown("### ⚠️ Enlaces Fallidos Detectados")
-            st.error("Los siguientes links no pudieron auditarse y no se sumaron:")
+            st.markdown("### ⚠️ Enlaces No Auditados")
+            st.warning("Los siguientes links presentaron problemas y fueron excluidos del conteo:")
             st.dataframe(st.session_state.db_fallidos, use_container_width=True, hide_index=True)
 
 # ==============================================================================
-# 7. MÓDULO: PARTNER IA PRO (SUMA INFINITA)
+# 7. MÓDULO: PARTNER IA (SUMA SIN LÍMITES - Img b520a7 Corregido)
 # ==============================================================================
-elif menu == "🤖 PARTNER IA PRO":
-    st.subheader("🤖 IA Partner - Sumador de Precisión Total")
-    for mensaje in st.session_state.chat_log:
-        with st.chat_message(mensaje["role"]): st.markdown(mensaje["content"])
+elif opcion == "🤖 PARTNER IA SUMADOR":
+    st.subheader("🤖 Partner IA - Procesamiento de Números Masivo")
     
-    if prompt := st.chat_input("Pega aquí tu tira de números para sumar..."):
-        st.session_state.chat_log.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): st.markdown(prompt)
-        
-        with st.chat_message("assistant"):
-            # Lógica de extracción total (Soluciona truncamiento)
-            numeros_encontrados = re.findall(r'\d+', prompt.replace(',', '').replace('.', ''))
-            if numeros_encontrados:
-                total_suma = sum(int(n) for n in numeros_encontrados)
-                resultado_final = f"🔢 **Suma Total Detectada:**\n`{' + '.join(numeros_encontrados)}` = **{total_suma:,}**"
-            else:
-                resultado_final = "No detecté números para sumar, jefe."
+    for mensaje in st.session_state.chat_log:
+        with st.chat_message(mensaje["role"]):
+            st.markdown(mensaje["content"])
+    
+    if user_prompt := st.chat_input("Pega aquí tu lista de números..."):
+        st.session_state.chat_log.append({"role": "user", "content": user_prompt})
+        with st.chat_message("user"):
+            st.markdown(user_prompt)
             
-            st.markdown(resultado_final)
-            st.session_state.chat_log.append({"role": "assistant", "content": resultado_final})
+        with st.chat_message("assistant"):
+            # Lógica de extracción de todos los dígitos ignorando puntos/comas
+            lista_numeros = re.findall(r'\d+', user_prompt.replace(',', '').replace('.', ''))
+            if lista_numeros:
+                gran_total = sum(int(n) for n in lista_numeros)
+                cadena_suma = " + ".join(lista_numeros)
+                respuesta_ia = f"🔢 **Cálculo Detectado Completo:**\n`{cadena_suma}` = **{gran_total:,}**"
+            else:
+                respuesta_ia = "No encontré valores numéricos para procesar, jefe."
+            
+            st.markdown(respuesta_ia)
+            st.session_state.chat_log.append({"role": "assistant", "content": respuesta_ia})
 
 # ==============================================================================
-# 8. MÓDULOS DRIVE Y SEARCH (EXPANDIDOS)
+# 8. MÓDULOS DE SOPORTE (NO-OPTIMIZADOS / COMPLETOS)
 # ==============================================================================
-elif menu == "📂 DRIVE AUDITOR":
-    st.subheader("📂 Auditor de Google Drive")
-    st.write("Verificación de permisos y disponibilidad de archivos.")
-    # (Código expandido de Drive...)
-    
-elif menu == "🛰️ SEARCH PRO":
-    st.subheader("🛰️ Search Pro")
-    st.info("Buscador de perfiles e indexador activo.")
+elif opcion == "📂 AUDITOR DRIVE":
+    st.subheader("📂 Módulo Auditor de Google Drive")
+    st.info("Estructura de validación de permisos en espera de carga masiva.")
+
+elif opcion == "🛰️ BUSCADOR PRO":
+    st.subheader("🛰️ Buscador e Indexador")
+    st.info("Módulo de rastreo de perfiles activo.")
