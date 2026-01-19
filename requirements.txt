@@ -3,3 +3,5 @@ google-api-python-client
 yt-dlp
 isodate
 pandas
+requests
+xlsxwriter
