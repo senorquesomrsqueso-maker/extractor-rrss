@@ -15,11 +15,10 @@ from io import BytesIO
 # ==============================================================================
 # 1. CONFIGURACIÓN ESTRUCTURAL Y LLAVES DE ACCESO (PROTEGIDAS)
 # ==============================================================================
-# Nota: Mantener esta llave para la funcionalidad de Drive Auditor
 DRIVE_API_KEY = "AIzaSyBjETNqerBHpqCBQBH7B1bZl55eYWrtMQk"
 
 st.set_page_config(
-    page_title="BS LATAM",
+    page_title="AUDIT-ELITE PRO V29 - OMNI TITAN EXPANDED",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -142,7 +141,6 @@ st.markdown("""
         font-size: 16px;
     }
     
-    /* BLOQUES DE CÓDIGO (COPIADO RÁPIDO Y MASIVO) */
     code { 
         font-size: 15px !important; 
         color: #ffffff !important; 
@@ -177,10 +175,6 @@ if 'chat_log' not in st.session_state:
 # 4. MOTORES DE AUDITORÍA (EXTRACTOR ORIGINAL V24 REFORZADO)
 # ==============================================================================
 def motor_auditor_universal_v24(urls):
-    """
-    Motor de extracción profunda. Mantiene la lógica de limpieza de parámetros
-    y conteo de vistas original.
-    """
     exitos, fallos = [], []
     p_bar = st.progress(0)
     msg_status = st.empty()
@@ -233,7 +227,6 @@ def motor_auditor_universal_v24(urls):
     return pd.DataFrame(exitos), pd.DataFrame(fallos)
 
 def auditor_drive_api_v24(urls):
-    """Auditor de archivos Google Drive mediante API v3."""
     resultados_d = []
     for link in urls:
         f_id_match = re.search(r'[-\w]{25,}', link)
@@ -278,7 +271,7 @@ with st.sidebar:
         st.rerun()
 
 # ==============================================================================
-# 6. DESPLIEGUE DE MÓDULOS (LÓGICA EXPANDIDA)
+# 6. DESPLIEGUE DE MÓDULOS (LÓGICA AUTOMATIZADA)
 # ==============================================================================
 
 # --- MÓDULO 1: EXTRACTOR PRO ---
@@ -303,7 +296,6 @@ if menu == "🚀 EXTRACTOR":
         df = st.session_state.db_final
         st.divider()
         st.metric("📊 VISTAS ACUMULADAS TOTALES", f"{df['Vistas'].sum():,}")
-        
         st.markdown("**📋 Suma para Excel / Reportes (Copiado Masivo):**")
         st.code(" + ".join([str(v) for v in df['Vistas'].tolist()]))
         
@@ -332,107 +324,95 @@ if menu == "🚀 EXTRACTOR":
             st.warning("⚠️ ENLACES CON ERRORES (REVISAR MANUALMENTE):")
             st.dataframe(st.session_state.db_fallidos, use_container_width=True)
 
-# --- MÓDULO 2: TIKTOK RADAR ---
+# --- MÓDULO 2: TIKTOK RADAR (REPARADO Y AUTOMATIZADO) ---
 elif menu == "🎯 TIKTOK RADAR":
-    st.markdown("### 🎯 TikTok Radar - Inteligencia de Búsqueda")
-    st.info("Configura filtros de búsqueda para contenido popular y forzado en español.")
+    st.markdown("### 🎯 TikTok Radar - Autómata de Búsqueda y Auditoría")
+    st.info("El sistema buscará, extraerá y auditará automáticamente los videos más relevantes.")
     
     col_radar1, col_radar2 = st.columns(2)
     with col_radar1:
-        query_text = st.text_input("🔍 Término de Búsqueda (Nicho/Marca):", placeholder="Ej: Gaming, Tech Review...")
+        query_text = st.text_input("🔍 Término de Búsqueda (Nicho/Marca):", placeholder="Ej: Blood Strike")
     with col_radar2:
-        hashtag_text = st.text_input("#️⃣ Filtrar por Hashtag:", placeholder="Ej: #mexico, #unboxing...")
+        limit_v = st.slider("Cantidad de videos a auditar automáticamente:", 5, 50, 15)
     
-    r_c1, r_c2, r_c3 = st.columns(3)
-    with r_c1:
-        filtro_fecha = st.selectbox("📅 Fecha del Video:", ["Hoy", "Esta Semana", "Este Mes", "Siempre"])
-    with r_c2:
-        filtro_orden = st.selectbox("📊 Priorizar por:", ["Más Relevante", "Más Populares (Likes)"])
-    with r_c3:
-        forzar_esp = st.toggle("Forzar Contenido Español 🇪🇸", value=True)
+    forzar_esp = st.toggle("Forzar Contenido Español 🇪🇸", value=True)
 
-    if st.button("🚀 ACTIVAR RADAR Y BUSCAR"):
-        if query_text or hashtag_text:
-            final_query = query_text
-            if hashtag_text:
-                tag = hashtag_text if hashtag_text.startswith('#') else f"#{hashtag_text}"
-                final_query += f" {tag}"
-            
-            if forzar_esp:
-                final_query += " (de OR el OR en OR la)"
-            
-            encoded_search = urllib.parse.quote(final_query)
-            tiktok_search_url = f"https://www.tiktok.com/search/video?q={encoded_search}"
-            
-            st.success(f"🎯 Radar apuntado a: {query_text} {hashtag_text if hashtag_text else ''}")
-            st.link_button("🔥 ABRIR TIKTOK CON FILTROS APLICADOS", tiktok_search_url)
-            
-            st.markdown("""
-                ---
-                **PROTOCOLO SUGERIDO:**
-                1. Navega por los resultados y selecciona los videos con más engagement.
-                2. Copia los enlaces de los videos.
-                3. Regresa al módulo **🚀 EXTRACTOR** para procesar los datos finales.
-            """)
+    if st.button("🚀 ACTIVAR RADAR Y PROCESAR TODO"):
+        if query_text:
+            with st.status("🛸 Iniciando Protocolo de Extracción...", expanded=True) as status:
+                # 1. Búsqueda y Extracción de Enlaces
+                st.write("🔍 Buscando videos en el índice de TikTok...")
+                final_q = query_text + (" (de OR el OR en OR la)" if forzar_esp else "")
+                
+                # Usamos yt_dlp para obtener los links de la búsqueda directamente
+                search_opts = {
+                    'quiet': True, 'extract_flat': True, 'force_generic_extractor': True,
+                    'playlistend': limit_v
+                }
+                
+                try:
+                    with yt_dlp.YoutubeDL(search_opts) as ydl:
+                        search_url = f"https://www.tiktok.com/search/video?q={urllib.parse.quote(final_q)}"
+                        info = ydl.extract_info(f"ytsearch{limit_v}:{search_url}", download=False)
+                        
+                        links_encontrados = []
+                        if 'entries' in info:
+                            for entry in info['entries']:
+                                if entry and 'url' in entry:
+                                    links_encontrados.append(entry['url'])
+                        
+                        if not links_encontrados:
+                            # Fallback a búsqueda manual si el scraper es bloqueado
+                            st.warning("⚠️ El acceso directo fue restringido. Generando link de respaldo...")
+                            st.link_button("🔥 ABRIR BÚSQUEDA MANUAL", search_url)
+                        else:
+                            st.write(f"✅ Se encontraron {len(links_encontrados)} videos. Iniciando Auditoría de Vistas...")
+                            # 2. Procesamiento automático mediante el motor principal
+                            df_res, df_err = motor_auditor_universal_v24(links_encontrados)
+                            
+                            st.session_state.db_final = df_res
+                            st.session_state.db_fallidos = df_err
+                            status.update(label="✅ Misión Cumplida. Datos cargados en el Extractor.", state="complete")
+                            st.balloons()
+                            time.sleep(2)
+                            st.rerun()
+                except Exception as e:
+                    st.error(f"Fallo en el sistema: {str(e)}")
         else:
-            st.error("Jefe, escribe algo en el buscador o el hashtag.")
+            st.error("Jefe, ingresa un objetivo de búsqueda.")
 
 # --- MÓDULO 3: DRIVE AUDITOR ---
 elif menu == "📂 DRIVE AUDITOR":
     st.markdown("### 📂 Auditoría de Enlaces Google Drive")
     drive_input = st.text_area("Pega los enlaces de carpetas o archivos de Drive:", height=200)
-    
     if st.button("🛡️ VERIFICAR ACCESO"):
         links_d = re.findall(r"(https?://drive\.google\.com/[^\s]+)", drive_input)
         if links_d:
             st.session_state.db_drive = auditor_drive_api_v24(links_d)
             st.rerun()
-            
     if not st.session_state.db_drive.empty:
-        st.markdown("### Resultados del Escaneo")
         st.dataframe(st.session_state.db_drive, use_container_width=True, hide_index=True)
 
 # --- MÓDULO 4: PARTNER IA ---
 elif menu == "🤖 PARTNER IA":
     st.markdown("### 🤖 IA Partner - Asistente de Cálculos")
     for msg in st.session_state.chat_log:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
-    
-    if chat_input := st.chat_input("Pega una lista de números o pide un cálculo..."):
+        with st.chat_message(msg["role"]): st.markdown(msg["content"])
+    if chat_input := st.chat_input("Pega una lista de números..."):
         st.session_state.chat_log.append({"role": "user", "content": chat_input})
         with st.chat_message("user"): st.markdown(chat_input)
-        
         with st.chat_message("assistant"):
             numeros = re.findall(r'\d+', chat_input.replace(',', '').replace('.', ''))
-            if numeros:
-                valores = [int(n) for n in numeros]
-                total_suma = sum(valores)
-                respuesta = f"🔢 La suma de la cadena es: **{total_suma: ,}**"
-                st.markdown(respuesta)
-                st.session_state.chat_log.append({"role": "assistant", "content": respuesta})
-            else:
-                resp_error = "No encontré números para sumar en tu mensaje, jefe."
-                st.markdown(resp_error)
-                st.session_state.chat_log.append({"role": "assistant", "content": resp_error})
+            respuesta = f"🔢 La suma es: **{sum([int(n) for n in numeros]): ,}**" if numeros else "No hay números."
+            st.markdown(respuesta)
+            st.session_state.chat_log.append({"role": "assistant", "content": respuesta})
 
 # --- MÓDULO 5: SEARCH PRO ---
 elif menu == "🛰️ SEARCH PRO":
     st.markdown("### 🛰️ Search Pro - Rastreador de Perfiles")
-    st.info("Localiza perfiles específicos usando Dorks de Google.")
-    target_name = st.text_input("Nombre de Creador, Usuario o Marca:")
+    target_name = st.text_input("Nombre de Creador o Marca:")
     if st.button("🛰️ LANZAR RASTREO"):
         if target_name:
-            dork_url = f"https://www.google.com/search?q=site:tiktok.com+%22{target_name}%22"
-            st.link_button(f"Abrir búsqueda para {target_name}", dork_url)
+            st.link_button(f"Abrir búsqueda para {target_name}", f"https://www.google.com/search?q=site:tiktok.com+%22{target_name}%22")
 
-# ==============================================================================
-# SECCIÓN FINAL: FOOTER Y MANTENIMIENTO
-# ==============================================================================
-st.sidebar.markdown(f"""
-    ---
-    **ESTADO DEL SISTEMA:** ÓPTIMO  
-    **VERSIÓN:** 29.0.1  
-    **USUARIO:** BS LATAM ELITE  
-    📅 {datetime.date.today()}
-""")
+st.sidebar.markdown(f"--- \n **ESTADO:** ÓPTIMO \n **V:** 29.0.2 \n 📅 {datetime.date.today()}")
