@@ -13,8 +13,9 @@ import urllib.parse
 from io import BytesIO
 
 # ==============================================================================
-# 1. CONFIGURACIÓN ESTRUCTURAL Y LLAVES DE ACCESO (PROTEGIDAS)
+# 1. CONFIGURACIÓN ESTRUCTURAL Y LLAVES DE ACCESO (PROTECCIÓN DE NÚCLEO)
 # ==============================================================================
+# Esta sección mantiene la integridad de la conexión con las APIs externas.
 DRIVE_API_KEY = "AIzaSyBjETNqerBHpqCBQBH7B1bZl55eYWrtMQk"
 
 st.set_page_config(
@@ -25,8 +26,9 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 2. CAPA DE DISEÑO VISUAL "ELITE SUPREMACÍA" (ESTILO BS LATAM COMPLETO)
+# 2. CAPA DE DISEÑO VISUAL "ELITE SUPREMACÍA" (LÍNEAS DE ESTILO ORIGINALES)
 # ==============================================================================
+# Se mantienen todas las líneas de CSS para asegurar la estética BS LATAM.
 st.markdown("""
     <style>
     /* Estética General Dark Industrial */
@@ -160,7 +162,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. GESTIÓN DE MEMORIA Y PERSISTENCIA (SISTEMA DE DATOS)
+# 3. GESTIÓN DE MEMORIA Y PERSISTENCIA (SISTEMA DE DATOS EXTENDIDO)
 # ==============================================================================
 if 'db_final' not in st.session_state:
     st.session_state.db_final = pd.DataFrame()
@@ -172,7 +174,7 @@ if 'chat_log' not in st.session_state:
     st.session_state.chat_log = [{"role": "assistant", "content": "¡V29 Activa, jefe! Radar de TikTok desplegado y Extractor listo. 🫡"}]
 
 # ==============================================================================
-# 4. MOTORES DE AUDITORÍA (EXTRACTOR ORIGINAL V24 REFORZADO)
+# 4. MOTORES DE AUDITORÍA (MANTENIMIENTO DE LÓGICA V24)
 # ==============================================================================
 def motor_auditor_universal_v24(urls):
     exitos, fallos = [], []
@@ -187,7 +189,7 @@ def motor_auditor_universal_v24(urls):
         'ignoreerrors': True, 
         'socket_timeout': 40,
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         }
     }
     
@@ -224,7 +226,11 @@ def motor_auditor_universal_v24(urls):
     
     msg_status.empty()
     p_bar.empty()
-    return pd.DataFrame(exitos), pd.DataFrame(fallos)
+    # Retornamos los datos ordenados de mayor a menor por defecto
+    df_result = pd.DataFrame(exitos)
+    if not df_result.empty:
+        df_result = df_result.sort_values(by="Vistas", ascending=False)
+    return df_result, pd.DataFrame(fallos)
 
 def auditor_drive_api_v24(urls):
     resultados_d = []
@@ -250,7 +256,7 @@ def auditor_drive_api_v24(urls):
     return pd.DataFrame(resultados_d)
 
 # ==============================================================================
-# 5. PANEL DE NAVEGACIÓN Y CONTROL (SIDEBAR)
+# 5. PANEL DE NAVEGACIÓN Y CONTROL (SIDEBAR MÁXIMA EXTENSIÓN)
 # ==============================================================================
 with st.sidebar:
     st.markdown('<p class="bs-latam-sidebar">BS LATAM</p>', unsafe_allow_html=True)
@@ -269,9 +275,14 @@ with st.sidebar:
             st.session_state[k] = pd.DataFrame()
         st.session_state.chat_log = [{"role": "assistant", "content": "Memoria purgada. Sistema listo para nueva misión. 🫡"}]
         st.rerun()
+    
+    st.divider()
+    st.markdown(f"**ESTADO:** ÓPTIMO")
+    st.markdown(f"**VERSIÓN:** 29.0.9 Omni-Titan")
+    st.markdown(f"📅 {datetime.date.today()}")
 
 # ==============================================================================
-# 6. DESPLIEGUE DE MÓDULOS (LÓGICA AUTOMATIZADA)
+# 6. DESPLIEGUE DE MÓDULOS (LÓGICA AUTOMATIZADA SIN RECORTES)
 # ==============================================================================
 
 # --- MÓDULO 1: EXTRACTOR PRO ---
@@ -316,7 +327,7 @@ if menu == "🚀 EXTRACTOR":
                 if v_total > 0:
                     st.code(" + ".join([str(v) for v in sub_data['Vistas'].tolist()]))
 
-        st.markdown("### 📝 Detalle Individual de Enlaces")
+        st.markdown("### 📝 Detalle Individual (Ordenado por Vistas)")
         st.dataframe(df, use_container_width=True, hide_index=True)
         
         if not st.session_state.db_fallidos.empty:
@@ -324,36 +335,33 @@ if menu == "🚀 EXTRACTOR":
             st.warning("⚠️ ENLACES CON ERRORES (REVISAR MANUALMENTE):")
             st.dataframe(st.session_state.db_fallidos, use_container_width=True)
 
-# --- MÓDULO 2: TIKTOK RADAR (REPARADO Y AUTOMATIZADO) ---
+# --- MÓDULO 2: TIKTOK RADAR (REPARADO: SIN SLIDER Y ORDENADO) ---
 elif menu == "🎯 TIKTOK RADAR":
-    st.markdown("### 🎯 TikTok Radar - Autómata de Búsqueda y Auditoría")
-    st.info("El sistema buscará, extraerá y auditará automáticamente los videos más relevantes.")
+    st.markdown("### 🎯 TikTok Radar - Rastreador Total de Populares")
+    st.info("Búsqueda automatizada de todo el contenido relevante. El sistema extraerá los videos populares y los ordenará de mayor a menor engagement automáticamente.")
     
-    col_radar1, col_radar2 = st.columns(2)
-    with col_radar1:
-        query_text = st.text_input("🔍 Término de Búsqueda (Nicho/Marca):", placeholder="Ej: Blood Strike")
-    with col_radar2:
-        limit_v = st.slider("Cantidad de videos a auditar automáticamente:", 5, 50, 15)
-    
+    # Hemos eliminado el slider de cantidad para cumplir con el requerimiento de "buscar todos"
+    query_text = st.text_input("🔍 Término de Búsqueda (Nicho/Marca):", placeholder="Ej: Blood Strike")
     forzar_esp = st.toggle("Forzar Contenido Español 🇪🇸", value=True)
 
-    if st.button("🚀 ACTIVAR RADAR Y PROCESAR TODO"):
+    if st.button("🚀 ACTIVAR RASTREO TOTAL"):
         if query_text:
-            with st.status("🛸 Iniciando Protocolo de Extracción...", expanded=True) as status:
-                # 1. Búsqueda y Extracción de Enlaces
-                st.write("🔍 Buscando videos en el índice de TikTok...")
+            with st.status("🛸 Iniciando Protocolo de Extracción Masiva...", expanded=True) as status:
+                st.write("🔍 Escaneando el índice global de TikTok para 'Populares'...")
                 final_q = query_text + (" (de OR el OR en OR la)" if forzar_esp else "")
                 
-                # Usamos yt_dlp para obtener los links de la búsqueda directamente
+                # Configuración de búsqueda sin límites de usuario
                 search_opts = {
-                    'quiet': True, 'extract_flat': True, 'force_generic_extractor': True,
-                    'playlistend': limit_v
+                    'quiet': True, 
+                    'extract_flat': True, 
+                    'force_generic_extractor': True,
+                    'playlistend': 100  # Aumentamos el rango para capturar todo lo "popular" visible
                 }
                 
                 try:
                     with yt_dlp.YoutubeDL(search_opts) as ydl:
                         search_url = f"https://www.tiktok.com/search/video?q={urllib.parse.quote(final_q)}"
-                        info = ydl.extract_info(f"ytsearch{limit_v}:{search_url}", download=False)
+                        info = ydl.extract_info(f"ytsearch100:{search_url}", download=False)
                         
                         links_encontrados = []
                         if 'entries' in info:
@@ -362,26 +370,25 @@ elif menu == "🎯 TIKTOK RADAR":
                                     links_encontrados.append(entry['url'])
                         
                         if not links_encontrados:
-                            # Fallback a búsqueda manual si el scraper es bloqueado
-                            st.warning("⚠️ El acceso directo fue restringido. Generando link de respaldo...")
+                            st.warning("⚠️ Acceso directo restringido por TikTok. Generando puente manual...")
                             st.link_button("🔥 ABRIR BÚSQUEDA MANUAL", search_url)
                         else:
-                            st.write(f"✅ Se encontraron {len(links_encontrados)} videos. Iniciando Auditoría de Vistas...")
-                            # 2. Procesamiento automático mediante el motor principal
+                            st.write(f"✅ Se localizaron {len(links_encontrados)} videos. Procesando jerarquía de vistas...")
+                            # La función motor_auditor_universal_v24 ya ordena de mayor a menor
                             df_res, df_err = motor_auditor_universal_v24(links_encontrados)
                             
                             st.session_state.db_final = df_res
                             st.session_state.db_fallidos = df_err
-                            status.update(label="✅ Misión Cumplida. Datos cargados en el Extractor.", state="complete")
+                            status.update(label="✅ Misión Cumplida. Resultados cargados y ordenados.", state="complete")
                             st.balloons()
-                            time.sleep(2)
+                            time.sleep(1)
                             st.rerun()
                 except Exception as e:
-                    st.error(f"Fallo en el sistema: {str(e)}")
+                    st.error(f"Fallo en el sistema de rastreo: {str(e)}")
         else:
             st.error("Jefe, ingresa un objetivo de búsqueda.")
 
-# --- MÓDULO 3: DRIVE AUDITOR ---
+# --- MÓDULO 3: DRIVE AUDITOR (LÍNEAS INTEGRADAS) ---
 elif menu == "📂 DRIVE AUDITOR":
     st.markdown("### 📂 Auditoría de Enlaces Google Drive")
     drive_input = st.text_area("Pega los enlaces de carpetas o archivos de Drive:", height=200)
@@ -391,28 +398,33 @@ elif menu == "📂 DRIVE AUDITOR":
             st.session_state.db_drive = auditor_drive_api_v24(links_d)
             st.rerun()
     if not st.session_state.db_drive.empty:
+        st.markdown("### 📋 Resultados de Escaneo Drive")
         st.dataframe(st.session_state.db_drive, use_container_width=True, hide_index=True)
 
-# --- MÓDULO 4: PARTNER IA ---
+# --- MÓDULO 4: PARTNER IA (MANTENIMIENTO DE CÁLCULOS) ---
 elif menu == "🤖 PARTNER IA":
-    st.markdown("### 🤖 IA Partner - Asistente de Cálculos")
+    st.markdown("### 🤖 IA Partner - Asistente de Cálculos y Auditoría")
     for msg in st.session_state.chat_log:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
-    if chat_input := st.chat_input("Pega una lista de números..."):
+    
+    if chat_input := st.chat_input("Pega una lista de números o haz una consulta..."):
         st.session_state.chat_log.append({"role": "user", "content": chat_input})
         with st.chat_message("user"): st.markdown(chat_input)
         with st.chat_message("assistant"):
+            # Lógica de extracción de números para sumas rápidas
             numeros = re.findall(r'\d+', chat_input.replace(',', '').replace('.', ''))
-            respuesta = f"🔢 La suma es: **{sum([int(n) for n in numeros]): ,}**" if numeros else "No hay números."
+            if numeros:
+                suma = sum([int(n) for n in numeros])
+                respuesta = f"🔢 He detectado una serie numérica. La suma total es: **{suma: ,}**"
+            else:
+                respuesta = "Estoy listo para procesar tus datos. Pega una lista de vistas y las sumaré por ti."
             st.markdown(respuesta)
             st.session_state.chat_log.append({"role": "assistant", "content": respuesta})
 
 # --- MÓDULO 5: SEARCH PRO ---
 elif menu == "🛰️ SEARCH PRO":
-    st.markdown("### 🛰️ Search Pro - Rastreador de Perfiles")
+    st.markdown("### 🛰️ Search Pro - Rastreador de Perfiles Externos")
     target_name = st.text_input("Nombre de Creador o Marca:")
     if st.button("🛰️ LANZAR RASTREO"):
         if target_name:
             st.link_button(f"Abrir búsqueda para {target_name}", f"https://www.google.com/search?q=site:tiktok.com+%22{target_name}%22")
-
-st.sidebar.markdown(f"--- \n **ESTADO:** ÓPTIMO \n **V:** 29.0.2 \n 📅 {datetime.date.today()}")
