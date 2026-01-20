@@ -188,7 +188,7 @@ def motor_auditor_universal_v24(urls):
         'ignoreerrors': True, 
         'socket_timeout': 40,
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         }
     }
     
@@ -272,7 +272,7 @@ with st.sidebar:
         st.rerun()
 
 # ==============================================================================
-# 6. DESPLIEGUE DE MÓDULOS (LÓGICA AMPLIADA)
+# 6. DESPLIEGUE DE MÓDULOS
 # ==============================================================================
 
 if menu == "🚀 EXTRACTOR":
@@ -366,59 +366,79 @@ elif menu == "🤖 PARTNER IA":
             st.session_state.chat_log.append({"role": "assistant", "content": res})
 
 elif menu == "🛰️ SEARCH PRO":
-    st.markdown("### 🛰️ Rastreador Automático de Videos por Perfil")
-    st.info("Ingresa el usuario para que el sistema entre al perfil y extraiga sus videos en el rango de fechas.")
+    st.markdown("### 🛰️ Rastreador Directo con Protocolo Bypass")
+    st.info("Este módulo utiliza cabeceras de navegador real para intentar leer el perfil directamente. Si TikTok bloquea la conexión, usa el sistema de Dorks de respaldo.")
     
-    target_user = st.text_input("👤 Perfil del Creador (Ej: @nombre):", placeholder="@usuario")
-    vistas_min = st.number_input("🔥 Umbral de Vistas (Elite):", value=60000, step=10000)
+    col_u1, col_u2 = st.columns([2, 1])
+    with col_u1:
+        target_user = st.text_input("👤 Perfil (@usuario):", placeholder="@nombre")
+    with col_u2:
+        vistas_min = st.number_input("🔥 Umbral Elite:", value=60000, step=10000)
     
     st.divider()
-    st.markdown("#### 📅 Configuración de Rango de Fechas")
+    st.markdown("#### 📅 Rango de Auditoría")
     col_f1, col_f2 = st.columns(2)
     with col_f1:
         fecha_inicio = st.date_input("Desde:", value=datetime.date.today() - datetime.timedelta(days=30))
     with col_f2:
         fecha_fin = st.date_input("Hasta:", value=datetime.date.today())
 
-    if st.button("🚀 RASTREAR VIDEOS DEL PERFIL"):
-        if target_user:
-            clean_user = target_user.replace("@", "")
-            perfil_url = f"https://www.tiktok.com/@{clean_user}"
-            
-            with st.status(f"🛠️ Entrando al perfil de {target_user}...", expanded=True) as status:
-                st.write("🔍 Escaneando videos publicados...")
-                ydl_opts_scan = {
-                    'extract_flat': True,
-                    'quiet': True,
-                    'playlist_items': '1-20', # Escanea los últimos 20 para rapidez
-                }
+    c_b1, c_b2 = st.columns(2)
+    
+    with c_b1:
+        if st.button("🚀 RASTREO DIRECTO (BYPASS)"):
+            if target_user:
+                clean_user = target_user.replace("@", "")
+                perfil_url = f"https://www.tiktok.com/@{clean_user}"
                 
-                try:
-                    with yt_dlp.YoutubeDL(ydl_opts_scan) as ydl:
-                        profile_info = ydl.extract_info(perfil_url, download=False)
-                        if 'entries' in profile_info:
-                            vids_found = [entry['url'] for entry in profile_info['entries'] if 'url' in entry]
-                            st.write(f"✅ Se localizaron {len(vids_found)} videos potenciales.")
-                            
-                            st.write("📊 Auditando métricas individuales...")
-                            st.session_state.db_final, st.session_state.db_fallidos = motor_auditor_universal_v24(vids_found)
-                            status.update(label="✅ Rastreo de perfil completado!", state="complete", expanded=False)
-                            st.rerun()
-                        else:
-                            st.error("No se pudieron leer videos de este perfil directamente.")
-                except Exception as e:
-                    st.error(f"Error al acceder al perfil: {str(e)}")
-        else:
-            st.warning("Ingresa un usuario para iniciar el rastreo.")
+                with st.status("🛠️ Iniciando Protocolo Bypass...", expanded=True) as status:
+                    # Configuración optimizada para saltar bloqueos iniciales
+                    ydl_opts_direct = {
+                        'extract_flat': 'in_playlist',
+                        'quiet': True,
+                        'playlist_items': '1-15', # Los más recientes
+                        'http_headers': {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                            'Referer': 'https://www.google.com/',
+                        }
+                    }
+                    try:
+                        with yt_dlp.YoutubeDL(ydl_opts_direct) as ydl:
+                            res = ydl.extract_info(perfil_url, download=False)
+                            if res and 'entries' in res:
+                                vids = [e['url'] for e in res['entries'] if 'url' in e]
+                                st.write(f"✅ Conexión establecida. Analizando {len(vids)} videos...")
+                                st.session_state.db_final, st.session_state.db_fallidos = motor_auditor_universal_v24(vids)
+                                status.update(label="Rastreo Completado", state="complete", expanded=False)
+                                st.rerun()
+                            else:
+                                st.error("TikTok denegó el acceso (Captcha detectado). Usa el Botón de Respaldo.")
+                    except Exception as e:
+                        st.error(f"Error de conexión: {str(e)[:50]}")
+            else: 
+                st.warning("Ingresa un usuario.")
+
+    with c_b2:
+        if st.button("🔍 RESPALDO: DORK INDEX"):
+            if target_user:
+                clean_user = target_user.replace("@", "")
+                dork_q = f"site:tiktok.com/@{clean_user}/video after:{fecha_inicio} before:{fecha_fin}"
+                st.link_button("🚀 BUSCAR EN GOOGLE", f"https://www.google.com/search?q={urllib.parse.quote(dork_q)}")
+            else: 
+                st.warning("Ingresa un usuario.")
 
     st.divider()
-    
-    # Análisis de virales detectados
+    raw_manual = st.text_area("Si usaste el respaldo de Google, pega los enlaces aquí:", height=120)
+    if st.button("📊 PROCESAR DATOS MANUALES"):
+        links_m = re.findall(r"(https?://www\.tiktok\.com/@[^/\s]+/video/\d+)", raw_manual)
+        if links_m:
+            st.session_state.db_final, st.session_state.db_fallidos = motor_auditor_universal_v24(list(set(links_m)))
+            st.rerun()
+
     if not st.session_state.db_final.empty:
         df_elite = st.session_state.db_final[st.session_state.db_final['Vistas'] >= vistas_min]
-        
         if not df_elite.empty:
-            st.markdown(f"### 🏆 Rendimiento Elite en el Perfil (+{vistas_min//1000}k)")
+            st.markdown(f"### 🏆 Rendimiento Elite en Perfil (+{vistas_min:,})")
             
             col_m1, col_m2 = st.columns(2)
             with col_m1:
@@ -439,5 +459,3 @@ elif menu == "🛰️ SEARCH PRO":
             st.markdown("**📋 Cadena de suma para Excel (Solo Elite):**")
             st.code(" + ".join([str(v) for v in df_elite['Vistas'].tolist()]))
             st.dataframe(df_elite, use_container_width=True, hide_index=True)
-        else:
-            st.warning(f"No se detectaron videos virales (+{vistas_min:,}) en los últimos hallazgos.")
