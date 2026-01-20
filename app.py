@@ -330,7 +330,6 @@ elif menu == "🎯 TIKTOK RADAR":
             final_q = query_text + (" (de OR el OR en OR la)" if forzar_esp else "")
             st.link_button("IR A TIKTOK", f"https://www.tiktok.com/search/video?q={urllib.parse.quote(final_q)}")
 
-    # CAMBIO SOLICITADO: Cuadro de pegado masivo 450px
     st.divider()
     raw_data = st.text_area("Zona de Pegado de Datos (Ctrl+V):", height=450, placeholder="Pega aquí todo lo copiado de la página de TikTok...")
     
@@ -367,13 +366,17 @@ elif menu == "🤖 PARTNER IA":
             st.session_state.chat_log.append({"role": "assistant", "content": res})
 
 elif menu == "🛰️ SEARCH PRO":
-    st.markdown("### 🛰️ Search Pro - Omnicanal de Rastreo")
-    target_name = st.text_input("Nombre de Creador o Marca:", placeholder="Escribe aquí el objetivo...")
+    st.markdown("### 🛰️ Rastreador de Virales por Perfil (Elite +60k)")
+    st.info("Localiza videos virales de un creador específico usando dorks temporales.")
     
-    if target_name:
-        t_enc = urllib.parse.quote(target_name)
-        # ADICIÓN SOLICITADA: Botones de Tiempo (24h, 7d, 15d, 30d)
-        st.markdown("#### ⏳ Ventanas Temporales")
+    target_user = st.text_input("👤 Usuario o Perfil del Creador (Ej: @nombre):", placeholder="@usuario")
+    vistas_min = st.number_input("🔥 Umbral de Vistas (Elite):", value=60000, step=10000)
+    
+    if target_user:
+        clean_user = target_user.replace("@", "")
+        t_enc = urllib.parse.quote(f"site:tiktok.com/@{clean_user}")
+        
+        st.markdown(f"#### 📅 Ventanas Temporales para: **{target_user}**")
         c1, c2, c3, c4 = st.columns(4)
         with c1: st.link_button("🕒 24 Horas", f"https://www.google.com/search?q={t_enc}&tbs=qdr:d")
         with c2: st.link_button("🗓️ 7 Días", f"https://www.google.com/search?q={t_enc}&tbs=qdr:w")
@@ -381,16 +384,35 @@ elif menu == "🛰️ SEARCH PRO":
         with c4: st.link_button("🌗 1 Mes", f"https://www.google.com/search?q={t_enc}&tbs=qdr:m")
         
         st.divider()
-        # ADICIÓN SOLICITADA: Segmentación +60k en Search Pro
+        
+        # Segmentación automática de virales +60k (del extractor actual)
         if not st.session_state.db_final.empty:
-            df_60k = st.session_state.db_final[st.session_state.db_final['Vistas'] >= 60000]
-            st.markdown(f"### 🏆 Rendimiento Elite (+60k) - {target_name}")
-            col_m1, col_m2 = st.columns(2)
-            with col_m1: st.metric("Vistas Sumadas Elite", f"{df_60k['Vistas'].sum():,}")
-            with col_m2: st.metric("Total Videos Elite", len(df_60k))
+            # Filtramos solo lo que cumple el umbral
+            df_elite = st.session_state.db_final[st.session_state.db_final['Vistas'] >= vistas_min]
             
-            st.markdown("**Suma para Excel (Elite):**")
-            st.code(" + ".join([str(v) for v in df_60k['Vistas'].tolist()]))
-            st.dataframe(df_60k, use_container_width=True)
+            if not df_elite.empty:
+                st.markdown(f"### 🏆 Rendimiento Elite (+{vistas_min//1000}k)")
+                
+                col_m1, col_m2 = st.columns(2)
+                with col_m1:
+                    st.markdown(f"""
+                    <div class="subtotal-card">
+                        <div class="sub-l">SUMA VISTAS ELITE</div>
+                        <div class="sub-v">{df_elite['Vistas'].sum():,}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col_m2:
+                    st.markdown(f"""
+                    <div class="subtotal-card">
+                        <div class="sub-l">VIDEOS DETECTADOS</div>
+                        <div class="sub-v">{len(df_elite)}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                st.markdown("**📋 Cadena de suma para Excel (Solo Elite):**")
+                st.code(" + ".join([str(v) for v in df_elite['Vistas'].tolist()]))
+                st.dataframe(df_elite, use_container_width=True, hide_index=True)
+            else:
+                st.warning(f"No se detectaron videos con más de {vistas_min:,} vistas para este creador.")
         else:
-            st.warning("Primero procesa videos en el Extractor o Radar para ver la segmentación.")
+            st.warning("Primero procesa los enlaces en el Extractor para ver el análisis de virales aquí.")
