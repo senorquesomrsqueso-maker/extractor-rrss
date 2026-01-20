@@ -15,6 +15,7 @@ from io import BytesIO
 # ==============================================================================
 # 1. CONFIGURACIÓN ESTRUCTURAL Y LLAVES DE ACCESO (PROTEGIDAS)
 # ==============================================================================
+# Nota: Mantener esta llave para la funcionalidad de Drive Auditor
 DRIVE_API_KEY = "AIzaSyBjETNqerBHpqCBQBH7B1bZl55eYWrtMQk"
 
 st.set_page_config(
@@ -197,7 +198,6 @@ def motor_auditor_universal_v24(urls):
     }
     
     for i, raw_u in enumerate(urls):
-        # Limpieza de URL para evitar errores por comas o paréntesis
         url = raw_u.strip().replace('"', '').split('?')[0].rstrip(')').rstrip(',')
         msg_status.markdown(f"📡 **Rastreando Objetivo:** `{url[:50]}...`")
         
@@ -208,7 +208,6 @@ def motor_auditor_universal_v24(urls):
                     vistas = int(info.get('view_count') or info.get('play_count') or 0)
                     autor = info.get('uploader') or info.get('creator') or info.get('uploader_id') or "N/A"
                     
-                    # Clasificación por Red
                     if "tiktok" in url: plat = "TIKTOK"
                     elif "youtube" in url or "youtu.be" in url: plat = "YOUTUBE"
                     elif "facebook" in url or "fb.watch" in url: plat = "FACEBOOK"
@@ -282,7 +281,7 @@ with st.sidebar:
 # 6. DESPLIEGUE DE MÓDULOS (LÓGICA EXPANDIDA)
 # ==============================================================================
 
-# --- MÓDULO 1: EXTRACTOR PRO (LÓGICA ORIGINAL SIN RECORTES) ---
+# --- MÓDULO 1: EXTRACTOR PRO ---
 if menu == "🚀 EXTRACTOR":
     st.markdown("### 📥 Entrada de Enlaces para Auditoría")
     raw_input = st.text_area("Pega tus links masivos aquí (TikTok, YT, IG, FB):", height=220)
@@ -303,15 +302,11 @@ if menu == "🚀 EXTRACTOR":
     if not st.session_state.db_final.empty:
         df = st.session_state.db_final
         st.divider()
-        
-        # Métrica Principal
         st.metric("📊 VISTAS ACUMULADAS TOTALES", f"{df['Vistas'].sum():,}")
         
-        # Bloque de Suma para Copiado Rápido
         st.markdown("**📋 Suma para Excel / Reportes (Copiado Masivo):**")
         st.code(" + ".join([str(v) for v in df['Vistas'].tolist()]))
         
-        # Desglose por Redes con Tarjetas CSS
         st.markdown("### 📊 Desglose por Plataforma")
         d_col1, d_col2, d_col3 = st.columns(3)
         platforms = [("TIKTOK", d_col1), ("YOUTUBE", d_col2), ("FACEBOOK", d_col3)]
@@ -332,13 +327,12 @@ if menu == "🚀 EXTRACTOR":
         st.markdown("### 📝 Detalle Individual de Enlaces")
         st.dataframe(df, use_container_width=True, hide_index=True)
         
-        # Sección de Errores/Fallidos
         if not st.session_state.db_fallidos.empty:
             st.markdown("---")
             st.warning("⚠️ ENLACES CON ERRORES (REVISAR MANUALMENTE):")
             st.dataframe(st.session_state.db_fallidos, use_container_width=True)
 
-# --- MÓDULO 2: TIKTOK RADAR (LO NUEVO - EXPANDIDO) ---
+# --- MÓDULO 2: TIKTOK RADAR ---
 elif menu == "🎯 TIKTOK RADAR":
     st.markdown("### 🎯 TikTok Radar - Inteligencia de Búsqueda")
     st.info("Configura filtros de búsqueda para contenido popular y forzado en español.")
@@ -359,13 +353,11 @@ elif menu == "🎯 TIKTOK RADAR":
 
     if st.button("🚀 ACTIVAR RADAR Y BUSCAR"):
         if query_text or hashtag_text:
-            # Lógica de construcción de búsqueda avanzada
             final_query = query_text
             if hashtag_text:
                 tag = hashtag_text if hashtag_text.startswith('#') else f"#{hashtag_text}"
                 final_query += f" {tag}"
             
-            # Padding de idioma español (Truco de SEO para TikTok)
             if forzar_esp:
                 final_query += " (de OR el OR en OR la)"
             
@@ -385,7 +377,7 @@ elif menu == "🎯 TIKTOK RADAR":
         else:
             st.error("Jefe, escribe algo en el buscador o el hashtag.")
 
-# --- MÓDULO 3: DRIVE AUDITOR (IDÉNTICO A ORIGINAL) ---
+# --- MÓDULO 3: DRIVE AUDITOR ---
 elif menu == "📂 DRIVE AUDITOR":
     st.markdown("### 📂 Auditoría de Enlaces Google Drive")
     drive_input = st.text_area("Pega los enlaces de carpetas o archivos de Drive:", height=200)
@@ -400,7 +392,7 @@ elif menu == "📂 DRIVE AUDITOR":
         st.markdown("### Resultados del Escaneo")
         st.dataframe(st.session_state.db_drive, use_container_width=True, hide_index=True)
 
-# --- MÓDULO 4: PARTNER IA (IDÉNTICO A ORIGINAL) ---
+# --- MÓDULO 4: PARTNER IA ---
 elif menu == "🤖 PARTNER IA":
     st.markdown("### 🤖 IA Partner - Asistente de Cálculos")
     for msg in st.session_state.chat_log:
@@ -412,7 +404,6 @@ elif menu == "🤖 PARTNER IA":
         with st.chat_message("user"): st.markdown(chat_input)
         
         with st.chat_message("assistant"):
-            # Lógica de suma de cadena numérica
             numeros = re.findall(r'\d+', chat_input.replace(',', '').replace('.', ''))
             if numeros:
                 valores = [int(n) for n in numeros]
@@ -425,7 +416,7 @@ elif menu == "🤖 PARTNER IA":
                 st.markdown(resp_error)
                 st.session_state.chat_log.append({"role": "assistant", "content": resp_error})
 
-# --- MÓDULO 5: SEARCH PRO (MANTENIDO) ---
+# --- MÓDULO 5: SEARCH PRO ---
 elif menu == "🛰️ SEARCH PRO":
     st.markdown("### 🛰️ Search Pro - Rastreador de Perfiles")
     st.info("Localiza perfiles específicos usando Dorks de Google.")
@@ -434,3 +425,14 @@ elif menu == "🛰️ SEARCH PRO":
         if target_name:
             dork_url = f"https://www.google.com/search?q=site:tiktok.com+%22{target_name}%22"
             st.link_button(f"Abrir búsqueda para {target_name}", dork_url)
+
+# ==============================================================================
+# SECCIÓN FINAL: FOOTER Y MANTENIMIENTO
+# ==============================================================================
+st.sidebar.markdown(f"""
+    ---
+    **ESTADO DEL SISTEMA:** ÓPTIMO  
+    **VERSIÓN:** 29.0.1  
+    **USUARIO:** BS LATAM ELITE  
+    📅 {datetime.date.today()}
+""")
