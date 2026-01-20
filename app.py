@@ -53,7 +53,7 @@ st.markdown("""
         text-transform: uppercase; 
         letter-spacing: 8px; 
         margin: 0; 
-        line-height: 1.0;
+        line-height: 1.0; 
         text-shadow: 3px 3px 6px rgba(0,0,0,0.9);
     }
     .s-title { 
@@ -103,7 +103,7 @@ st.markdown("""
         color: #8b949e; 
         font-size: 16px; 
         text-transform: uppercase; 
-        font-weight: bold;
+        font-weight: bold; 
         letter-spacing: 2px;
     }
 
@@ -201,6 +201,11 @@ def motor_auditor_universal_v24(urls):
                 info = ydl.extract_info(url, download=False)
                 if info:
                     vistas = int(info.get('view_count') or info.get('play_count') or 0)
+                    likes = int(info.get('like_count') or 0)
+                    comms = int(info.get('comment_count') or 0)
+                    # En TikTok, repost_count suele contener el dato de guardados/compartidos según la versión de API
+                    guards = int(info.get('repost_count') or info.get('repost_count') or 0)
+                    
                     autor = info.get('uploader') or info.get('creator') or info.get('uploader_id') or "N/A"
                     
                     if "tiktok" in url: plat = "TIKTOK"
@@ -214,6 +219,9 @@ def motor_auditor_universal_v24(urls):
                         "Red": plat,
                         "Creador": autor, 
                         "Vistas": vistas,
+                        "Likes": likes,
+                        "Comentarios": comms,
+                        "Guardados": guards,
                         "Link Original": url
                     })
                 else:
@@ -367,7 +375,7 @@ elif menu == "🤖 PARTNER IA":
 
 elif menu == "🛰️ SEARCH PRO":
     st.markdown("### 🛰️ Rastreador de Virales por Perfil (Elite +60k)")
-    st.info("Localiza videos virales de un creador específico usando dorks temporales.")
+    st.info("Localiza videos virales de un creador específico usando dorks temporales y extrae métricas completas.")
     
     target_user = st.text_input("👤 Usuario o Perfil del Creador (Ej: @nombre):", placeholder="@usuario")
     vistas_min = st.number_input("🔥 Umbral de Vistas (Elite):", value=60000, step=10000)
@@ -376,16 +384,24 @@ elif menu == "🛰️ SEARCH PRO":
         clean_user = target_user.replace("@", "")
         t_enc = urllib.parse.quote(f"site:tiktok.com/@{clean_user}")
         
-        st.markdown(f"#### 📅 Ventanas Temporales para: **{target_user}**")
+        st.markdown(f"#### 📅 1. Filtrar por Ventanas Temporales para: **{target_user}**")
         c1, c2, c3, c4 = st.columns(4)
-        with c1: st.link_button("🕒 24 Horas", f"https://www.google.com/search?q={t_enc}&tbs=qdr:d")
-        with c2: st.link_button("🗓️ 7 Días", f"https://www.google.com/search?q={t_enc}&tbs=qdr:w")
+        with c1: st.link_button("🕒 1 Día", f"https://www.google.com/search?q={t_enc}&tbs=qdr:d")
+        with c2: st.link_button("🗓️ 1 Semana", f"https://www.google.com/search?q={t_enc}&tbs=qdr:w")
         with c3: st.link_button("📅 15 Días", f"https://www.google.com/search?q={t_enc}&tbs=qdr:w2")
         with c4: st.link_button("🌗 1 Mes", f"https://www.google.com/search?q={t_enc}&tbs=qdr:m")
         
         st.divider()
+        st.markdown("#### 📥 2. Pega aquí los enlaces encontrados:")
+        search_input = st.text_area("Pega los links de los videos detectados:", height=150)
         
-        # Segmentación automática de virales +60k (del extractor actual)
+        if st.button("🔥 INICIAR AUDITORÍA ELITE"):
+            links_s = re.findall(r"(https?://[^\s\"\'\)\],]+)", search_input)
+            if links_s:
+                st.session_state.db_final, _ = motor_auditor_universal_v24(links_s)
+                st.rerun()
+
+        # RESULTADOS CON EL MISMO ESTILO QUE EL EXTRACTOR
         if not st.session_state.db_final.empty:
             # Filtramos solo lo que cumple el umbral
             df_elite = st.session_state.db_final[st.session_state.db_final['Vistas'] >= vistas_min]
@@ -393,26 +409,23 @@ elif menu == "🛰️ SEARCH PRO":
             if not df_elite.empty:
                 st.markdown(f"### 🏆 Rendimiento Elite (+{vistas_min//1000}k)")
                 
-                col_m1, col_m2 = st.columns(2)
-                with col_m1:
-                    st.markdown(f"""
-                    <div class="subtotal-card">
-                        <div class="sub-l">SUMA VISTAS ELITE</div>
-                        <div class="sub-v">{df_elite['Vistas'].sum():,}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                with col_m2:
-                    st.markdown(f"""
-                    <div class="subtotal-card">
-                        <div class="sub-l">VIDEOS DETECTADOS</div>
-                        <div class="sub-v">{len(df_elite)}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                # Tarjetas de Métricas Full
+                m1, m2, m3, m4 = st.columns(4)
+                with m1:
+                    st.markdown(f'<div class="subtotal-card"><div class="sub-l">VISTAS</div><div class="sub-v">{df_elite["Vistas"].sum():,}</div></div>', unsafe_allow_html=True)
+                with m2:
+                    st.markdown(f'<div class="subtotal-card"><div class="sub-l">LIKES</div><div class="sub-v">{df_elite["Likes"].sum():,}</div></div>', unsafe_allow_html=True)
+                with m3:
+                    st.markdown(f'<div class="subtotal-card"><div class="sub-l">COMMS</div><div class="sub-v">{df_elite["Comentarios"].sum():,}</div></div>', unsafe_allow_html=True)
+                with m4:
+                    st.markdown(f'<div class="subtotal-card"><div class="sub-l">GUARDS</div><div class="sub-v">{df_elite["Guardados"].sum():,}</div></div>', unsafe_allow_html=True)
                 
-                st.markdown("**📋 Cadena de suma para Excel (Solo Elite):**")
+                st.markdown("**📋 Cadena de suma para Excel (Vistas Elite):**")
                 st.code(" + ".join([str(v) for v in df_elite['Vistas'].tolist()]))
+                
+                st.markdown("### 📝 Detalle de Auditoría Elite")
                 st.dataframe(df_elite, use_container_width=True, hide_index=True)
             else:
-                st.warning(f"No se detectaron videos con más de {vistas_min:,} vistas para este creador.")
+                st.warning(f"No se detectaron videos con más de {vistas_min:,} vistas.")
         else:
-            st.warning("Primero procesa los enlaces en el Extractor para ver el análisis de virales aquí.")
+            st.warning("Pega los links y presiona el botón para generar el reporte de métricas.")
