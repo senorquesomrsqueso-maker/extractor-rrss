@@ -18,7 +18,7 @@ from io import BytesIO
 DRIVE_API_KEY = "AIzaSyBjETNqerBHpqCBQBH7B1bZl55eYWrtMQk"
 
 st.set_page_config(
-    page_title="AUDIT-ELITE PRO V29 - OMNI TITAN EXPANDED",
+    page_title="BS LATAM",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
