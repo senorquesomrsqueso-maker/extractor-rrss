@@ -288,11 +288,12 @@ with st.sidebar:
 # --- MÓDULO 1: EXTRACTOR PRO ---
 if menu == "🚀 EXTRACTOR":
     st.markdown("### 📥 Entrada de Enlaces para Auditoría")
-    raw_input = st.text_area("Pega tus links masivos aquí (TikTok, YT, IG, FB):", height=220)
+    raw_input = st.text_area("Pega tus links masivos aquí (puedes pegar texto sucio):", height=220)
     
     col_acc1, col_acc2 = st.columns(2)
     with col_acc1:
         if st.button("🔥 INICIAR EXTRACCIÓN DE VISTAS"):
+            # Filtro inteligente para sacar links de cualquier texto sucio
             links_f = re.findall(r"(https?://[^\s\"\'\)\],]+)", raw_input)
             if links_f:
                 st.session_state.db_final, st.session_state.db_fallidos = motor_auditor_universal_v24(links_f)
@@ -335,63 +336,41 @@ if menu == "🚀 EXTRACTOR":
             st.warning("⚠️ ENLACES CON ERRORES (REVISAR MANUALMENTE):")
             st.dataframe(st.session_state.db_fallidos, use_container_width=True)
 
-# --- MÓDULO 2: TIKTOK RADAR (REPARADO: SIN SLIDER Y ORDENADO) ---
+# --- MÓDULO 2: TIKTOK RADAR (PROTOCOLO ANTI-BLOQUEO) ---
 elif menu == "🎯 TIKTOK RADAR":
-    st.markdown("### 🎯 TikTok Radar - Rastreador Total de Populares")
-    st.info("Búsqueda automatizada de todo el contenido relevante. El sistema extraerá los videos populares y los ordenará de mayor a menor engagement automáticamente.")
+    st.markdown("### 🎯 TikTok Radar - Protocolo de Rastreo")
+    st.info("Para evitar el bloqueo de TikTok, sigue estos pasos: 1. Abre el buscador. 2. Copia todo (Ctrl+A y Ctrl+C). 3. Pega abajo.")
     
-    # Hemos eliminado el slider de cantidad para cumplir con el requerimiento de "buscar todos"
-    query_text = st.text_input("🔍 Término de Búsqueda (Nicho/Marca):", placeholder="Ej: Blood Strike")
+    query_text = st.text_input("🔍 Término de Búsqueda:", placeholder="Ej: Blood Strike")
     forzar_esp = st.toggle("Forzar Contenido Español 🇪🇸", value=True)
 
-    if st.button("🚀 ACTIVAR RASTREO TOTAL"):
-        if query_text:
-            with st.status("🛸 Iniciando Protocolo de Extracción Masiva...", expanded=True) as status:
-                st.write("🔍 Escaneando el índice global de TikTok para 'Populares'...")
-                final_q = query_text + (" (de OR el OR en OR la)" if forzar_esp else "")
-                
-                # Configuración de búsqueda sin límites de usuario
-                search_opts = {
-                    'quiet': True, 
-                    'extract_flat': True, 
-                    'force_generic_extractor': True,
-                    'playlistend': 100  # Aumentamos el rango para capturar todo lo "popular" visible
-                }
-                
-                try:
-                    with yt_dlp.YoutubeDL(search_opts) as ydl:
-                        search_url = f"https://www.tiktok.com/search/video?q={urllib.parse.quote(final_q)}"
-                        info = ydl.extract_info(f"ytsearch100:{search_url}", download=False)
-                        
-                        links_encontrados = []
-                        if 'entries' in info:
-                            for entry in info['entries']:
-                                if entry and 'url' in entry:
-                                    links_encontrados.append(entry['url'])
-                        
-                        if not links_encontrados:
-                            st.warning("⚠️ Acceso directo restringido por TikTok. Generando puente manual...")
-                            st.link_button("🔥 ABRIR BÚSQUEDA MANUAL", search_url)
-                        else:
-                            st.write(f"✅ Se localizaron {len(links_encontrados)} videos. Procesando jerarquía de vistas...")
-                            # La función motor_auditor_universal_v24 ya ordena de mayor a menor
-                            df_res, df_err = motor_auditor_universal_v24(links_encontrados)
-                            
-                            st.session_state.db_final = df_res
-                            st.session_state.db_fallidos = df_err
-                            status.update(label="✅ Misión Cumplida. Resultados cargados y ordenados.", state="complete")
-                            st.balloons()
-                            time.sleep(1)
-                            st.rerun()
-                except Exception as e:
-                    st.error(f"Fallo en el sistema de rastreo: {str(e)}")
-        else:
-            st.error("Jefe, ingresa un objetivo de búsqueda.")
+    if query_text:
+        final_q = query_text + (" (de OR el OR en OR la)" if forzar_esp else "")
+        search_url = f"https://www.tiktok.com/search/video?q={urllib.parse.quote(final_q)}"
+        
+        st.markdown("#### Paso 1: Generar Puente de Búsqueda")
+        st.link_button("🔥 ABRIR RADAR DE TIKTOK", search_url)
+        
+        st.markdown("#### Paso 2: Extraer Datos de la Página")
+        raw_manual = st.text_area("Pega aquí todo el contenido copiado de la página de TikTok:", height=200)
+        
+        if st.button("🚀 PROCESAR Y AUDITAR"):
+            # Extrae solo links de video de TikTok del texto pegado
+            lks_r = re.findall(r"(https?://www\.tiktok\.com/@[^/\s]+/video/\d+)", raw_manual)
+            if lks_r:
+                lks_r = list(set(lks_r)) # Eliminamos duplicados
+                st.success(f"✅ Se detectaron {len(lks_r)} videos válidos.")
+                st.session_state.db_final, st.session_state.db_fallidos = motor_auditor_universal_v24(lks_r)
+                st.balloons()
+                time.sleep(1)
+                st.rerun()
+            else:
+                st.error("No se detectaron enlaces de video válidos en el texto pegado.")
 
-# --- MÓDULO 3: DRIVE AUDITOR (LÍNEAS INTEGRADAS) ---
+# --- MÓDULO 3: DRIVE AUDITOR ---
 elif menu == "📂 DRIVE AUDITOR":
     st.markdown("### 📂 Auditoría de Enlaces Google Drive")
-    drive_input = st.text_area("Pega los enlaces de carpetas o archivos de Drive:", height=200)
+    drive_input = st.text_area("Pega los enlaces de Drive:", height=200)
     if st.button("🛡️ VERIFICAR ACCESO"):
         links_d = re.findall(r"(https?://drive\.google\.com/[^\s]+)", drive_input)
         if links_d:
@@ -401,30 +380,54 @@ elif menu == "📂 DRIVE AUDITOR":
         st.markdown("### 📋 Resultados de Escaneo Drive")
         st.dataframe(st.session_state.db_drive, use_container_width=True, hide_index=True)
 
-# --- MÓDULO 4: PARTNER IA (MANTENIMIENTO DE CÁLCULOS) ---
+# --- MÓDULO 4: PARTNER IA ---
 elif menu == "🤖 PARTNER IA":
-    st.markdown("### 🤖 IA Partner - Asistente de Cálculos y Auditoría")
+    st.markdown("### 🤖 IA Partner - Asistente de Cálculos")
     for msg in st.session_state.chat_log:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
     
-    if chat_input := st.chat_input("Pega una lista de números o haz una consulta..."):
+    if chat_input := st.chat_input("Pega una lista de números..."):
         st.session_state.chat_log.append({"role": "user", "content": chat_input})
         with st.chat_message("user"): st.markdown(chat_input)
         with st.chat_message("assistant"):
-            # Lógica de extracción de números para sumas rápidas
             numeros = re.findall(r'\d+', chat_input.replace(',', '').replace('.', ''))
             if numeros:
                 suma = sum([int(n) for n in numeros])
                 respuesta = f"🔢 He detectado una serie numérica. La suma total es: **{suma: ,}**"
             else:
-                respuesta = "Estoy listo para procesar tus datos. Pega una lista de vistas y las sumaré por ti."
+                respuesta = "Estoy listo para procesar tus datos."
             st.markdown(respuesta)
             st.session_state.chat_log.append({"role": "assistant", "content": respuesta})
 
-# --- MÓDULO 5: SEARCH PRO ---
+# --- MÓDULO 5: SEARCH PRO (RESTAURADO COMPLETO) ---
 elif menu == "🛰️ SEARCH PRO":
-    st.markdown("### 🛰️ Search Pro - Rastreador de Perfiles Externos")
-    target_name = st.text_input("Nombre de Creador o Marca:")
-    if st.button("🛰️ LANZAR RASTREO"):
-        if target_name:
-            st.link_button(f"Abrir búsqueda para {target_name}", f"https://www.google.com/search?q=site:tiktok.com+%22{target_name}%22")
+    st.markdown("### 🛰️ Search Pro - Omnicanal de Rastreo")
+    target = st.text_input("Nombre de Creador o Marca:", placeholder="Escribe aquí el objetivo...")
+    
+    if target:
+        t_enc = urllib.parse.quote(target)
+        st.divider()
+        st.markdown(f"#### 🔎 Protocolos de Búsqueda Activos para: **{target}**")
+        
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            st.markdown("##### 🌐 Fuentes Generales")
+            st.link_button("🔍 Google Search", f"https://www.google.com/search?q={t_enc}")
+            st.link_button("📈 Google Trends", f"https://trends.google.com/trends/explore?q={t_enc}")
+            st.link_button("📰 Google News", f"https://www.google.com/search?q={t_enc}&tbm=nws")
+        
+        with c2:
+            st.markdown("##### 📱 Inteligencia Social")
+            st.link_button("🎵 TikTok Profiles", f"https://www.google.com/search?q=site:tiktok.com+%22{t_enc}%22")
+            st.link_button("🐦 Twitter (X) Live", f"https://twitter.com/search?q={t_enc}&f=live")
+            st.link_button("📸 Instagram Search", f"https://www.google.com/search?q=site:instagram.com+%22{target}%22")
+            
+        with c3:
+            st.markdown("##### 🛠️ Herramientas Pro")
+            st.link_button("📢 FB Ads Library", f"https://www.facebook.com/ads/library/?q={t_enc}")
+            st.link_button("❓ Answer The Public", f"https://answerthepublic.com/reports/new?topic={t_enc}")
+            st.link_button("📊 Social Blade Search", f"https://socialblade.com/search/query?query={t_enc}")
+
+# ==============================================================================
+# FINAL DEL CÓDIGO - AUDIT-ELITE SUPREMACÍA V29
+# ==============================================================================
