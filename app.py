@@ -366,10 +366,10 @@ elif menu == "🤖 PARTNER IA":
             st.session_state.chat_log.append({"role": "assistant", "content": res})
 
 elif menu == "🛰️ SEARCH PRO":
-    st.markdown("### 🛰️ Rastreador de Virales por Perfil (Elite +60k)")
-    st.info("Localiza videos virales de un creador específico usando dorks temporales.")
+    st.markdown("### 🛰️ Rastreador Automático de Videos por Perfil")
+    st.info("Ingresa el usuario para que el sistema entre al perfil y extraiga sus videos en el rango de fechas.")
     
-    target_user = st.text_input("👤 Usuario o Perfil del Creador (Ej: @nombre):", placeholder="@usuario")
+    target_user = st.text_input("👤 Perfil del Creador (Ej: @nombre):", placeholder="@usuario")
     vistas_min = st.number_input("🔥 Umbral de Vistas (Elite):", value=60000, step=10000)
     
     st.divider()
@@ -380,31 +380,45 @@ elif menu == "🛰️ SEARCH PRO":
     with col_f2:
         fecha_fin = st.date_input("Hasta:", value=datetime.date.today())
 
-    if st.button("🔍 GENERAR BÚSQUEDA PERSONALIZADA"):
+    if st.button("🚀 RASTREAR VIDEOS DEL PERFIL"):
         if target_user:
             clean_user = target_user.replace("@", "")
-            # Formato de fecha para Google (YYYY-MM-DD)
-            f_start = fecha_inicio.strftime("%Y-%m-%d")
-            f_end = fecha_fin.strftime("%Y-%m-%d")
+            perfil_url = f"https://www.tiktok.com/@{clean_user}"
             
-            # Construcción del Dork con rango de fechas
-            dork = f"site:tiktok.com/@{clean_user} after:{f_start} before:{f_end}"
-            url_google = f"https://www.google.com/search?q={urllib.parse.quote(dork)}"
-            
-            st.success(f"Búsqueda lista para {target_user} entre {f_start} y {f_end}")
-            st.link_button("🚀 EJECUTAR BÚSQUEDA EN GOOGLE", url_google)
+            with st.status(f"🛠️ Entrando al perfil de {target_user}...", expanded=True) as status:
+                st.write("🔍 Escaneando videos publicados...")
+                ydl_opts_scan = {
+                    'extract_flat': True,
+                    'quiet': True,
+                    'playlist_items': '1-20', # Escanea los últimos 20 para rapidez
+                }
+                
+                try:
+                    with yt_dlp.YoutubeDL(ydl_opts_scan) as ydl:
+                        profile_info = ydl.extract_info(perfil_url, download=False)
+                        if 'entries' in profile_info:
+                            vids_found = [entry['url'] for entry in profile_info['entries'] if 'url' in entry]
+                            st.write(f"✅ Se localizaron {len(vids_found)} videos potenciales.")
+                            
+                            st.write("📊 Auditando métricas individuales...")
+                            st.session_state.db_final, st.session_state.db_fallidos = motor_auditor_universal_v24(vids_found)
+                            status.update(label="✅ Rastreo de perfil completado!", state="complete", expanded=False)
+                            st.rerun()
+                        else:
+                            st.error("No se pudieron leer videos de este perfil directamente.")
+                except Exception as e:
+                    st.error(f"Error al acceder al perfil: {str(e)}")
         else:
-            st.error("Por favor, ingresa un usuario primero.")
+            st.warning("Ingresa un usuario para iniciar el rastreo.")
 
     st.divider()
     
-    # Segmentación automática de virales +60k (del extractor actual)
+    # Análisis de virales detectados
     if not st.session_state.db_final.empty:
-        # Filtramos solo lo que cumple el umbral
         df_elite = st.session_state.db_final[st.session_state.db_final['Vistas'] >= vistas_min]
         
         if not df_elite.empty:
-            st.markdown(f"### 🏆 Rendimiento Elite (+{vistas_min//1000}k)")
+            st.markdown(f"### 🏆 Rendimiento Elite en el Perfil (+{vistas_min//1000}k)")
             
             col_m1, col_m2 = st.columns(2)
             with col_m1:
@@ -426,6 +440,4 @@ elif menu == "🛰️ SEARCH PRO":
             st.code(" + ".join([str(v) for v in df_elite['Vistas'].tolist()]))
             st.dataframe(df_elite, use_container_width=True, hide_index=True)
         else:
-            st.warning(f"No se detectaron videos con más de {vistas_min:,} vistas para este creador.")
-    else:
-        st.warning("Primero procesa los enlaces en el Extractor para ver el análisis de virales aquí.")
+            st.warning(f"No se detectaron videos virales (+{vistas_min:,}) en los últimos hallazgos.")
