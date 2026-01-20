@@ -7,6 +7,7 @@ import requests
 import json
 import datetime
 import math
+import threading
 import os
 import traceback
 import urllib.parse
@@ -141,7 +142,6 @@ st.markdown("""
         font-size: 16px;
     }
     
-    /* BLOQUES DE CÓDIGO (COPIADO RÁPIDO Y MASIVO) */
     code { 
         font-size: 15px !important; 
         color: #ffffff !important; 
@@ -173,7 +173,7 @@ if 'chat_log' not in st.session_state:
     st.session_state.chat_log = [{"role": "assistant", "content": "¡V29 Activa, jefe! Radar de TikTok desplegado y Extractor listo. 🫡"}]
 
 # ==============================================================================
-# 4. MOTORES DE AUDITORÍA (EXTRACTOR ORIGINAL V24 REFORZADO)
+# 4. MOTORES DE AUDITORÍA (EXTRACTOR REFORZADO CON MÉTRICAS TOTALES)
 # ==============================================================================
 def motor_auditor_universal_v24(urls):
     exitos, fallos = [], []
@@ -200,26 +200,24 @@ def motor_auditor_universal_v24(urls):
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 if info:
+                    v_ts = info.get('timestamp') or (time.mktime(datetime.datetime.strptime(info['upload_date'], "%Y%m%d").timetuple()) if info.get('upload_date') else None)
                     vistas = int(info.get('view_count') or info.get('play_count') or 0)
-                    autor = info.get('uploader') or info.get('creator') or info.get('uploader_id') or "N/A"
-                    
-                    if "tiktok" in url: plat = "TIKTOK"
-                    elif "youtube" in url or "youtu.be" in url: plat = "YOUTUBE"
-                    elif "facebook" in url or "fb.watch" in url: plat = "FACEBOOK"
-                    elif "instagram" in url: plat = "INSTAGRAM"
-                    else: plat = "OTRA RED"
+                    autor = info.get('uploader') or info.get('creator') or "N/A"
                     
                     exitos.append({
-                        "#": i + 1,
-                        "Red": plat,
+                        "Fecha": datetime.datetime.fromtimestamp(v_ts).strftime('%Y-%m-%d') if v_ts else "N/A",
+                        "Red": "TIKTOK" if "tiktok" in url else "OTRA",
                         "Creador": autor, 
                         "Vistas": vistas,
+                        "Likes": int(info.get('like_count') or 0),
+                        "Comments": int(info.get('comment_count') or 0),
+                        "Saves": int(info.get('repost_count') or 0),
                         "Link Original": url
                     })
                 else:
-                    fallos.append({"Link": url, "Motivo": "Privado/Eliminado o Inaccesible"})
+                    fallos.append({"Link": url, "Motivo": "Privado o Inaccesible"})
         except Exception as e:
-            fallos.append({"Link": url, "Motivo": f"Error Técnico: {str(e)[:30]}"})
+            fallos.append({"Link": url, "Motivo": f"Error: {str(e)[:20]}"})
         
         p_bar.progress((i + 1) / len(urls))
     
@@ -238,12 +236,7 @@ def auditor_drive_api_v24(urls):
                 resp = requests.get(endpoint, timeout=20).json()
                 if "error" not in resp:
                     peso_mb = f"{int(resp.get('size', 0))/1024/1024:.2f} MB" if resp.get('size') else "N/A"
-                    resultados_d.append({
-                        "Archivo": resp.get('name'), 
-                        "Peso": peso_mb, 
-                        "Estado": "✅ DISPONIBLE", 
-                        "Link": link
-                    })
+                    resultados_d.append({"Archivo": resp.get('name'), "Peso": peso_mb, "Estado": "✅ DISPONIBLE", "Link": link})
                 else:
                     resultados_d.append({"Archivo": "🔒 PROTEGIDO", "Peso": "0", "Estado": "❌ BLOQUEADO", "Link": link})
             except:
@@ -256,19 +249,11 @@ def auditor_drive_api_v24(urls):
 with st.sidebar:
     st.markdown('<p class="bs-latam-sidebar">BS LATAM</p>', unsafe_allow_html=True)
     st.divider()
-    
-    menu = st.radio(
-        "MÓDULOS OPERATIVOS", 
-        ["🚀 EXTRACTOR", "🎯 TIKTOK RADAR", "📂 DRIVE AUDITOR", "🤖 PARTNER IA", "🛰️ SEARCH PRO"],
-        index=0
-    )
-    
+    menu = st.radio("MÓDULOS OPERATIVOS", ["🚀 EXTRACTOR", "🎯 TIKTOK RADAR", "📂 DRIVE AUDITOR", "🤖 PARTNER IA", "🛰️ SEARCH PRO"], index=0)
     st.divider()
-    st.markdown("### ⚙️ Centro de Control")
     if st.button("🚨 REINICIAR SISTEMA COMPLETO"):
-        for k in ['db_final', 'db_fallidos', 'db_drive']:
-            st.session_state[k] = pd.DataFrame()
-        st.session_state.chat_log = [{"role": "assistant", "content": "Memoria purgada. Sistema listo para nueva misión. 🫡"}]
+        for k in ['db_final', 'db_fallidos', 'db_drive']: st.session_state[k] = pd.DataFrame()
+        st.session_state.chat_log = [{"role": "assistant", "content": "Memoria purgada. Sistema listo. 🫡"}]
         st.rerun()
 
 # ==============================================================================
@@ -277,185 +262,109 @@ with st.sidebar:
 
 if menu == "🚀 EXTRACTOR":
     st.markdown("### 📥 Entrada de Enlaces para Auditoría")
-    raw_input = st.text_area("Pega tus links masivos aquí (TikTok, YT, IG, FB):", height=220)
-    
-    col_acc1, col_acc2 = st.columns(2)
-    with col_acc1:
-        if st.button("🔥 INICIAR EXTRACCIÓN DE VISTAS"):
-            links_f = re.findall(r"(https?://[^\s\"\'\)\],]+)", raw_input)
-            if links_f:
-                st.session_state.db_final, st.session_state.db_fallidos = motor_auditor_universal_v24(links_f)
-                st.rerun()
-    with col_acc2:
-        if st.button("🧹 LIMPIAR RESULTADOS"):
-            st.session_state.db_final = pd.DataFrame()
-            st.session_state.db_fallidos = pd.DataFrame()
+    raw_input = st.text_area("Pega tus links masivos aquí:", height=220)
+    if st.button("🔥 INICIAR EXTRACCIÓN"):
+        links_f = re.findall(r"(https?://[^\s\"\'\)\],]+)", raw_input)
+        if links_f:
+            st.session_state.db_final, st.session_state.db_fallidos = motor_auditor_universal_v24(links_f)
             st.rerun()
-
     if not st.session_state.db_final.empty:
-        df = st.session_state.db_final
-        st.divider()
-        st.metric("📊 VISTAS ACUMULADAS TOTALES", f"{df['Vistas'].sum():,}")
-        st.markdown("**📋 Suma para Excel / Reportes (Copiado Masivo):**")
-        st.code(" + ".join([str(v) for v in df['Vistas'].tolist()]))
-        
-        st.markdown("### 📊 Desglose por Plataforma")
-        d_col1, d_col2, d_col3 = st.columns(3)
-        platforms = [("TIKTOK", d_col1), ("YOUTUBE", d_col2), ("FACEBOOK", d_col3)]
-        for p_name, p_col in platforms:
-            sub_data = df[df['Red'] == p_name]
-            v_total = sub_data['Vistas'].sum()
-            with p_col:
-                st.markdown(f'<div class="subtotal-card"><div class="sub-l">{p_name}</div><div class="sub-v">{v_total:,}</div></div>', unsafe_allow_html=True)
-                if v_total > 0: st.code(" + ".join([str(v) for v in sub_data['Vistas'].tolist()]))
-
-        st.markdown("### 📝 Detalle Individual de Enlaces")
-        st.dataframe(df, use_container_width=True, hide_index=True)
-        if not st.session_state.db_fallidos.empty:
-            st.warning("⚠️ ENLACES CON ERRORES:")
-            st.dataframe(st.session_state.db_fallidos, use_container_width=True)
+        st.dataframe(st.session_state.db_final, use_container_width=True)
 
 elif menu == "🎯 TIKTOK RADAR":
-    st.markdown("### 🎯 TikTok Radar - Protocolo de Rastreo")
-    st.info("Para evitar el bloqueo de TikTok, sigue estos pasos: 1. Abre el buscador. 2. Copia todo (Ctrl+A y Ctrl+C). 3. Pega abajo.")
-    
-    col_radar1, col_radar2 = st.columns(2)
-    with col_radar1:
-        query_text = st.text_input("🔍 Término de Búsqueda:", placeholder="Ej: Blood Strike")
-    with col_radar2:
-        forzar_esp = st.toggle("Forzar Contenido Español es", value=True)
-
+    st.markdown("### 🎯 TikTok Radar")
+    query_text = st.text_input("🔍 Término de Búsqueda:")
     if st.button("🔥 ABRIR BUSCADOR"):
-        if query_text:
-            final_q = query_text + (" (de OR el OR en OR la)" if forzar_esp else "")
-            st.link_button("IR A TIKTOK", f"https://www.tiktok.com/search/video?q={urllib.parse.quote(final_q)}")
-
-    st.divider()
-    raw_data = st.text_area("Zona de Pegado de Datos (Ctrl+V):", height=450, placeholder="Pega aquí todo lo copiado de la página de TikTok...")
-    
-    if st.button("🚀 FILTRAR Y PROCESAR RADAR"):
+        st.link_button("IR A TIKTOK", f"https://www.tiktok.com/search/video?q={urllib.parse.quote(query_text)}")
+    raw_data = st.text_area("Zona de Pegado de Datos:", height=400)
+    if st.button("🚀 FILTRAR Y PROCESAR"):
         links_radar = re.findall(r"(https?://www\.tiktok\.com/@[^/\s]+/video/\d+)", raw_data)
         if links_radar:
             st.session_state.db_final, _ = motor_auditor_universal_v24(list(set(links_radar)))
-            st.success(f"Se detectaron {len(links_radar)} videos únicos.")
             st.rerun()
 
 elif menu == "📂 DRIVE AUDITOR":
     st.markdown("### 📂 Auditoría de Enlaces Google Drive")
-    drive_input = st.text_area("Pega los enlaces de carpetas o archivos de Drive:", height=200)
+    drive_input = st.text_area("Enlaces de Drive:", height=200)
     if st.button("🛡️ VERIFICAR ACCESO"):
         links_d = re.findall(r"(https?://drive\.google\.com/[^\s]+)", drive_input)
         if links_d:
             st.session_state.db_drive = auditor_drive_api_v24(links_d)
             st.rerun()
-    if not st.session_state.db_drive.empty:
-        st.dataframe(st.session_state.db_drive, use_container_width=True, hide_index=True)
+    st.dataframe(st.session_state.db_drive)
 
 elif menu == "🤖 PARTNER IA":
-    st.markdown("### 🤖 IA Partner - Asistente de Cálculos")
+    st.markdown("### 🤖 IA Partner")
     for msg in st.session_state.chat_log:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
-    if chat_input := st.chat_input("Pega una lista de números..."):
+    if chat_input := st.chat_input("Escribe..."):
         st.session_state.chat_log.append({"role": "user", "content": chat_input})
-        with st.chat_message("user"): st.markdown(chat_input)
-        with st.chat_message("assistant"):
-            numeros = re.findall(r'\d+', chat_input.replace(',', '').replace('.', ''))
-            total = sum([int(n) for n in numeros]) if numeros else 0
-            res = f"🔢 Suma: **{total: ,}**" if numeros else "No hay números, jefe."
-            st.markdown(res)
-            st.session_state.chat_log.append({"role": "assistant", "content": res})
+        st.rerun()
 
+# ==============================================================================
+# 7. SEARCH PRO (CORREGIDO: CRONOLÓGICO + MÉTRICAS FULL)
+# ==============================================================================
 elif menu == "🛰️ SEARCH PRO":
-    st.markdown("### 🛰️ Rastreador Directo con Protocolo Bypass")
-    st.info("Este módulo utiliza cabeceras de navegador real para intentar leer el perfil directamente. Si TikTok bloquea la conexión, usa el sistema de Dorks de respaldo.")
+    st.subheader("🛰️ Buscador Inteligente de Canales (Auditoría Cronológica)")
     
     col_u1, col_u2 = st.columns([2, 1])
     with col_u1:
-        target_user = st.text_input("👤 Perfil (@usuario):", placeholder="@nombre")
+        target_user = st.text_input("Pega el link del Canal o @usuario:", placeholder="https://www.tiktok.com/@usuario")
     with col_u2:
-        vistas_min = st.number_input("🔥 Umbral Elite:", value=60000, step=10000)
+        vistas_min = st.number_input("Vistas mínimas", value=60000)
     
     st.divider()
-    st.markdown("#### 📅 Rango de Auditoría")
+    st.markdown("#### 📅 Rango de tiempo para Escaneo (Filtro Estricto)")
     col_f1, col_f2 = st.columns(2)
     with col_f1:
-        fecha_inicio = st.date_input("Desde:", value=datetime.date.today() - datetime.timedelta(days=30))
+        fecha_inicio = st.date_input("Desde:", value=datetime.date.today() - datetime.timedelta(days=7))
     with col_f2:
         fecha_fin = st.date_input("Hasta:", value=datetime.date.today())
-
-    c_b1, c_b2 = st.columns(2)
     
-    with c_b1:
-        if st.button("🚀 RASTREO DIRECTO (BYPASS)"):
-            if target_user:
-                clean_user = target_user.replace("@", "")
-                perfil_url = f"https://www.tiktok.com/@{clean_user}"
-                
-                with st.status("🛠️ Iniciando Protocolo Bypass...", expanded=True) as status:
-                    # Configuración optimizada para saltar bloqueos iniciales
-                    ydl_opts_direct = {
-                        'extract_flat': 'in_playlist',
-                        'quiet': True,
-                        'playlist_items': '1-15', # Los más recientes
-                        'http_headers': {
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                            'Referer': 'https://www.google.com/',
-                        }
-                    }
-                    try:
-                        with yt_dlp.YoutubeDL(ydl_opts_direct) as ydl:
-                            res = ydl.extract_info(perfil_url, download=False)
-                            if res and 'entries' in res:
-                                vids = [e['url'] for e in res['entries'] if 'url' in e]
-                                st.write(f"✅ Conexión establecida. Analizando {len(vids)} videos...")
-                                st.session_state.db_final, st.session_state.db_fallidos = motor_auditor_universal_v24(vids)
-                                status.update(label="Rastreo Completado", state="complete", expanded=False)
+    if st.button("🚀 Escanear Canal"):
+        if target_user:
+            clean_user = target_user.split('?')[0].rstrip('/')
+            if not clean_user.startswith('http'):
+                clean_user = f"https://www.tiktok.com/@{clean_user.replace('@', '')}"
+            
+            with st.status("🛠️ Iniciando Escaneo Cronológico Estricto...", expanded=True) as status:
+                ydl_opts_search = {
+                    'extract_flat': True, 'quiet': True,
+                    'http_headers': {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+                }
+                try:
+                    with yt_dlp.YoutubeDL(ydl_opts_search) as ydl:
+                        res = ydl.extract_info(clean_user, download=False)
+                        if res and 'entries' in res:
+                            f_inicio_ts = time.mktime(fecha_inicio.timetuple())
+                            f_fin_ts = time.mktime((fecha_fin + datetime.timedelta(days=1)).timetuple())
+                            
+                            valid_links = []
+                            for entry in res['entries']:
+                                v_ts = entry.get('timestamp') or (time.mktime(datetime.datetime.strptime(entry['upload_date'], "%Y%m%d").timetuple()) if entry.get('upload_date') else None)
+                                if v_ts and f_inicio_ts <= v_ts <= f_fin_ts:
+                                    valid_links.append(entry.get('url') or f"https://www.tiktok.com/video/{entry.get('id')}")
+                            
+                            if valid_links:
+                                st.session_state.db_final, _ = motor_auditor_universal_v24(valid_links)
+                                status.update(label="✅ Escaneo Finalizado!", state="complete")
                                 st.rerun()
                             else:
-                                st.error("TikTok denegó el acceso (Captcha detectado). Usa el Botón de Respaldo.")
-                    except Exception as e:
-                        st.error(f"Error de conexión: {str(e)[:50]}")
-            else: 
-                st.warning("Ingresa un usuario.")
-
-    with c_b2:
-        if st.button("🔍 RESPALDO: DORK INDEX"):
-            if target_user:
-                clean_user = target_user.replace("@", "")
-                dork_q = f"site:tiktok.com/@{clean_user}/video after:{fecha_inicio} before:{fecha_fin}"
-                st.link_button("🚀 BUSCAR EN GOOGLE", f"https://www.google.com/search?q={urllib.parse.quote(dork_q)}")
-            else: 
-                st.warning("Ingresa un usuario.")
-
-    st.divider()
-    raw_manual = st.text_area("Si usaste el respaldo de Google, pega los enlaces aquí:", height=120)
-    if st.button("📊 PROCESAR DATOS MANUALES"):
-        links_m = re.findall(r"(https?://www\.tiktok\.com/@[^/\s]+/video/\d+)", raw_manual)
-        if links_m:
-            st.session_state.db_final, st.session_state.db_fallidos = motor_auditor_universal_v24(list(set(links_m)))
-            st.rerun()
+                                st.error("Sin videos en ese rango de fechas.")
+                except Exception as e:
+                    st.error(f"Error Técnico: {str(e)}")
+        else:
+            st.warning("Introduce un canal.")
 
     if not st.session_state.db_final.empty:
-        df_elite = st.session_state.db_final[st.session_state.db_final['Vistas'] >= vistas_min]
+        df_elite = st.session_state.db_final[st.session_state.db_final['Vistas'] >= vistas_min].sort_values(by="Vistas", ascending=False)
         if not df_elite.empty:
-            st.markdown(f"### 🏆 Rendimiento Elite en Perfil (+{vistas_min:,})")
+            st.markdown(f"### 🏆 Resultados Elite (+{vistas_min:,} vistas)")
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Vistas", f"{df_elite['Vistas'].sum():,}")
+            m2.metric("Likes", f"{df_elite['Likes'].sum():,}")
+            m3.metric("Comments", f"{df_elite['Comments'].sum():,}")
+            m4.metric("Contenido", len(df_elite))
             
-            col_m1, col_m2 = st.columns(2)
-            with col_m1:
-                st.markdown(f"""
-                <div class="subtotal-card">
-                    <div class="sub-l">SUMA VISTAS ELITE</div>
-                    <div class="sub-v">{df_elite['Vistas'].sum():,}</div>
-                </div>
-                """, unsafe_allow_html=True)
-            with col_m2:
-                st.markdown(f"""
-                <div class="subtotal-card">
-                    <div class="sub-l">VIDEOS DETECTADOS</div>
-                    <div class="sub-v">{len(df_elite)}</div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            st.markdown("**📋 Cadena de suma para Excel (Solo Elite):**")
             st.code(" + ".join([str(v) for v in df_elite['Vistas'].tolist()]))
-            st.dataframe(df_elite, use_container_width=True, hide_index=True)
+            st.dataframe(df_elite[["Fecha", "Vistas", "Likes", "Comments", "Saves", "Link Original"]], use_container_width=True, hide_index=True)
