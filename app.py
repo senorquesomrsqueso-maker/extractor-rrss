@@ -7,7 +7,6 @@ import requests
 import json
 import datetime
 import math
-import threading
 import os
 import traceback
 import urllib.parse
@@ -19,7 +18,7 @@ from io import BytesIO
 DRIVE_API_KEY = "AIzaSyBjETNqerBHpqCBQBH7B1bZl55eYWrtMQk"
 
 st.set_page_config(
-    page_title="BS LATAM",
+    page_title="BS LATAM - AUDIT ELITE",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -186,10 +185,9 @@ def motor_auditor_universal_v24(urls):
         'extract_flat': False,
         'skip_download': True, 
         'ignoreerrors': True, 
-        'socket_timeout': 60,
+        'socket_timeout': 40,
         'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-            'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         }
     }
     
@@ -202,22 +200,20 @@ def motor_auditor_universal_v24(urls):
                 info = ydl.extract_info(url, download=False)
                 if info:
                     v_ts = info.get('timestamp') or (time.mktime(datetime.datetime.strptime(info['upload_date'], "%Y%m%d").timetuple()) if info.get('upload_date') else None)
-                    
-                    # Lógica de extracción de vistas multicanal
                     vistas = int(info.get('view_count') or info.get('play_count') or 0)
+                    autor = info.get('uploader') or info.get('creator') or "N/A"
                     
-                    autor = info.get('uploader') or info.get('creator') or info.get('channel') or "N/A"
+                    # Identificación de Red
+                    red_label = "OTRA"
+                    u_low = url.lower()
+                    if "tiktok" in u_low: red_label = "TIKTOK"
+                    elif "youtube" in u_low or "youtu.be" in u_low: red_label = "YOUTUBE"
+                    elif "facebook" in u_low or "fb.watch" in u_low: red_label = "FACEBOOK"
+                    elif "instagram" in u_low: red_label = "INSTAGRAM"
                     
-                    # Detectar Red
-                    red_tag = "OTRA"
-                    if "tiktok.com" in url: red_tag = "TIKTOK"
-                    elif "instagram.com" in url: red_tag = "INSTAGRAM"
-                    elif "youtube.com" in url or "youtu.be" in url: red_tag = "YOUTUBE"
-                    elif "facebook.com" in url or "fb.watch" in url: red_tag = "FACEBOOK"
-
                     exitos.append({
                         "Fecha": datetime.datetime.fromtimestamp(v_ts).strftime('%Y-%m-%d') if v_ts else "N/A",
-                        "Red": red_tag,
+                        "Red": red_label,
                         "Creador": autor, 
                         "Vistas": vistas,
                         "Likes": int(info.get('like_count') or 0),
@@ -226,7 +222,7 @@ def motor_auditor_universal_v24(urls):
                         "Link Original": url
                     })
                 else:
-                    fallos.append({"Link": url, "Motivo": "Sin datos"})
+                    fallos.append({"Link": url, "Motivo": "Privado o Inaccesible"})
         except Exception as e:
             fallos.append({"Link": url, "Motivo": f"Error: {str(e)[:20]}"})
         
@@ -279,32 +275,31 @@ if menu == "🚀 EXTRACTOR":
         if links_f:
             st.session_state.db_final, st.session_state.db_fallidos = motor_auditor_universal_v24(links_f)
             st.rerun()
-    
+            
     if not st.session_state.db_final.empty:
         df = st.session_state.db_final
         
+        # --- BLOQUE DE RESULTADOS PERSONALIZADO (IDÉNTICO AL ANTERIOR) ---
         st.divider()
-        st.markdown("### 📊 Resumen de Impacto (Copiar)")
+        st.markdown("### 📊 Panel de Resultados")
         
         c1, c2 = st.columns(2)
         with c1:
-            total_vistas = int(df['Vistas'].sum())
             st.write("🌍 **VISTAS TOTALES:**")
-            st.code(f"{total_vistas:,}")
+            st.code(f"{int(df['Vistas'].sum()):,}")
             
             st.write("➕ **SUMA DETALLADA (+):**")
-            # Mostramos todos, incluso ceros, para diagnosticar si el extractor falló
-            vistas_list = [str(int(v)) for v in df['Vistas'].tolist()]
-            st.code(" + ".join(vistas_list))
+            v_list = [str(int(x)) for x in df['Vistas'].tolist()]
+            st.code(" + ".join(v_list))
 
         with c2:
             st.write("📱 **POR PLATAFORMAS:**")
-            resumen_redes = df.groupby('Red')['Vistas'].sum().reset_index()
+            resumen = df.groupby('Red')['Vistas'].sum().reset_index()
             txt_redes = ""
-            for _, row in resumen_redes.iterrows():
+            for _, row in resumen.iterrows():
                 txt_redes += f"{row['Red']}: {int(row['Vistas']):,}\n"
-            st.code(txt_redes.strip())
-        
+            st.code(txt_redes.strip() if txt_redes else "Sin datos")
+
         st.divider()
         st.dataframe(df, use_container_width=True, hide_index=True)
 
@@ -383,6 +378,8 @@ elif menu == "🛰️ SEARCH PRO":
                                 st.session_state.db_final, _ = motor_auditor_universal_v24(valid_links)
                                 status.update(label="✅ Escaneo Finalizado!", state="complete")
                                 st.rerun()
+                            else:
+                                st.error("Sin videos en ese rango de fechas.")
                 except Exception as e:
                     st.error(f"Error Técnico: {str(e)}")
         else:
