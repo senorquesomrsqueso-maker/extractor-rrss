@@ -18,7 +18,7 @@ from io import BytesIO
 DRIVE_API_KEY = "AIzaSyBjETNqerBHpqCBQBH7B1bZl55eYWrtMQk"
 
 st.set_page_config(
-    page_title="BS LATAM - AUDIT ELITE",
+    page_title="BS LATAM",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -208,9 +208,15 @@ def motor_auditor_universal_v24(urls):
                     vistas = int(info.get('view_count') or info.get('play_count') or 0)
                     autor = info.get('uploader') or info.get('creator') or "N/A"
                     
+                    # Identificación de Red Social
+                    red_social = "OTRA"
+                    if "tiktok" in url: red_social = "TIKTOK"
+                    elif "youtube" in url or "youtu.be" in url: red_social = "YOUTUBE"
+                    elif "facebook" in url or "fb.watch" in url: red_social = "FACEBOOK"
+
                     exitos.append({
                         "Fecha": datetime.datetime.fromtimestamp(v_ts).strftime('%Y-%m-%d') if v_ts else "N/A",
-                        "Red": "TIKTOK" if "tiktok" in url else ("YOUTUBE" if "youtu" in url else "OTRA"),
+                        "Red": red_social,
                         "Creador": autor, 
                         "Vistas": vistas,
                         "Likes": int(info.get('like_count') or 0),
@@ -272,8 +278,40 @@ if menu == "🚀 EXTRACTOR":
         if links_f:
             st.session_state.db_final, st.session_state.db_fallidos = motor_auditor_universal_v24(links_f)
             st.rerun()
+            
     if not st.session_state.db_final.empty:
-        st.dataframe(st.session_state.db_final, use_container_width=True)
+        df = st.session_state.db_final
+        
+        st.divider()
+        st.markdown("### 📊 Reporte de Métricas por Red")
+        
+        # --- BLOQUE DE TOTAL GLOBAL ---
+        col_glob1, col_glob2 = st.columns([1, 3])
+        with col_glob1:
+            st.metric("VISTAS TOTALES (GLOBAL)", f"{df['Vistas'].sum():,}")
+        with col_glob2:
+            st.write("📋 **Suma para Hoja de Cálculo (Global):**")
+            st.code(" + ".join([str(v) for v in df['Vistas'].tolist()]))
+            
+        st.divider()
+        
+        # --- BLOQUES DINÁMICOS POR RED (YouTube, TikTok, Facebook) ---
+        redes_detectadas = df['Red'].unique()
+        cols_dinamicas = st.columns(len(redes_detectadas))
+        
+        for i, red in enumerate(redes_detectadas):
+            with cols_dinamicas[i]:
+                df_red = df[df['Red'] == red]
+                suma_red = df_red['Vistas'].sum()
+                cadena_red = " + ".join([str(v) for v in df_red['Vistas'].tolist()])
+                
+                st.markdown(f"#### 🌐 {red}")
+                st.metric(f"Total {red}", f"{suma_red:,}")
+                st.write(f"Suma {red}:")
+                st.code(cadena_red)
+
+        st.divider()
+        st.dataframe(df, use_container_width=True)
 
 elif menu == "🎯 TIKTOK RADAR":
     st.markdown("### 🎯 TikTok Radar")
