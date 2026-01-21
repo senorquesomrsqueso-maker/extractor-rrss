@@ -192,7 +192,12 @@ def motor_auditor_universal_v24(urls):
     }
     
     for i, raw_u in enumerate(urls):
-        url = raw_u.strip().replace('"', '').split('?')[0].rstrip(')').rstrip(',')
+        # --- LIMPIEZA CORREGIDA PARA ENLACES LARGOS DE YOUTUBE ---
+        url = raw_u.strip().replace('"', '').replace("'", "").rstrip(')').rstrip(',')
+        if "?si=" in url:
+            url = url.split('?si=')[0]
+        # --------------------------------------------------------
+        
         msg_status.markdown(f"📡 **Rastreando Objetivo:** `{url[:50]}...`")
         
         try:
@@ -205,7 +210,7 @@ def motor_auditor_universal_v24(urls):
                     
                     exitos.append({
                         "Fecha": datetime.datetime.fromtimestamp(v_ts).strftime('%Y-%m-%d') if v_ts else "N/A",
-                        "Red": "TIKTOK" if "tiktok" in url else "OTRA",
+                        "Red": "TIKTOK" if "tiktok" in url else ("YOUTUBE" if "youtu" in url else "OTRA"),
                         "Creador": autor, 
                         "Vistas": vistas,
                         "Likes": int(info.get('like_count') or 0),
