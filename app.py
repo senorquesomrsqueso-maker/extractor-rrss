@@ -8,355 +8,362 @@ import json
 import datetime
 import math
 import os
-import random
 import traceback
 import urllib.parse
 from io import BytesIO
-from googleapiclient.discovery import build
-import isodate
 
 # ==============================================================================
-# 1. CONFIGURACIÓN ESTRUCTURAL Y LLAVES DE ACCESO (BS LATAM ELITE)
+# 1. CONFIGURACIÓN ESTRUCTURAL Y LLAVES DE ACCESO (PROTEGIDAS)
 # ==============================================================================
-# Llave maestra con permisos para YouTube Data API v3 y Google Drive API
-# Esta llave es el núcleo para evitar bloqueos y asegurar datos reales.
-API_KEY_BS = "AIzaSyBjETNqerBHpqCBQBH7B1bZl55eYWrtMQk"
+DRIVE_API_KEY = "AIzaSyBjETNqerBHpqCBQBH7B1bZl55eYWrtMQk"
 
 st.set_page_config(
-    page_title="BS LATAM - AUDIT ELITE SUPREMACÍA V30.9",
+    page_title="BS LATAM - AUDIT ELITE",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ==============================================================================
-# 2. CAPA DE DISEÑO VISUAL "ELITE SUPREMACÍA" (CSS INDUSTRIAL DARK)
+# 2. CAPA DE DISEÑO VISUAL "ELITE SUPREMACÍA" (ESTILO BS LATAM COMPLETO)
 # ==============================================================================
 st.markdown("""
     <style>
-    /* Configuración de fondo y scroll personalizado */
-    .main { background-color: #0b0d11; color: #e6edf3; font-family: 'Segoe UI', sans-serif; }
+    /* Estética General Dark Industrial */
+    .main { 
+        background-color: #0b0d11; 
+        color: #e6edf3; 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    }
     .stApp { background-color: #0b0d11; }
     
-    /* Bloque de Título Estilo BS LATAM Industrial */
+    /* BLOQUE DE TÍTULO PRINCIPAL EXPANDIDO */
     .title-box { 
-        border-left: 15px solid #E30613; padding: 45px 65px; margin: 35px 0 65px 0; 
+        border-left: 15px solid #E30613; 
+        padding: 40px 60px; 
+        margin: 30px 0 60px 0; 
         background: linear-gradient(90deg, #161b22 0%, rgba(11,13,17,0) 100%);
-        border-radius: 0 35px 35px 0; box-shadow: 18px 0 45px rgba(0,0,0,0.7);
+        border-radius: 0 30px 30px 0;
+        box-shadow: 15px 0 40px rgba(0,0,0,0.6);
     }
     .m-title { 
-        font-size: 55px; font-weight: 950; color: #ffffff; 
-        text-transform: uppercase; letter-spacing: 9px; margin: 0; line-height: 1.0;
-        text-shadow: 4px 4px 8px rgba(0,0,0,0.8);
+        font-size: 52px; 
+        font-weight: 900; 
+        color: #ffffff; 
+        text-transform: uppercase; 
+        letter-spacing: 8px; 
+        margin: 0; 
+        line-height: 1.0;
+        text-shadow: 3px 3px 6px rgba(0,0,0,0.9);
     }
     .s-title { 
-        font-size: 24px; color: #8b949e; font-family: 'Courier New', monospace; 
-        margin-top: 25px; letter-spacing: 4px; font-weight: bold;
+        font-size: 22px; 
+        color: #8b949e; 
+        font-family: 'Courier New', monospace; 
+        margin-top: 20px; 
+        letter-spacing: 3px;
+        font-weight: bold;
     }
 
-    /* Diseño de Barra Lateral Elite con Brillo Azul */
+    /* ESTILO BS LATAM SIDEBAR - MÁXIMA VISIBILIDAD */
     .bs-latam-sidebar {
-        color: #ffffff; font-weight: 950; font-size: 38px; text-align: center;
-        text-transform: uppercase; letter-spacing: 6px;
-        text-shadow: 0px 0px 25px #0055ff, 2px 2px 0px #000000;
-        margin-bottom: 40px; padding: 20px; border-bottom: 3px solid #E30613;
+        color: #ffffff; 
+        font-weight: 950; 
+        font-size: 36px; 
+        text-align: center;
+        text-transform: uppercase; 
+        letter-spacing: 5px;
+        text-shadow: 0px 0px 20px #0055ff, 2px 2px 0px #000000;
+        margin-bottom: 35px; 
+        padding: 15px;
+        border-bottom: 2px solid #30363d;
     }
     
-    /* Indicadores de Métricas (Cards) */
-    [data-testid="stMetric"] { 
-        background-color: #161b22; border: 2px solid #30363d; 
-        padding: 45 paradox; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    /* TARJETAS DE MÉTRICAS INDIVIDUALES */
+    .subtotal-card {
+        background-color: #161b22; 
+        border: 2px solid #30363d; 
+        padding: 30px;
+        border-radius: 25px; 
+        text-align: center; 
+        margin-bottom: 25px;
+        transition: transform 0.3s ease;
     }
-    [data-testid="stMetricValue"] { color: #E30613 !important; font-weight: 900; font-size: 52px !important; }
-    [data-testid="stMetricLabel"] { font-size: 18px !important; color: #8b949e !important; text-transform: uppercase; }
+    .subtotal-card:hover {
+        transform: translateY(-5px);
+        border-color: #E30613;
+    }
+    .sub-v { 
+        color: #E30613; 
+        font-size: 38px; 
+        font-weight: 950; 
+        text-shadow: 0 0 15px rgba(227,6,19,0.4);
+    }
+    .sub-l { 
+        color: #8b949e; 
+        font-size: 16px; 
+        text-transform: uppercase; 
+        font-weight: bold;
+        letter-spacing: 2px;
+    }
 
-    /* Botones de Impacto BS LATAM */
+    /* ESTILOS DE COMPONENTES STREAMLIT */
+    [data-testid="stMetric"] { 
+        background-color: #161b22; 
+        border: 2px solid #30363d; 
+        padding: 40px; 
+        border-radius: 28px; 
+    }
+    [data-testid="stMetricValue"] { 
+        color: #E30613 !important; 
+        font-weight: 900; 
+        font-size: 48px !important; 
+    }
+
     .stButton>button { 
         background: linear-gradient(135deg, #E30613 0%, #9e040d 100%) !important;
-        color: #ffffff !important; font-weight: 900 !important; text-transform: uppercase;
-        border-radius: 22px; height: 90px; width: 100%; font-size: 26px !important;
-        border: none; box-shadow: 0 12px 25px rgba(227,6,19,0.35);
-        transition: all 0.3s ease;
+        color: #ffffff !important; 
+        font-weight: 900 !important; 
+        text-transform: uppercase;
+        border-radius: 20px; 
+        height: 85px; 
+        width: 100%; 
+        font-size: 24px !important;
+        border: none;
+        box-shadow: 0 10px 20px rgba(227,6,19,0.2);
     }
-    .stButton>button:hover { transform: translateY(-3px); box-shadow: 0 15px 35px rgba(227,6,19,0.5); }
     
-    /* Áreas de Texto y Código */
     .stTextArea textarea { 
-        background-color: #161b22 !important; color: #e6edf3 !important; 
-        border: 2px solid #30363d !important; border-radius: 25px; font-size: 17px;
-        padding: 20px;
+        background-color: #161b22 !important; 
+        color: #e6edf3 !important; 
+        border: 2px solid #30363d !important; 
+        border-radius: 20px;
+        font-size: 16px;
     }
     
     code { 
-        font-size: 17px !important; color: #00ffcc !important; background-color: #0b0d11 !important; 
-        border: 2px solid #E30613 !important; padding: 25px !important; border-radius: 15px; 
-        display: block; margin: 15px 0; line-height: 1.6;
+        font-size: 15px !important; 
+        color: #ffffff !important; 
+        background-color: #161b22 !important; 
+        border: 1px solid #444c56 !important;
+        padding: 18px !important; 
+        border-radius: 12px; 
+        display: block;
+        margin: 10px 0;
     }
-
-    /* Barra de Progreso Personalizada */
-    .stProgress > div > div > div > div { background-color: #E30613 !important; }
-
-    /* Estilo de Tablas */
-    .stDataFrame { border: 1px solid #30363d; border-radius: 15px; background-color: #161b22; }
     </style>
     
     <div class="title-box">
-        <p class="m-title">AUDIT-ELITE SUPREMACÍA V30.9</p>
-        <p class="s-title">SISTEMA TOTAL DE AUDITORÍA Y RASTREO • BS LATAM PRO</p>
+        <p class="m-title">AUDIT-ELITE SUPREMACÍA V29</p>
+        <p class="s-title">SISTEMA INTEGRAL DE AUDITORÍA Y RASTREO • BS LATAM PRO</p>
     </div>
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. GESTIÓN DE MEMORIA Y ESTADOS DE SESIÓN (PERSISTENCIA TOTAL)
+# 3. GESTIÓN DE MEMORIA Y PERSISTENCIA (SISTEMA DE DATOS)
 # ==============================================================================
-if 'db_final' not in st.session_state: st.session_state.db_final = pd.DataFrame()
-if 'db_fallidos' not in st.session_state: st.session_state.db_fallidos = []
-if 'db_drive' not in st.session_state: st.session_state.db_drive = pd.DataFrame()
-if 'chat_log' not in st.session_state: 
-    st.session_state.chat_log = [{"role": "assistant", "content": "Protocolo BS-ELITE V30.9 iniciado. Barra de progreso re-sincronizada. 🫡"}]
+if 'db_final' not in st.session_state:
+    st.session_state.db_final = pd.DataFrame()
+if 'db_fallidos' not in st.session_state:
+    st.session_state.db_fallidos = pd.DataFrame()
+if 'db_drive' not in st.session_state:
+    st.session_state.db_drive = pd.DataFrame()
+if 'chat_log' not in st.session_state:
+    st.session_state.chat_log = [{"role": "assistant", "content": "¡V29 Activa, jefe! Radar de TikTok desplegado y Extractor listo. 🫡"}]
 
 # ==============================================================================
-# 4. NÚCLEO DE EXTRACCIÓN HÍBRIDO (MOTOR DE LIMPIEZA TOTAL)
+# 4. MOTORES DE AUDITORÍA (EXTRACTOR REFORZADO CON MÉTRICAS TOTALES)
 # ==============================================================================
-
-def clean_bs_link(url):
-    """Limpia enlaces de basura de rastreo y parámetros UTM para evitar errores."""
-    url = url.strip().replace('"', '').replace("'", "")
-    if "?" in url: url = url.split('?')[0]
-    return url.rstrip('/')
-
-def fetch_youtube_api_pro(url):
-    """Extracción vía API Oficial de Google para YouTube (Blindaje total contra 0 vistas)."""
-    try:
-        vid_match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11}).*", url)
-        if not vid_match: return None
-        v_id = vid_match.group(1)
-        
-        service = build("youtube", "v3", developerKey=API_KEY_BS)
-        res = service.videos().list(part="snippet,statistics,contentDetails", id=v_id).execute()
-        
-        if not res['items']: return None
-        item = res['items'][0]
-        dur_iso = item['contentDetails']['duration']
-        dur_sec = isodate.parse_duration(dur_iso).total_seconds()
-        
-        return {
-            "Fecha": datetime.datetime.now().strftime('%Y-%m-%d'),
-            "Red": "YOUTUBE",
-            "Tipo": "Short" if (dur_sec <= 61 or "/shorts/" in url) else "Video Largo",
-            "Creador": item['snippet']['channelTitle'],
-            "Vistas": int(item['statistics'].get('viewCount', 0)),
-            "Likes": int(item['statistics'].get('likeCount', 0)),
-            "Comments": int(item['statistics'].get('commentCount', 0)),
-            "Saves": 0,
-            "Link Original": url
-        }
-    except Exception as e:
-        return None
-
-def fetch_social_dlp_elite(url, platform):
-    """Extracción vía Scrapping Reforzado para TikTok y Facebook con rotación de UA."""
-    opts = {
-        'quiet': True, 'no_warnings': True, 'extract_flat': False,
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'socket_timeout': 30
-    }
-    if os.path.exists('cookies.txt'): opts['cookiefile'] = 'cookies.txt'
-    
-    with yt_dlp.YoutubeDL(opts) as ydl:
-        try:
-            time.sleep(random.uniform(2.5, 4.0))
-            info = ydl.extract_info(url, download=False)
-            if not info: return None
-            
-            vistas = info.get('view_count') or info.get('play_count') or 0
-            likes = info.get('like_count') or 0
-            
-            return {
-                "Fecha": datetime.datetime.now().strftime('%Y-%m-%d'),
-                "Red": platform.upper(),
-                "Tipo": "Reel/TikTok",
-                "Creador": info.get('uploader') or info.get('channel', 'N/A'),
-                "Vistas": int(vistas),
-                "Likes": int(likes),
-                "Comments": int(info.get('comment_count', 0)),
-                "Saves": int(info.get('repost_count', 0)),
-                "Link Original": url
-            }
-        except Exception:
-            return None
-
-def extractor_maestro_pro(raw_text):
-    """Motor con barra de progreso visual activa y detector automático de plataforma."""
-    urls_found = re.findall(r"(https?://[^\s\"\'\)\],]+)", raw_text)
-    resultados, fallos = [], []
-    
-    # REINSTALACIÓN DE BARRA DE PROGRESO Y STATUS
+def motor_auditor_universal_v24(urls):
+    exitos, fallos = [], []
     p_bar = st.progress(0)
-    p_status = st.empty()
+    msg_status = st.empty()
     
-    for i, raw_url in enumerate(urls_found):
-        clean_url = clean_bs_link(raw_url)
-        p_status.markdown(f"📡 **ANALIZANDO OBJETIVO [{i+1}/{len(urls_found)}]:** `{clean_url[:55]}...`")
-        
-        data = None
-        if "youtube.com" in clean_url or "youtu.be" in clean_url:
-            data = fetch_youtube_api_pro(clean_url)
-        elif "tiktok.com" in clean_url:
-            data = fetch_social_dlp_elite(clean_url, "TikTok")
-        elif "facebook.com" in clean_url or "fb.watch" in clean_url:
-            data = fetch_social_dlp_elite(clean_url, "Facebook")
-            
-        if data and data["Vistas"] >= 0:
-            resultados.append(data)
-        else:
-            fallos.append(clean_url)
-        
-        p_bar.progress((i + 1) / len(urls_found))
+    ydl_opts = {
+        'quiet': True, 
+        'no_warnings': True, 
+        'extract_flat': False,
+        'skip_download': True, 
+        'ignoreerrors': True, 
+        'socket_timeout': 40,
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        }
+    }
     
-    p_status.empty()
-    p_bar.empty()
-    return pd.DataFrame(resultados), fallos
-
-# ==============================================================================
-# 5. MÓDULOS PERIFÉRICOS (RADAR, DRIVE, IA, SEARCH) - INTACTOS
-# ==============================================================================
-
-def auditor_drive_elite(links):
-    """Verifica accesibilidad y peso de archivos en Google Drive."""
-    results = []
-    for l in links:
-        f_id_match = re.search(r'[-\w]{25,}', l)
-        if f_id_match:
-            fid = f_id_match.group()
-            url_api = f"https://www.googleapis.com/drive/v3/files/{fid}?fields=name,size&key={API_KEY_BS}"
-            try:
-                r = requests.get(url_api, timeout=20).json()
-                if "error" not in r:
-                    mb = f"{int(r.get('size', 0))/1024/1024:.2f} MB" if r.get('size') else "N/A"
-                    results.append({"Archivo": r.get('name'), "Peso": mb, "Estado": "✅ DISPONIBLE", "Link": l})
+    for i, raw_u in enumerate(urls):
+        url = raw_u.strip().replace('"', '').split('?')[0].rstrip(')').rstrip(',')
+        msg_status.markdown(f"📡 **Rastreando Objetivo:** `{url[:50]}...`")
+        
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+                if info:
+                    v_ts = info.get('timestamp') or (time.mktime(datetime.datetime.strptime(info['upload_date'], "%Y%m%d").timetuple()) if info.get('upload_date') else None)
+                    vistas = int(info.get('view_count') or info.get('play_count') or 0)
+                    autor = info.get('uploader') or info.get('creator') or "N/A"
+                    
+                    exitos.append({
+                        "Fecha": datetime.datetime.fromtimestamp(v_ts).strftime('%Y-%m-%d') if v_ts else "N/A",
+                        "Red": "TIKTOK" if "tiktok" in url else "OTRA",
+                        "Creador": autor, 
+                        "Vistas": vistas,
+                        "Likes": int(info.get('like_count') or 0),
+                        "Comments": int(info.get('comment_count') or 0),
+                        "Saves": int(info.get('repost_count') or 0),
+                        "Link Original": url
+                    })
                 else:
-                    results.append({"Archivo": "🔒 PRIVADO", "Peso": "-", "Estado": "❌ BLOQUEADO", "Link": l})
+                    fallos.append({"Link": url, "Motivo": "Privado o Inaccesible"})
+        except Exception as e:
+            fallos.append({"Link": url, "Motivo": f"Error: {str(e)[:20]}"})
+        
+        p_bar.progress((i + 1) / len(urls))
+    
+    msg_status.empty()
+    p_bar.empty()
+    return pd.DataFrame(exitos), pd.DataFrame(fallos)
+
+def auditor_drive_api_v24(urls):
+    resultados_d = []
+    for link in urls:
+        f_id_match = re.search(r'[-\w]{25,}', link)
+        if f_id_match:
+            f_id = f_id_match.group()
+            endpoint = f"https://www.googleapis.com/drive/v3/files/{f_id}?fields=name,size&key={DRIVE_API_KEY}"
+            try:
+                resp = requests.get(endpoint, timeout=20).json()
+                if "error" not in resp:
+                    peso_mb = f"{int(resp.get('size', 0))/1024/1024:.2f} MB" if resp.get('size') else "N/A"
+                    resultados_d.append({"Archivo": resp.get('name'), "Peso": peso_mb, "Estado": "✅ DISPONIBLE", "Link": link})
+                else:
+                    resultados_d.append({"Archivo": "🔒 PROTEGIDO", "Peso": "0", "Estado": "❌ BLOQUEADO", "Link": link})
             except:
-                results.append({"Archivo": "ERROR", "Peso": "-", "Estado": "❌ ROTO", "Link": l})
-    return pd.DataFrame(results)
+                resultados_d.append({"Archivo": "ERROR", "Peso": "0", "Estado": "❌ ROTO", "Link": link})
+    return pd.DataFrame(resultados_d)
 
 # ==============================================================================
-# 6. PANEL DE CONTROL Y NAVEGACIÓN (SIDEBAR ELITE)
+# 5. PANEL DE NAVEGACIÓN Y CONTROL (SIDEBAR)
 # ==============================================================================
 with st.sidebar:
     st.markdown('<p class="bs-latam-sidebar">BS LATAM</p>', unsafe_allow_html=True)
     st.divider()
-    menu = st.radio(
-        "MÓDULOS OPERATIVOS", 
-        ["🚀 EXTRACTOR UNIFICADO", "🎯 TIKTOK RADAR", "📂 DRIVE AUDITOR", "🤖 PARTNER IA", "🛰️ SEARCH PRO"],
-        index=0
-    )
+    menu = st.radio("MÓDULOS OPERATIVOS", ["🚀 EXTRACTOR", "🎯 TIKTOK RADAR", "📂 DRIVE AUDITOR", "🤖 PARTNER IA", "🛰️ SEARCH PRO"], index=0)
     st.divider()
-    if st.button("🚨 REINICIAR SISTEMA"):
-        st.session_state.db_final = pd.DataFrame()
-        st.session_state.db_fallidos = []
-        st.session_state.db_drive = pd.DataFrame()
+    if st.button("🚨 REINICIAR SISTEMA COMPLETO"):
+        for k in ['db_final', 'db_fallidos', 'db_drive']: st.session_state[k] = pd.DataFrame()
+        st.session_state.chat_log = [{"role": "assistant", "content": "Memoria purgada. Sistema listo. 🫡"}]
         st.rerun()
 
 # ==============================================================================
-# 7. DESPLIEGUE DE INTERFAZ POR MÓDULO
+# 6. DESPLIEGUE DE MÓDULOS
 # ==============================================================================
 
-if menu == "🚀 EXTRACTOR UNIFICADO":
-    st.markdown("### 📥 Extracción Masiva de Enlaces (YouTube, TikTok, Facebook)")
-    raw_input = st.text_area("Pega tus links aquí (uno por línea o bloque de texto):", height=280)
-    
-    # ACCIÓN DEL BOTÓN CON DISPARADOR DE RESULTADOS INSTANTÁNEOS
-    if st.button("🔥 INICIAR AUDITORÍA DE IMPACTO"):
-        if raw_input:
-            df_new, fails_new = extractor_maestro_pro(raw_input)
-            st.session_state.db_final = df_new
-            st.session_state.db_fallidos = fails_new
+if menu == "🚀 EXTRACTOR":
+    st.markdown("### 📥 Entrada de Enlaces para Auditoría")
+    raw_input = st.text_area("Pega tus links masivos aquí:", height=220)
+    if st.button("🔥 INICIAR EXTRACCIÓN"):
+        links_f = re.findall(r"(https?://[^\s\"\'\)\],]+)", raw_input)
+        if links_f:
+            st.session_state.db_final, st.session_state.db_fallidos = motor_auditor_universal_v24(links_f)
             st.rerun()
-            
     if not st.session_state.db_final.empty:
-        df = st.session_state.db_final
-        st.divider()
-        
-        # Bloque de Métricas Críticas
-        m1, m2 = st.columns(2)
-        with m1:
-            st.metric("🌍 VISTAS TOTALES", f"{int(df['Vistas'].sum()):,}")
-            st.write("📋 **CADENA DE SUMA (+):**")
-            st.code("+".join([str(int(v)) for v in df['Vistas'].tolist()]))
-            
-        with m2:
-            st.metric("👍 LIKES TOTALES", f"{int(df['Likes'].sum()):,}")
-            st.write("📊 **VISTAS POR PLATAFORMA:**")
-            v_dict = df.groupby('Red')['Vistas'].sum().to_dict()
-            st.code("\n".join([f"{k}: {v:,}" for k, v in v_dict.items()]))
-        
-        st.divider()
-        st.subheader("📝 Tabla de Resultados Detallada")
-        st.dataframe(df, use_container_width=True, hide_index=True)
-        
-        if st.session_state.db_fallidos:
-            with st.expander("❌ Ver enlaces fallidos (Bloqueados o 0 vistas)"):
-                for f in st.session_state.db_fallidos: st.error(f)
-        
-        # Exportación Pro
-        csv_data = df.to_csv(index=False).encode('utf-8')
-        st.download_button("📥 DESCARGAR REPORTE EXCEL (CSV)", data=csv_data, file_name=f"audit_bs_{datetime.date.today()}.csv", mime='text/csv')
+        st.dataframe(st.session_state.db_final, use_container_width=True)
 
 elif menu == "🎯 TIKTOK RADAR":
-    st.markdown("### 🎯 TikTok Radar de Tendencias")
-    q_radar = st.text_input("🔍 Término o Hashtag de Búsqueda:")
-    if st.button("🔥 ABRIR RADAR EXTERNO"):
-        st.link_button("EJECUTAR BÚSQUEDA EN TIKTOK", f"https://www.tiktok.com/search/video?q={urllib.parse.quote(q_radar)}")
-    
-    radar_input = st.text_area("Pega los datos del radar aquí:", height=300)
-    if st.button("🚀 PROCESAR RADAR"):
-        links_radar = re.findall(r"(https?://www\.tiktok\.com/@[^/\s]+/video/\d+)", radar_input)
+    st.markdown("### 🎯 TikTok Radar")
+    query_text = st.text_input("🔍 Término de Búsqueda:")
+    if st.button("🔥 ABRIR BUSCADOR"):
+        st.link_button("IR A TIKTOK", f"https://www.tiktok.com/search/video?q={urllib.parse.quote(query_text)}")
+    raw_data = st.text_area("Zona de Pegado de Datos:", height=400)
+    if st.button("🚀 FILTRAR Y PROCESAR"):
+        links_radar = re.findall(r"(https?://www\.tiktok\.com/@[^/\s]+/video/\d+)", raw_data)
         if links_radar:
-            st.session_state.db_final, _ = extractor_maestro_pro("\n".join(list(set(links_radar))))
+            st.session_state.db_final, _ = motor_auditor_universal_v24(list(set(links_radar)))
             st.rerun()
 
 elif menu == "📂 DRIVE AUDITOR":
     st.markdown("### 📂 Auditoría de Enlaces Google Drive")
-    drive_input = st.text_area("Pega enlaces de Drive aquí:", height=200)
-    if st.button("🛡️ VERIFICAR ACCESIBILIDAD"):
+    drive_input = st.text_area("Enlaces de Drive:", height=200)
+    if st.button("🛡️ VERIFICAR ACCESO"):
         links_d = re.findall(r"(https?://drive\.google\.com/[^\s]+)", drive_input)
         if links_d:
-            st.session_state.db_drive = auditor_drive_elite(links_d)
-    if not st.session_state.db_drive.empty:
-        st.dataframe(st.session_state.db_drive, use_container_width=True)
+            st.session_state.db_drive = auditor_drive_api_v24(links_d)
+            st.rerun()
+    st.dataframe(st.session_state.db_drive)
 
 elif menu == "🤖 PARTNER IA":
-    st.markdown("### 🤖 Partner IA Operativo")
+    st.markdown("### 🤖 IA Partner")
     for msg in st.session_state.chat_log:
         with st.chat_message(msg["role"]): st.markdown(msg["content"])
-    if prompt := st.chat_input("Consulta operativa sobre la auditoría..."):
-        st.session_state.chat_log.append({"role": "user", "content": prompt})
-        st.session_state.chat_log.append({"role": "assistant", "content": "Analizando métricas de retención y viralidad..."})
+    if chat_input := st.chat_input("Escribe..."):
+        st.session_state.chat_log.append({"role": "user", "content": chat_input})
         st.rerun()
 
+# ==============================================================================
+# 7. SEARCH PRO (CORREGIDO: CRONOLÓGICO + MÉTRICAS FULL)
+# ==============================================================================
 elif menu == "🛰️ SEARCH PRO":
-    st.subheader("🛰️ Escaneo Profundo de Canales")
-    target_channel = st.text_input("Link del Canal:", placeholder="https://www.tiktok.com/@usuario")
-    c1, c2 = st.columns(2)
-    with c1: f_ini = st.date_input("Fecha Inicio:", value=datetime.date.today() - datetime.timedelta(days=15))
-    with c2: f_fin = st.date_input("Fecha Fin:", value=datetime.date.today())
-    if st.button("🚀 INICIAR ESCANEO DE CANAL"):
-        if target_channel:
-            with st.status("🛠️ Ejecutando Escaneo...", expanded=True):
-                opts = {'extract_flat': True, 'quiet': True}
+    st.subheader("🛰️ Buscador Inteligente de Canales (Auditoría Cronológica)")
+    
+    col_u1, col_u2 = st.columns([2, 1])
+    with col_u1:
+        target_user = st.text_input("Pega el link del Canal o @usuario:", placeholder="https://www.tiktok.com/@usuario")
+    with col_u2:
+        vistas_min = st.number_input("Vistas mínimas", value=60000)
+    
+    st.divider()
+    st.markdown("#### 📅 Rango de tiempo para Escaneo (Filtro Estricto)")
+    col_f1, col_f2 = st.columns(2)
+    with col_f1:
+        fecha_inicio = st.date_input("Desde:", value=datetime.date.today() - datetime.timedelta(days=7))
+    with col_f2:
+        fecha_fin = st.date_input("Hasta:", value=datetime.date.today())
+    
+    if st.button("🚀 Escanear Canal"):
+        if target_user:
+            clean_user = target_user.split('?')[0].rstrip('/')
+            if not clean_user.startswith('http'):
+                clean_user = f"https://www.tiktok.com/@{clean_user.replace('@', '')}"
+            
+            with st.status("🛠️ Iniciando Escaneo Cronológico Estricto...", expanded=True) as status:
+                ydl_opts_search = {
+                    'extract_flat': True, 'quiet': True,
+                    'http_headers': {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+                }
                 try:
-                    with yt_dlp.YoutubeDL(opts) as ydl:
-                        res = ydl.extract_info(target_channel, download=False)
+                    with yt_dlp.YoutubeDL(ydl_opts_search) as ydl:
+                        res = ydl.extract_info(clean_user, download=False)
                         if res and 'entries' in res:
-                            valid = [e.get('url') for e in res['entries'] if e.get('url')]
-                            st.session_state.db_final, _ = extractor_maestro_pro("\n".join(valid))
-                            st.rerun()
-                except Exception as e: st.error(f"Error en escaneo: {e}")
+                            f_inicio_ts = time.mktime(fecha_inicio.timetuple())
+                            f_fin_ts = time.mktime((fecha_fin + datetime.timedelta(days=1)).timetuple())
+                            
+                            valid_links = []
+                            for entry in res['entries']:
+                                v_ts = entry.get('timestamp') or (time.mktime(datetime.datetime.strptime(entry['upload_date'], "%Y%m%d").timetuple()) if entry.get('upload_date') else None)
+                                if v_ts and f_inicio_ts <= v_ts <= f_fin_ts:
+                                    valid_links.append(entry.get('url') or f"https://www.tiktok.com/video/{entry.get('id')}")
+                            
+                            if valid_links:
+                                st.session_state.db_final, _ = motor_auditor_universal_v24(valid_links)
+                                status.update(label="✅ Escaneo Finalizado!", state="complete")
+                                st.rerun()
+                            else:
+                                st.error("Sin videos en ese rango de fechas.")
+                except Exception as e:
+                    st.error(f"Error Técnico: {str(e)}")
+        else:
+            st.warning("Introduce un canal.")
 
-# ==============================================================================
-# 8. FOOTER DE SEGURIDAD Y CONTROL DE VERSIÓN
-# ==============================================================================
-st.markdown("---")
-st.caption(f"BS LATAM AUDIT ELITE V30.9 | {datetime.datetime.now().strftime('%H:%M:%S')} | ACCESO NIVEL 5 ACTIVADO")
+    if not st.session_state.db_final.empty:
+        df_elite = st.session_state.db_final[st.session_state.db_final['Vistas'] >= vistas_min].sort_values(by="Vistas", ascending=False)
+        if not df_elite.empty:
+            st.markdown(f"### 🏆 Resultados Elite (+{vistas_min:,} vistas)")
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Vistas", f"{df_elite['Vistas'].sum():,}")
+            m2.metric("Likes", f"{df_elite['Likes'].sum():,}")
+            m3.metric("Comments", f"{df_elite['Comments'].sum():,}")
+            m4.metric("Contenido", len(df_elite))
+            
+            st.code(" + ".join([str(v) for v in df_elite['Vistas'].tolist()]))
+            st.dataframe(df_elite[["Fecha", "Vistas", "Likes", "Comments", "Saves", "Link Original"]], use_container_width=True, hide_index=True)
