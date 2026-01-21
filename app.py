@@ -204,9 +204,16 @@ def motor_auditor_universal_v24(urls):
                     vistas = int(info.get('view_count') or info.get('play_count') or 0)
                     autor = info.get('uploader') or info.get('creator') or "N/A"
                     
+                    # Detectar Red
+                    red_tag = "OTRA"
+                    if "tiktok.com" in url: red_tag = "TIKTOK"
+                    elif "instagram.com" in url: red_tag = "INSTAGRAM"
+                    elif "youtube.com" in url or "youtu.be" in url: red_tag = "YOUTUBE"
+                    elif "facebook.com" in url: red_tag = "FACEBOOK"
+
                     exitos.append({
                         "Fecha": datetime.datetime.fromtimestamp(v_ts).strftime('%Y-%m-%d') if v_ts else "N/A",
-                        "Red": "TIKTOK" if "tiktok" in url else "OTRA",
+                        "Red": red_tag,
                         "Creador": autor, 
                         "Vistas": vistas,
                         "Likes": int(info.get('like_count') or 0),
@@ -268,8 +275,34 @@ if menu == "🚀 EXTRACTOR":
         if links_f:
             st.session_state.db_final, st.session_state.db_fallidos = motor_auditor_universal_v24(links_f)
             st.rerun()
+    
     if not st.session_state.db_final.empty:
-        st.dataframe(st.session_state.db_final, use_container_width=True)
+        df = st.session_state.db_final
+        
+        # --- NUEVA SECCIÓN: RESULTADOS DE VISTAS ---
+        st.divider()
+        st.markdown("### 📊 Resumen de Impacto (Copiar)")
+        
+        c1, c2 = st.columns(2)
+        with c1:
+            total_vistas = df['Vistas'].sum()
+            st.write("🌍 **VISTAS TOTALES:**")
+            st.code(f"{total_vistas:,}")
+            
+            st.write("➕ **SUMA DETALLADA (+):**")
+            vistas_list = [str(v) for v in df['Vistas'].tolist()]
+            st.code(" + ".join(vistas_list))
+
+        with c2:
+            st.write("📱 **POR PLATAFORMAS:**")
+            resumen_redes = df.groupby('Red')['Vistas'].sum()
+            txt_redes = ""
+            for red, valor in resumen_redes.items():
+                txt_redes += f"{red}: {valor:,}\n"
+            st.code(txt_redes.strip())
+        
+        st.divider()
+        st.dataframe(df, use_container_width=True)
 
 elif menu == "🎯 TIKTOK RADAR":
     st.markdown("### 🎯 TikTok Radar")
