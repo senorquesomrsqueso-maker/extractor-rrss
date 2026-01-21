@@ -200,24 +200,16 @@ def motor_auditor_universal_v24(urls):
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 if info:
-                    # Cálculo de Timestamp y Vistas Preciso
                     v_ts = info.get('timestamp') or (time.mktime(datetime.datetime.strptime(info['upload_date'], "%Y%m%d").timetuple()) if info.get('upload_date') else None)
-                    vistas_raw = info.get('view_count') or info.get('play_count') or 0
-                    vistas = int(vistas_raw)
-                    
+                    vistas = int(info.get('view_count') or info.get('play_count') or 0)
                     autor = info.get('uploader') or info.get('creator') or "N/A"
                     
-                    # --- LÓGICA DE DETECCIÓN DE RED PROFESIONAL ---
+                    # Detectar Red
                     red_tag = "OTRA"
-                    url_l = url.lower()
-                    if "tiktok.com" in url_l: 
-                        red_tag = "TIKTOK"
-                    elif "instagram.com" in url_l: 
-                        red_tag = "INSTAGRAM"
-                    elif any(x in url_l for x in ["youtube.com", "youtu.be"]): 
-                        red_tag = "YOUTUBE"
-                    elif any(x in url_l for x in ["facebook.com", "fb.watch"]): 
-                        red_tag = "FACEBOOK"
+                    if "tiktok.com" in url: red_tag = "TIKTOK"
+                    elif "instagram.com" in url: red_tag = "INSTAGRAM"
+                    elif "youtube.com" in url or "youtu.be" in url: red_tag = "YOUTUBE"
+                    elif "facebook.com" in url or "fb.watch" in url: red_tag = "FACEBOOK"
 
                     exitos.append({
                         "Fecha": datetime.datetime.fromtimestamp(v_ts).strftime('%Y-%m-%d') if v_ts else "N/A",
@@ -287,33 +279,31 @@ if menu == "🚀 EXTRACTOR":
     if not st.session_state.db_final.empty:
         df = st.session_state.db_final
         
-        # --- NUEVA SECCIÓN: RESULTADOS DE VISTAS (OPTIMIZADA) ---
+        # --- SECCIÓN DE RESULTADOS CORREGIDA (REEMPLAZO SOLICITADO) ---
         st.divider()
         st.markdown("### 📊 Resumen de Impacto (Copiar)")
         
         c1, c2 = st.columns(2)
         with c1:
-            # Cálculo de Total sin Decimales
             total_vistas = int(df['Vistas'].sum())
             st.write("🌍 **VISTAS TOTALES:**")
             st.code(f"{total_vistas:,}")
             
-            # Suma Detallada Limpia
             st.write("➕ **SUMA DETALLADA (+):**")
-            vistas_list = [str(int(v)) for v in df['Vistas'].tolist()]
-            st.code(" + ".join(vistas_list))
+            vistas_list = [str(int(v)) for v in df['Vistas'].tolist() if v > 0]
+            st.code(" + ".join(vistas_list) if vistas_list else "0")
 
         with c2:
-            # Desglose Dinámico por Red Social detectada
             st.write("📱 **POR PLATAFORMAS:**")
-            resumen_redes = df.groupby('Red')['Vistas'].sum()
+            # Agrupar por Red y sumar vistas, filtrando los 0
+            resumen_redes = df.groupby('Red')['Vistas'].sum().reset_index()
             txt_redes = ""
-            for red, valor in resumen_redes.items():
-                txt_redes += f"{red}: {int(valor):,}\n"
-            st.code(txt_redes.strip() if txt_redes else "Sin datos")
+            for _, row in resumen_redes.iterrows():
+                if row['Vistas'] > 0:
+                    txt_redes += f"{row['Red']}: {int(row['Vistas']):,}\n"
+            st.code(txt_redes.strip() if txt_redes else "Sin datos de plataformas")
         
         st.divider()
-        st.markdown("#### 📑 Tabla Maestra de Datos")
         st.dataframe(df, use_container_width=True, hide_index=True)
 
 elif menu == "🎯 TIKTOK RADAR":
@@ -346,9 +336,6 @@ elif menu == "🤖 PARTNER IA":
         st.session_state.chat_log.append({"role": "user", "content": chat_input})
         st.rerun()
 
-# ==============================================================================
-# 7. SEARCH PRO (CORREGIDO: CRONOLÓGICO + MÉTRICAS FULL)
-# ==============================================================================
 elif menu == "🛰️ SEARCH PRO":
     st.subheader("🛰️ Buscador Inteligente de Canales (Auditoría Cronológica)")
     
@@ -402,17 +389,14 @@ elif menu == "🛰️ SEARCH PRO":
             st.warning("Introduce un canal.")
 
     if not st.session_state.db_final.empty:
-        # Filtrado Elite basado en Vistas Mínimas
         df_elite = st.session_state.db_final[st.session_state.db_final['Vistas'] >= vistas_min].sort_values(by="Vistas", ascending=False)
         if not df_elite.empty:
             st.markdown(f"### 🏆 Resultados Elite (+{vistas_min:,} vistas)")
             m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Vistas", f"{int(df_elite['Vistas'].sum()):,}")
-            m2.metric("Likes", f"{int(df_elite['Likes'].sum()):,}")
-            m3.metric("Comments", f"{int(df_elite['Comments'].sum()):,}")
+            m1.metric("Vistas", f"{df_elite['Vistas'].sum():,}")
+            m2.metric("Likes", f"{df_elite['Likes'].sum():,}")
+            m3.metric("Comments", f"{df_elite['Comments'].sum():,}")
             m4.metric("Contenido", len(df_elite))
             
-            # Suma detallada exclusiva para el set Elite
-            st.write("Suma Elite:")
             st.code(" + ".join([str(int(v)) for v in df_elite['Vistas'].tolist()]))
             st.dataframe(df_elite[["Fecha", "Vistas", "Likes", "Comments", "Saves", "Link Original"]], use_container_width=True, hide_index=True)
