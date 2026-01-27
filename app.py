@@ -10,6 +10,7 @@ import math
 import os
 import traceback
 import urllib.parse
+import random
 from io import BytesIO
 
 # ==============================================================================
@@ -154,7 +155,7 @@ st.markdown("""
     </style>
     
     <div class="title-box">
-        <p class="m-title">AUDIT-ELITE SUPREMACÍA V29</p>
+        <p class="m-title">AUDIT-ELITE SUPREMACÍA V31</p>
         <p class="s-title">SISTEMA INTEGRAL DE AUDITORÍA Y RASTREO • BS LATAM PRO</p>
     </div>
     """, unsafe_allow_html=True)
@@ -169,55 +170,47 @@ if 'db_fallidos' not in st.session_state:
 if 'db_drive' not in st.session_state:
     st.session_state.db_drive = pd.DataFrame()
 if 'chat_log' not in st.session_state:
-    st.session_state.chat_log = [{"role": "assistant", "content": "¡V29 Activa, jefe! Radar de TikTok desplegado y Extractor listo. 🫡"}]
+    st.session_state.chat_log = [{"role": "assistant", "content": "¡V31 Activa, jefe! Bypass 503 implementado en el Search. 🫡"}]
 
 # ==============================================================================
-# 4. MOTORES DE AUDITORÍA (EXTRACTOR REFORZADO CON MÉTRICAS TOTALES)
+# 4. MOTORES DE AUDITORÍA (EXTRACTOR REFORZADO CON SIGILO)
 # ==============================================================================
 def motor_auditor_universal_v24(urls):
     exitos, fallos = [], []
     p_bar = st.progress(0)
     msg_status = st.empty()
     
-    ydl_opts = {
-        'quiet': True, 
-        'no_warnings': True, 
-        'extract_flat': False,
-        'skip_download': True, 
-        'ignoreerrors': True, 
-        'socket_timeout': 40,
-        'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        }
-    }
-    
+    ua_list = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    ]
+
     for i, raw_u in enumerate(urls):
-        # --- LIMPIEZA CORREGIDA PARA ENLACES LARGOS DE YOUTUBE ---
         url = raw_u.strip().replace('"', '').replace("'", "").rstrip(')').rstrip(',')
-        if "?si=" in url:
-            url = url.split('?si=')[0]
-        # --------------------------------------------------------
+        if "?si=" in url: url = url.split('?si=')[0]
         
         msg_status.markdown(f"📡 **Rastreando Objetivo:** `{url[:50]}...`")
         
+        ydl_opts = {
+            'quiet': True, 'no_warnings': True, 'extract_flat': False,
+            'skip_download': True, 'ignoreerrors': True, 'socket_timeout': 40,
+            'http_headers': {'User-Agent': random.choice(ua_list)}
+        }
+        
         try:
+            # Pausa aleatoria para evitar detección masiva
+            time.sleep(random.uniform(1.5, 3.0))
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 if info:
                     v_ts = info.get('timestamp') or (time.mktime(datetime.datetime.strptime(info['upload_date'], "%Y%m%d").timetuple()) if info.get('upload_date') else None)
                     vistas = int(info.get('view_count') or info.get('play_count') or 0)
-                    autor = info.get('uploader') or info.get('creator') or "N/A"
-                    
-                    # Identificación de Red Social
-                    red_social = "OTRA"
-                    if "tiktok" in url: red_social = "TIKTOK"
-                    elif "youtube" in url or "youtu.be" in url: red_social = "YOUTUBE"
-                    elif "facebook" in url or "fb.watch" in url: red_social = "FACEBOOK"
+                    red_social = "TIKTOK" if "tiktok" in url else "YOUTUBE" if "youtu" in url else "FACEBOOK" if "facebook" in url else "OTRA"
 
                     exitos.append({
                         "Fecha": datetime.datetime.fromtimestamp(v_ts).strftime('%Y-%m-%d') if v_ts else "N/A",
                         "Red": red_social,
-                        "Creador": autor, 
+                        "Creador": info.get('uploader') or info.get('creator') or "N/A", 
                         "Vistas": vistas,
                         "Likes": int(info.get('like_count') or 0),
                         "Comments": int(info.get('comment_count') or 0),
@@ -225,9 +218,10 @@ def motor_auditor_universal_v24(urls):
                         "Link Original": url
                     })
                 else:
-                    fallos.append({"Link": url, "Motivo": "Privado o Inaccesible"})
+                    fallos.append({"Link": url, "Motivo": "Privado/Bloqueado"})
         except Exception as e:
-            fallos.append({"Link": url, "Motivo": f"Error: {str(e)[:20]}"})
+            if "503" in str(e) or "429" in str(e): time.sleep(10)
+            fallos.append({"Link": url, "Motivo": f"Error: {str(e)[:15]}"})
         
         p_bar.progress((i + 1) / len(urls))
     
@@ -263,11 +257,11 @@ with st.sidebar:
     st.divider()
     if st.button("🚨 REINICIAR SISTEMA COMPLETO"):
         for k in ['db_final', 'db_fallidos', 'db_drive']: st.session_state[k] = pd.DataFrame()
-        st.session_state.chat_log = [{"role": "assistant", "content": "Memoria purgada. Sistema listo. 🫡"}]
+        st.session_state.chat_log = [{"role": "assistant", "content": "Memoria purgada. 🫡"}]
         st.rerun()
 
 # ==============================================================================
-# 6. DESPLIEGUE DE MÓDULOS
+# 6. DESPLIEGUE DE MÓDULOS (LÓGICA ORIGINAL)
 # ==============================================================================
 
 if menu == "🚀 EXTRACTOR":
@@ -281,36 +275,19 @@ if menu == "🚀 EXTRACTOR":
             
     if not st.session_state.db_final.empty:
         df = st.session_state.db_final
-        
         st.divider()
         st.markdown("### 📊 Reporte de Métricas por Red")
-        
-        # --- BLOQUE DE TOTAL GLOBAL ---
         col_glob1, col_glob2 = st.columns([1, 3])
-        with col_glob1:
-            st.metric("VISTAS TOTALES (GLOBAL)", f"{df['Vistas'].sum():,}")
-        with col_glob2:
-            st.write("📋 **Suma para Hoja de Cálculo (Global):**")
-            st.code(" + ".join([str(v) for v in df['Vistas'].tolist()]))
-            
+        col_glob1.metric("VISTAS TOTALES (GLOBAL)", f"{df['Vistas'].sum():,}")
+        col_glob2.code(" + ".join([str(v) for v in df['Vistas'].tolist()]))
         st.divider()
-        
-        # --- BLOQUES DINÁMICOS POR RED (YouTube, TikTok, Facebook) ---
         redes_detectadas = df['Red'].unique()
         cols_dinamicas = st.columns(len(redes_detectadas))
-        
         for i, red in enumerate(redes_detectadas):
             with cols_dinamicas[i]:
                 df_red = df[df['Red'] == red]
-                suma_red = df_red['Vistas'].sum()
-                cadena_red = " + ".join([str(v) for v in df_red['Vistas'].tolist()])
-                
-                st.markdown(f"#### 🌐 {red}")
-                st.metric(f"Total {red}", f"{suma_red:,}")
-                st.write(f"Suma {red}:")
-                st.code(cadena_red)
-
-        st.divider()
+                st.markdown(f"#### 🌐 {red}"); st.metric(f"Total {red}", f"{df_red['Vistas'].sum():,}")
+                st.code(" + ".join([str(v) for v in df_red['Vistas'].tolist()]))
         st.dataframe(df, use_container_width=True)
 
 elif menu == "🎯 TIKTOK RADAR":
@@ -326,8 +303,8 @@ elif menu == "🎯 TIKTOK RADAR":
             st.rerun()
 
 elif menu == "📂 DRIVE AUDITOR":
-    st.markdown("### 📂 Auditoría de Enlaces Google Drive")
-    drive_input = st.text_area("Enlaces de Drive:", height=200)
+    st.markdown("### 📂 Auditoría Drive")
+    drive_input = st.text_area("Enlaces:", height=200)
     if st.button("🛡️ VERIFICAR ACCESO"):
         links_d = re.findall(r"(https?://drive\.google\.com/[^\s]+)", drive_input)
         if links_d:
@@ -344,10 +321,10 @@ elif menu == "🤖 PARTNER IA":
         st.rerun()
 
 # ==============================================================================
-# 7. SEARCH PRO (CORREGIDO: CRONOLÓGICO + MÉTRICAS FULL)
+# 7. SEARCH PRO (INTERVENCIÓN: BYPASS 503 / 429)
 # ==============================================================================
 elif menu == "🛰️ SEARCH PRO":
-    st.subheader("🛰️ Buscador Inteligente de Canales (Auditoría Cronológica)")
+    st.subheader("🛰️ Buscador Inteligente de Canales (Modo Bypass 503)")
     
     col_u1, col_u2 = st.columns([2, 1])
     with col_u1:
@@ -358,10 +335,8 @@ elif menu == "🛰️ SEARCH PRO":
     st.divider()
     st.markdown("#### 📅 Rango de tiempo para Escaneo (Filtro Estricto)")
     col_f1, col_f2 = st.columns(2)
-    with col_f1:
-        fecha_inicio = st.date_input("Desde:", value=datetime.date.today() - datetime.timedelta(days=7))
-    with col_f2:
-        fecha_fin = st.date_input("Hasta:", value=datetime.date.today())
+    fecha_inicio = col_f1.date_input("Desde:", value=datetime.date.today() - datetime.timedelta(days=7))
+    fecha_fin = col_f2.date_input("Hasta:", value=datetime.date.today())
     
     if st.button("🚀 Escanear Canal"):
         if target_user:
@@ -369,10 +344,12 @@ elif menu == "🛰️ SEARCH PRO":
             if not clean_user.startswith('http'):
                 clean_user = f"https://www.tiktok.com/@{clean_user.replace('@', '')}"
             
-            with st.status("🛠️ Iniciando Escaneo Cronológico Estricto...", expanded=True) as status:
+            with st.status("🛠️ Ejecutando Bypass de Seguridad (Flat Extraction)...", expanded=True) as status:
+                # Paso 1: Solo obtenemos los enlaces (Ligero) para no activar el bloqueo 503
                 ydl_opts_search = {
-                    'extract_flat': True, 'quiet': True,
-                    'http_headers': {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+                    'extract_flat': 'in_playlist', 
+                    'quiet': True,
+                    'http_headers': {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/121.0.0.0'}
                 }
                 try:
                     with yt_dlp.YoutubeDL(ydl_opts_search) as ydl:
@@ -383,18 +360,25 @@ elif menu == "🛰️ SEARCH PRO":
                             
                             valid_links = []
                             for entry in res['entries']:
+                                if not entry: continue
+                                # Verificamos fecha de la entrada
                                 v_ts = entry.get('timestamp') or (time.mktime(datetime.datetime.strptime(entry['upload_date'], "%Y%m%d").timetuple()) if entry.get('upload_date') else None)
+                                
                                 if v_ts and f_inicio_ts <= v_ts <= f_fin_ts:
-                                    valid_links.append(entry.get('url') or f"https://www.tiktok.com/video/{entry.get('id')}")
+                                    link = entry.get('url') or f"https://www.tiktok.com/video/{entry.get('id')}"
+                                    valid_links.append(link)
                             
                             if valid_links:
+                                status.write(f"✅ Se detectaron {len(valid_links)} videos. Auditando métricas con sigilo...")
+                                # Paso 2: Usamos el motor principal para obtener vistas/likes con pausas
                                 st.session_state.db_final, _ = motor_auditor_universal_v24(valid_links)
-                                status.update(label="✅ Escaneo Finalizado!", state="complete")
                                 st.rerun()
                             else:
-                                st.error("Sin videos en ese rango de fechas.")
+                                st.error("No se encontraron videos en ese rango de fechas.")
+                        else:
+                            st.error("TikTok/YT no respondió a la lista. Intenta de nuevo en 2 minutos.")
                 except Exception as e:
-                    st.error(f"Error Técnico: {str(e)}")
+                    st.error(f"Error Crítico: {str(e)}")
         else:
             st.warning("Introduce un canal.")
 
@@ -407,6 +391,5 @@ elif menu == "🛰️ SEARCH PRO":
             m2.metric("Likes", f"{df_elite['Likes'].sum():,}")
             m3.metric("Comments", f"{df_elite['Comments'].sum():,}")
             m4.metric("Contenido", len(df_elite))
-            
             st.code(" + ".join([str(v) for v in df_elite['Vistas'].tolist()]))
             st.dataframe(df_elite[["Fecha", "Vistas", "Likes", "Comments", "Saves", "Link Original"]], use_container_width=True, hide_index=True)
