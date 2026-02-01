@@ -26,7 +26,7 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 2. CAPA DE DISEÑO VISUAL "ELITE SUPREMACÍA" (ESTILO BS LATAM COMPLETO)
+# 2. CAPA DE DISEÑO VISUAL "ELITE SUPREMACÍA" (EDITADO: TAMAÑO DE NÚMEROS)
 # ==============================================================================
 st.markdown("""
     <style>
@@ -38,7 +38,7 @@ st.markdown("""
     }
     .stApp { background-color: #0b0d11; }
     
-    /* BLOQUE DE TÍTULO PRINCIPAL EXPANDIDO */
+    /* BLOQUE DE TÍTULO PRINCIPAL */
     .title-box { 
         border-left: 15px solid #E30613; 
         padding: 40px 60px; 
@@ -66,7 +66,7 @@ st.markdown("""
         font-weight: bold;
     }
 
-    /* ESTILO BS LATAM SIDEBAR - MÁXIMA VISIBILIDAD */
+    /* ESTILO BS LATAM SIDEBAR */
     .bs-latam-sidebar {
         color: #ffffff; 
         font-weight: 950; 
@@ -80,45 +80,11 @@ st.markdown("""
         border-bottom: 2px solid #30363d;
     }
     
-    /* TARJETAS DE MÉTRICAS INDIVIDUALES */
-    .subtotal-card {
-        background-color: #161b22; 
-        border: 2px solid #30363d; 
-        padding: 30px;
-        border-radius: 25px; 
-        text-align: center; 
-        margin-bottom: 25px;
-        transition: transform 0.3s ease;
-    }
-    .subtotal-card:hover {
-        transform: translateY(-5px);
-        border-color: #E30613;
-    }
-    .sub-v { 
-        color: #E30613; 
-        font-size: 38px; 
-        font-weight: 950; 
-        text-shadow: 0 0 15px rgba(227,6,19,0.4);
-    }
-    .sub-l { 
-        color: #8b949e; 
-        font-size: 16px; 
-        text-transform: uppercase; 
-        font-weight: bold;
-        letter-spacing: 2px;
-    }
-
-    /* ESTILOS DE COMPONENTES STREAMLIT */
-    [data-testid="stMetric"] { 
-        background-color: #161b22; 
-        border: 2px solid #30363d; 
-        padding: 40px; 
-        border-radius: 28px; 
-    }
+    /* AJUSTE DE MÉTRICAS: TAMAÑO NORMALIZADO PARA COPIAR */
     [data-testid="stMetricValue"] { 
         color: #E30613 !important; 
         font-weight: 900; 
-        font-size: 48px !important; 
+        font-size: 35px !important; /* Reducido de 48px a 35px */
     }
 
     .stButton>button { 
@@ -161,7 +127,7 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. GESTIÓN DE MEMORIA Y PERSISTENCIA (SISTEMA DE DATOS)
+# 3. GESTIÓN DE MEMORIA Y PERSISTENCIA
 # ==============================================================================
 if 'db_final' not in st.session_state:
     st.session_state.db_final = pd.DataFrame()
@@ -170,10 +136,10 @@ if 'db_fallidos' not in st.session_state:
 if 'db_drive' not in st.session_state:
     st.session_state.db_drive = pd.DataFrame()
 if 'chat_log' not in st.session_state:
-    st.session_state.chat_log = [{"role": "assistant", "content": "¡V31 Activa, jefe! Bypass 503 implementado en el Search. 🫡"}]
+    st.session_state.chat_log = [{"role": "assistant", "content": "¡V31 Activa, jefe! Módulo IA listo para procesar. 🫡"}]
 
 # ==============================================================================
-# 4. MOTORES DE AUDITORÍA (EXTRACTOR REFORZADO CON SIGILO)
+# 4. MOTORES DE AUDITORÍA (EXTRACTOR REFORZADO)
 # ==============================================================================
 def motor_auditor_universal_v24(urls):
     exitos, fallos = [], []
@@ -198,8 +164,8 @@ def motor_auditor_universal_v24(urls):
         }
         
         try:
-            # Pausa aleatoria para evitar detección masiva
-            time.sleep(random.uniform(1.5, 3.0))
+            # Velocidad optimizada pero segura
+            time.sleep(random.uniform(0.8, 1.5))
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 if info:
@@ -220,8 +186,8 @@ def motor_auditor_universal_v24(urls):
                 else:
                     fallos.append({"Link": url, "Motivo": "Privado/Bloqueado"})
         except Exception as e:
-            if "503" in str(e) or "429" in str(e): time.sleep(10)
-            fallos.append({"Link": url, "Motivo": f"Error: {str(e)[:15]}"})
+            if "503" in str(e) or "429" in str(e): time.sleep(5)
+            fallos.append({"Link": url, "Motivo": f"Error: {str(e)[:20]}"})
         
         p_bar.progress((i + 1) / len(urls))
     
@@ -261,7 +227,7 @@ with st.sidebar:
         st.rerun()
 
 # ==============================================================================
-# 6. DESPLIEGUE DE MÓDULOS (LÓGICA ORIGINAL)
+# 6. DESPLIEGUE DE MÓDULOS
 # ==============================================================================
 
 if menu == "🚀 EXTRACTOR":
@@ -281,6 +247,7 @@ if menu == "🚀 EXTRACTOR":
         col_glob1.metric("VISTAS TOTALES (GLOBAL)", f"{df['Vistas'].sum():,}")
         col_glob2.code(" + ".join([str(v) for v in df['Vistas'].tolist()]))
         st.divider()
+        
         redes_detectadas = df['Red'].unique()
         cols_dinamicas = st.columns(len(redes_detectadas))
         for i, red in enumerate(redes_detectadas):
@@ -288,7 +255,13 @@ if menu == "🚀 EXTRACTOR":
                 df_red = df[df['Red'] == red]
                 st.markdown(f"#### 🌐 {red}"); st.metric(f"Total {red}", f"{df_red['Vistas'].sum():,}")
                 st.code(" + ".join([str(v) for v in df_red['Vistas'].tolist()]))
+        
         st.dataframe(df, use_container_width=True)
+
+    # VISUALIZACIÓN DE FALLIDOS (Arreglo solicitado)
+    if not st.session_state.db_fallidos.empty:
+        with st.expander("❌ ENLACES FALLIDOS DETECTADOS"):
+            st.table(st.session_state.db_fallidos)
 
 elif menu == "🎯 TIKTOK RADAR":
     st.markdown("### 🎯 TikTok Radar")
@@ -313,15 +286,27 @@ elif menu == "📂 DRIVE AUDITOR":
     st.dataframe(st.session_state.db_drive)
 
 elif menu == "🤖 PARTNER IA":
-    st.markdown("### 🤖 IA Partner")
+    st.markdown("### 🤖 Partner IA")
+    # Mostrar historial de chat
     for msg in st.session_state.chat_log:
-        with st.chat_message(msg["role"]): st.markdown(msg["content"])
-    if chat_input := st.chat_input("Escribe..."):
-        st.session_state.chat_log.append({"role": "user", "content": chat_input})
-        st.rerun()
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+    
+    # Input de chat funcional
+    if prompt := st.chat_input("Escribe tu consulta sobre los datos..."):
+        st.session_state.chat_log.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+            
+        with st.chat_message("assistant"):
+            # Lógica de respuesta IA simple integrada
+            total_vistas = st.session_state.db_final['Vistas'].sum() if not st.session_state.db_final.empty else 0
+            respuesta = f"Entendido. Actualmente tenemos {total_vistas:,} vistas registradas en el extractor principal. ¿En qué más puedo apoyarte?"
+            st.markdown(respuesta)
+            st.session_state.chat_log.append({"role": "assistant", "content": respuesta})
 
 # ==============================================================================
-# 7. SEARCH PRO (INTERVENCIÓN: BYPASS 503 / 429)
+# 7. SEARCH PRO (BYPASS 503 / 429)
 # ==============================================================================
 elif menu == "🛰️ SEARCH PRO":
     st.subheader("🛰️ Buscador Inteligente de Canales (Modo Bypass 503)")
@@ -345,7 +330,6 @@ elif menu == "🛰️ SEARCH PRO":
                 clean_user = f"https://www.tiktok.com/@{clean_user.replace('@', '')}"
             
             with st.status("🛠️ Ejecutando Bypass de Seguridad (Flat Extraction)...", expanded=True) as status:
-                # Paso 1: Solo obtenemos los enlaces (Ligero) para no activar el bloqueo 503
                 ydl_opts_search = {
                     'extract_flat': 'in_playlist', 
                     'quiet': True,
@@ -361,7 +345,6 @@ elif menu == "🛰️ SEARCH PRO":
                             valid_links = []
                             for entry in res['entries']:
                                 if not entry: continue
-                                # Verificamos fecha de la entrada
                                 v_ts = entry.get('timestamp') or (time.mktime(datetime.datetime.strptime(entry['upload_date'], "%Y%m%d").timetuple()) if entry.get('upload_date') else None)
                                 
                                 if v_ts and f_inicio_ts <= v_ts <= f_fin_ts:
@@ -369,14 +352,13 @@ elif menu == "🛰️ SEARCH PRO":
                                     valid_links.append(link)
                             
                             if valid_links:
-                                status.write(f"✅ Se detectaron {len(valid_links)} videos. Auditando métricas con sigilo...")
-                                # Paso 2: Usamos el motor principal para obtener vistas/likes con pausas
+                                status.write(f"✅ Detectados {len(valid_links)} videos. Auditando...")
                                 st.session_state.db_final, _ = motor_auditor_universal_v24(valid_links)
                                 st.rerun()
                             else:
-                                st.error("No se encontraron videos en ese rango de fechas.")
+                                st.error("No se encontraron videos en ese rango.")
                         else:
-                            st.error("TikTok/YT no respondió a la lista. Intenta de nuevo en 2 minutos.")
+                            st.error("Error de respuesta de red. Intenta en 2 min.")
                 except Exception as e:
                     st.error(f"Error Crítico: {str(e)}")
         else:
