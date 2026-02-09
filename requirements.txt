@@ -5,3 +5,4 @@ isodate
 pandas
 requests
 xlsxwriter
+google-generativeai
