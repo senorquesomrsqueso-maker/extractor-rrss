@@ -20,9 +20,9 @@ from io import BytesIO
 DRIVE_API_KEY = "AIzaSyBjETNqerBHpqCBQBH7B1bZl55eYWrtMQk"
 GEMINI_API_KEY = "AIzaSyA8HsM0vSCopd1s05nOryhbNIGU26dvxG4"
 
-# Configuración de IA Real
+# ACTIVACIÓN DE IA REAL
 genai.configure(api_key=GEMINI_API_KEY)
-model_gemini = genai.GenerativeModel('gemini-1.5-flash')
+model_ia = genai.GenerativeModel('gemini-1.5-flash')
 
 st.set_page_config(
     page_title="BS LATAM",
@@ -32,28 +32,101 @@ st.set_page_config(
 )
 
 # ==============================================================================
-# 2. CAPA DE DISEÑO VISUAL "ELITE SUPREMACÍA"
+# 2. CAPA DE DISEÑO VISUAL "ELITE SUPREMACÍA" (ESTRUCTURA ORIGINAL)
 # ==============================================================================
 st.markdown("""
     <style>
-    .main { background-color: #0b0d11; color: #e6edf3; font-family: 'Segoe UI', sans-serif; }
-    .stApp { background-color: #0b0d11; }
-    .title-box { 
-        border-left: 15px solid #E30613; padding: 40px 60px; margin: 30px 0 60px 0; 
-        background: linear-gradient(90deg, #161b22 0%, rgba(11,13,17,0) 100%);
-        border-radius: 0 30px 30px 0; box-shadow: 15px 0 40px rgba(0,0,0,0.6);
+    /* Ocultar elementos para privacidad y estética */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+
+    .main { 
+        background-color: #0b0d11; 
+        color: #e6edf3; 
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
     }
-    .m-title { font-size: 52px; font-weight: 900; color: #ffffff; text-transform: uppercase; letter-spacing: 8px; margin: 0; }
-    .s-title { font-size: 22px; color: #8b949e; font-family: 'Courier New', monospace; margin-top: 20px; font-weight: bold; }
-    .bs-latam-sidebar { color: #ffffff; font-weight: 950; font-size: 36px; text-align: center; text-transform: uppercase; text-shadow: 0px 0px 20px #0055ff; }
-    [data-testid="stMetricValue"] { color: #E30613 !important; font-weight: 900; font-size: 35px !important; }
+    .stApp { background-color: #0b0d11; }
+    
+    .title-box { 
+        border-left: 15px solid #E30613; 
+        padding: 40px 60px; 
+        margin: 30px 0 60px 0; 
+        background: linear-gradient(90deg, #161b22 0%, rgba(11,13,17,0) 100%);
+        border-radius: 0 30px 30px 0;
+        box-shadow: 15px 0 40px rgba(0,0,0,0.6);
+    }
+    .m-title { 
+        font-size: 52px; 
+        font-weight: 900; 
+        color: #ffffff; 
+        text-transform: uppercase; 
+        letter-spacing: 8px; 
+        margin: 0; 
+        line-height: 1.0;
+        text-shadow: 3px 3px 6px rgba(0,0,0,0.9);
+    }
+    .s-title { 
+        font-size: 22px; 
+        color: #8b949e; 
+        font-family: 'Courier New', monospace; 
+        margin-top: 20px; 
+        letter-spacing: 3px;
+        font-weight: bold;
+    }
+
+    .bs-latam-sidebar {
+        color: #ffffff; 
+        font-weight: 950; 
+        font-size: 36px; 
+        text-align: center;
+        text-transform: uppercase; 
+        letter-spacing: 5px;
+        text-shadow: 0px 0px 20px #0055ff, 2px 2px 0px #000000;
+        margin-bottom: 35px; 
+        padding: 15px;
+        border-bottom: 2px solid #30363d;
+    }
+    
+    [data-testid="stMetricValue"] { 
+        color: #E30613 !important; 
+        font-weight: 900; 
+        font-size: 35px !important; 
+    }
+
     .stButton>button { 
         background: linear-gradient(135deg, #E30613 0%, #9e040d 100%) !important;
-        color: #ffffff !important; font-weight: 900 !important; border-radius: 20px; height: 85px; width: 100%; font-size: 24px !important;
+        color: #ffffff !important; 
+        font-weight: 900 !important; 
+        text-transform: uppercase;
+        border-radius: 20px; 
+        height: 85px; 
+        width: 100%; 
+        font-size: 24px !important;
+        border: none;
+        box-shadow: 0 10px 20px rgba(227,6,19,0.2);
     }
-    .stTextArea textarea { background-color: #161b22 !important; color: #e6edf3 !important; border: 2px solid #30363d !important; border-radius: 20px; }
-    code { font-size: 15px !important; color: #ffffff !important; background-color: #161b22 !important; border: 1px solid #444c56 !important; padding: 18px !important; border-radius: 12px; display: block; }
+    
+    .stTextArea textarea { 
+        background-color: #161b22 !important; 
+        color: #e6edf3 !important; 
+        border: 2px solid #30363d !important; 
+        border-radius: 20px;
+        font-size: 16px;
+    }
+    
+    code { 
+        font-size: 15px !important; 
+        color: #ffffff !important; 
+        background-color: #161b22 !important; 
+        border: 1px solid #444c56 !important;
+        padding: 18px !important; 
+        border-radius: 12px; 
+        display: block;
+        margin: 10px 0;
+    }
     </style>
+    
     <div class="title-box">
         <p class="m-title">AUDIT-ELITE SUPREMACÍA V31</p>
         <p class="s-title">SISTEMA INTEGRAL DE AUDITORÍA Y RASTREO • BS LATAM PRO</p>
@@ -63,48 +136,66 @@ st.markdown("""
 # ==============================================================================
 # 3. GESTIÓN DE MEMORIA Y PERSISTENCIA
 # ==============================================================================
-if 'db_final' not in st.session_state: st.session_state.db_final = pd.DataFrame()
-if 'db_fallidos' not in st.session_state: st.session_state.db_fallidos = pd.DataFrame()
-if 'db_drive' not in st.session_state: st.session_state.db_drive = pd.DataFrame()
+if 'db_final' not in st.session_state:
+    st.session_state.db_final = pd.DataFrame()
+if 'db_fallidos' not in st.session_state:
+    st.session_state.db_fallidos = pd.DataFrame()
+if 'db_drive' not in st.session_state:
+    st.session_state.db_drive = pd.DataFrame()
 if 'chat_log' not in st.session_state:
-    st.session_state.chat_log = [{"role": "assistant", "content": "¡V31 Activa, jefe! Módulo IA con Gemini 1.5 listo. 🫡"}]
+    st.session_state.chat_log = [{"role": "assistant", "content": "¡V31 Activa, jefe! Módulo IA Real conectado y listo. 🫡"}]
 
 # ==============================================================================
-# 4. MOTORES DE AUDITORÍA
+# 4. MOTORES DE AUDITORÍA (EXTRACTOR COMPLETO)
 # ==============================================================================
 def motor_auditor_universal_v24(urls):
     exitos, fallos = [], []
     p_bar = st.progress(0)
     msg_status = st.empty()
-    ua_list = ['Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36']
+    
+    ua_list = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    ]
 
     for i, raw_u in enumerate(urls):
         url = raw_u.strip().replace('"', '').replace("'", "").rstrip(')').rstrip(',')
         if "?si=" in url: url = url.split('?si=')[0]
-        msg_status.markdown(f"📡 **Rastreando:** `{url[:50]}...`")
+        
+        msg_status.markdown(f"📡 **Rastreando Objetivo:** `{url[:50]}...`")
         
         ydl_opts = {
             'quiet': True, 'no_warnings': True, 'extract_flat': False,
-            'skip_download': True, 'ignoreerrors': True, 'socket_timeout': 30,
+            'skip_download': True, 'ignoreerrors': True, 'socket_timeout': 40,
             'http_headers': {'User-Agent': random.choice(ua_list)}
         }
+        
         try:
-            time.sleep(random.uniform(0.5, 1.0))
+            time.sleep(random.uniform(0.8, 1.5))
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 if info:
                     v_ts = info.get('timestamp') or (time.mktime(datetime.datetime.strptime(info['upload_date'], "%Y%m%d").timetuple()) if info.get('upload_date') else None)
+                    vistas = int(info.get('view_count') or info.get('play_count') or 0)
                     red_social = "TIKTOK" if "tiktok" in url else "YOUTUBE" if "youtu" in url else "FACEBOOK" if "facebook" in url else "OTRA"
+
                     exitos.append({
                         "Fecha": datetime.datetime.fromtimestamp(v_ts).strftime('%Y-%m-%d') if v_ts else "N/A",
-                        "Red": red_social, "Creador": info.get('uploader') or "N/A", 
-                        "Vistas": int(info.get('view_count') or info.get('play_count') or 0),
-                        "Likes": int(info.get('like_count') or 0), "Comments": int(info.get('comment_count') or 0),
-                        "Saves": int(info.get('repost_count') or 0), "Link Original": url
+                        "Red": red_social,
+                        "Creador": info.get('uploader') or info.get('creator') or "N/A", 
+                        "Vistas": vistas,
+                        "Likes": int(info.get('like_count') or 0),
+                        "Comments": int(info.get('comment_count') or 0),
+                        "Saves": int(info.get('repost_count') or 0),
+                        "Link Original": url
                     })
-                else: fallos.append({"Link": url, "Motivo": "Privado/Bloqueado"})
-        except Exception as e: fallos.append({"Link": url, "Motivo": f"Error: {str(e)[:20]}"})
+                else:
+                    fallos.append({"Objetivo": url, "Motivo": "Privado/Bloqueado"})
+        except Exception as e:
+            fallos.append({"Objetivo": url, "Motivo": f"Error: {str(e)[:20]}"})
+        
         p_bar.progress((i + 1) / len(urls))
+    
     msg_status.empty()
     p_bar.empty()
     return pd.DataFrame(exitos), pd.DataFrame(fallos)
@@ -121,26 +212,29 @@ def auditor_drive_api_v24(urls):
                 if "error" not in resp:
                     peso_mb = f"{int(resp.get('size', 0))/1024/1024:.2f} MB" if resp.get('size') else "N/A"
                     resultados_d.append({"Archivo": resp.get('name'), "Peso": peso_mb, "Estado": "✅ DISPONIBLE", "Link": link})
-                else: resultados_d.append({"Archivo": "🔒 PROTEGIDO", "Peso": "0", "Estado": "❌ BLOQUEADO", "Link": link})
-            except: resultados_d.append({"Archivo": "ERROR", "Peso": "0", "Estado": "❌ ROTO", "Link": link})
+                else:
+                    resultados_d.append({"Archivo": "🔒 PROTEGIDO", "Peso": "0", "Estado": "❌ BLOQUEADO", "Link": link})
+            except:
+                resultados_d.append({"Archivo": "ERROR", "Peso": "0", "Estado": "❌ ROTO", "Link": link})
     return pd.DataFrame(resultados_d)
 
 # ==============================================================================
-# 5. PANEL DE NAVEGACIÓN
+# 5. PANEL DE NAVEGACIÓN Y CONTROL (SIDEBAR)
 # ==============================================================================
 with st.sidebar:
     st.markdown('<p class="bs-latam-sidebar">BS LATAM</p>', unsafe_allow_html=True)
     st.divider()
     menu = st.radio("MÓDULOS OPERATIVOS", ["🚀 EXTRACTOR", "🎯 TIKTOK RADAR", "📂 DRIVE AUDITOR", "🤖 PARTNER IA", "🛰️ SEARCH PRO"], index=0)
     st.divider()
-    if st.button("🚨 REINICIAR SISTEMA"):
+    if st.button("🚨 REINICIAR SISTEMA COMPLETO"):
         for k in ['db_final', 'db_fallidos', 'db_drive']: st.session_state[k] = pd.DataFrame()
         st.session_state.chat_log = [{"role": "assistant", "content": "Memoria purgada. 🫡"}]
         st.rerun()
 
 # ==============================================================================
-# 6. DESPLIEGUE DE MÓDULOS
+# 6. DESPLIEGUE DE MÓDULOS (MANTENIENDO TODA LA LÓGICA ORIGINAL)
 # ==============================================================================
+
 if menu == "🚀 EXTRACTOR":
     st.markdown("### 📥 Entrada de Enlaces para Auditoría")
     raw_input = st.text_area("Pega tus links masivos aquí:", height=220)
@@ -149,19 +243,35 @@ if menu == "🚀 EXTRACTOR":
         if links_f:
             st.session_state.db_final, st.session_state.db_fallidos = motor_auditor_universal_v24(links_f)
             st.rerun()
+            
     if not st.session_state.db_final.empty:
         df = st.session_state.db_final
+        st.divider()
+        st.markdown("### 📊 Reporte de Métricas por Red")
         col_glob1, col_glob2 = st.columns([1, 3])
         col_glob1.metric("VISTAS TOTALES (GLOBAL)", f"{df['Vistas'].sum():,}")
         col_glob2.code(" + ".join([str(v) for v in df['Vistas'].tolist()]))
+        st.divider()
+        
+        redes_detectadas = df['Red'].unique()
+        cols_dinamicas = st.columns(len(redes_detectadas))
+        for i, red in enumerate(redes_detectadas):
+            with cols_dinamicas[i]:
+                df_red = df[df['Red'] == red]
+                st.markdown(f"#### 🌐 {red}"); st.metric(f"Total {red}", f"{df_red['Vistas'].sum():,}")
+                st.code(" + ".join([str(v) for v in df_red['Vistas'].tolist()]))
+        
         st.dataframe(df, use_container_width=True)
+
     if not st.session_state.db_fallidos.empty:
-        with st.expander("❌ ENLACES FALLIDOS DETECTADOS"): st.table(st.session_state.db_fallidos)
+        with st.expander("❌ ENLACES FALLIDOS DETECTADOS"):
+            st.table(st.session_state.db_fallidos)
 
 elif menu == "🎯 TIKTOK RADAR":
     st.markdown("### 🎯 TikTok Radar")
     query_text = st.text_input("🔍 Término de Búsqueda:")
-    if st.button("🔥 ABRIR BUSCADOR"): st.link_button("IR A TIKTOK", f"https://www.tiktok.com/search/video?q={urllib.parse.quote(query_text)}")
+    if st.button("🔥 ABRIR BUSCADOR"):
+        st.link_button("IR A TIKTOK", f"https://www.tiktok.com/search/video?q={urllib.parse.quote(query_text)}")
     raw_data = st.text_area("Zona de Pegado de Datos:", height=400)
     if st.button("🚀 FILTRAR Y PROCESAR"):
         links_radar = re.findall(r"(https?://www\.tiktok\.com/@[^/\s]+/video/\d+)", raw_data)
@@ -174,87 +284,125 @@ elif menu == "📂 DRIVE AUDITOR":
     drive_input = st.text_area("Enlaces:", height=200)
     if st.button("🛡️ VERIFICAR ACCESO"):
         links_d = re.findall(r"(https?://drive\.google\.com/[^\s]+)", drive_input)
-        if links_d: st.session_state.db_drive = auditor_drive_api_v24(links_d); st.rerun()
+        if links_d:
+            st.session_state.db_drive = auditor_drive_api_v24(links_d)
+            st.rerun()
     st.dataframe(st.session_state.db_drive)
 
+# ==============================================================================
+# 7. PARTNER IA (CEREBRO GEMINI INTEGRADO)
+# ==============================================================================
 elif menu == "🤖 PARTNER IA":
-    st.markdown("### 🤖 Partner IA (Cerebro Gemini Active)")
+    st.markdown("### 🤖 Partner IA (Cerebro Gemini Real)")
     for msg in st.session_state.chat_log:
-        with st.chat_message(msg["role"]): st.markdown(msg["content"])
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
     
     if prompt := st.chat_input("Escribe tu consulta sobre los datos..."):
         st.session_state.chat_log.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): st.markdown(prompt)
-        
+        with st.chat_message("user"):
+            st.markdown(prompt)
+            
         with st.chat_message("assistant"):
-            # Contexto de datos
-            ctx = ""
+            # Preparar contexto real de los datos actuales
+            data_context = "No hay datos cargados."
             if not st.session_state.db_final.empty:
-                vistas = st.session_state.db_final['Vistas'].sum()
-                ctx = f"Datos actuales: {len(st.session_state.db_final)} videos procesados con {vistas:,} vistas totales."
+                resumen_vistas = st.session_state.db_final['Vistas'].sum()
+                data_context = f"Tabla de datos actual: {st.session_state.db_final.to_string()}. Total vistas: {resumen_vistas}."
             
             try:
-                response = model_gemini.generate_content(f"Eres el asistente de BS LATAM. Contexto: {ctx}. Usuario pregunta: {prompt}")
-                respuesta = response.text
-                st.markdown(respuesta)
-                st.session_state.chat_log.append({"role": "assistant", "content": respuesta})
+                # LLAMADA A LA IA REAL
+                full_query = f"Eres el analista experto de BS LATAM. Contexto de los datos: {data_context}. Pregunta del usuario: {prompt}"
+                response = model_ia.generate_content(full_query)
+                st.markdown(response.text)
+                st.session_state.chat_log.append({"role": "assistant", "content": response.text})
             except Exception as e:
-                st.error(f"Error IA: {e}")
+                st.error(f"Error en el cerebro IA: {e}")
 
+# ==============================================================================
+# 8. SEARCH PRO (MODO MASIVO/BULK INTEGRADO)
+# ==============================================================================
 elif menu == "🛰️ SEARCH PRO":
-    st.subheader("🛰️ Buscador Inteligente Masivo (Bulk Mode)")
-    target_input = st.text_area("Pega varios links de Canales o @usuarios (uno por línea):", height=150, placeholder="https://www.tiktok.com/@user1\n@user2")
-    vistas_min = st.number_input("Vistas mínimas", value=60000)
+    st.subheader("🛰️ Buscador Inteligente Masivo (Bulk Scan)")
     
+    # Cambio solicitado: De link único a área de texto para múltiples enlaces
+    target_bulk = st.text_area("Pega varios links de Canales o @usuarios (uno por línea):", height=150, placeholder="https://www.tiktok.com/@user1\n@user2")
+    
+    col_u2 = st.columns([1])[0]
+    vistas_min = col_u2.number_input("Vistas mínimas para filtrar", value=60000)
+    
+    st.divider()
+    st.markdown("#### 📅 Rango de tiempo para Escaneo Masivo")
     col_f1, col_f2 = st.columns(2)
     fecha_inicio = col_f1.date_input("Desde:", value=datetime.date.today() - datetime.timedelta(days=7))
     fecha_fin = col_f2.date_input("Hasta:", value=datetime.date.today())
     
-    if st.button("🚀 Iniciar Escaneo Masivo"):
-        canales = re.findall(r"(@[\w\.]+|https?://www\.tiktok\.com/@[^/\s\?]+)", target_input)
+    if st.button("🚀 INICIAR ESCANEO DE CANALES"):
+        # Extraer todos los canales válidos del texto pegado
+        canales = re.findall(r"(@[\w\.]+|https?://www\.tiktok\.com/@[^/\s\?]+)", target_bulk)
+        
         if canales:
             all_valid_links = []
-            canales_fallidos = []
-            status_p = st.status("🕵️ Procesando lista de canales...", expanded=True)
+            canales_con_error = []
             
-            for canal in canales:
-                clean_user = canal.split('?')[0].rstrip('/')
-                if not clean_user.startswith('http'): clean_user = f"https://www.tiktok.com/@{clean_user.replace('@', '')}"
+            with st.status("🛠️ Ejecutando Rastro Masivo...", expanded=True) as status_bulk:
+                for canal in canales:
+                    clean_user = canal.split('?')[0].rstrip('/')
+                    if not clean_user.startswith('http'):
+                        clean_user = f"https://www.tiktok.com/@{clean_user.replace('@', '')}"
+                    
+                    status_bulk.write(f"🔍 Escaneando Objetivo: {clean_user}")
+                    
+                    ydl_opts_search = {
+                        'extract_flat': 'in_playlist', 
+                        'quiet': True,
+                        'http_headers': {'User-Agent': 'Mozilla/5.0'}
+                    }
+                    
+                    try:
+                        with yt_dlp.YoutubeDL(ydl_opts_search) as ydl:
+                            res = ydl.extract_info(clean_user, download=False)
+                            if res and 'entries' in res:
+                                f_inicio_ts = time.mktime(fecha_inicio.timetuple())
+                                f_fin_ts = time.mktime((fecha_fin + datetime.timedelta(days=1)).timetuple())
+                                
+                                for entry in res['entries']:
+                                    if not entry: continue
+                                    v_ts = entry.get('timestamp') or (time.mktime(datetime.datetime.strptime(entry['upload_date'], "%Y%m%d").timetuple()) if entry.get('upload_date') else None)
+                                    
+                                    if v_ts and f_inicio_ts <= v_ts <= f_fin_ts:
+                                        link_v = entry.get('url') or f"https://www.tiktok.com/video/{entry.get('id')}"
+                                        all_valid_links.append(link_v)
+                            else:
+                                canales_con_error.append({"Objetivo": clean_user, "Motivo": "Sin acceso/Canal vacío"})
+                    except:
+                        canales_con_error.append({"Objetivo": clean_user, "Motivo": "Error de conexión (Bypass fallido)"})
                 
-                status_p.write(f"🔍 Escaneando: {clean_user}")
-                ydl_opts_search = {'extract_flat': 'in_playlist', 'quiet': True, 'http_headers': {'User-Agent': 'Mozilla/5.0'}}
-                
-                try:
-                    with yt_dlp.YoutubeDL(ydl_opts_search) as ydl:
-                        res = ydl.extract_info(clean_user, download=False)
-                        if res and 'entries' in res:
-                            f_ini, f_fin = time.mktime(fecha_inicio.timetuple()), time.mktime((fecha_fin + datetime.timedelta(days=1)).timetuple())
-                            for entry in res['entries']:
-                                if not entry: continue
-                                v_ts = entry.get('timestamp') or (time.mktime(datetime.datetime.strptime(entry['upload_date'], "%Y%m%d").timetuple()) if entry.get('upload_date') else None)
-                                if v_ts and f_ini <= v_ts <= f_fin:
-                                    all_valid_links.append(entry.get('url') or f"https://www.tiktok.com/video/{entry.get('id')}")
-                        else: canales_fallidos.append({"Canal": clean_user, "Motivo": "Sin acceso/Vacío"})
-                except: canales_fallidos.append({"Canal": clean_user, "Motivo": "Error de Red"})
-            
-            if all_valid_links:
-                status_p.write(f"✅ Auditando {len(all_valid_links)} videos detectados...")
-                st.session_state.db_final, extra_fallos = motor_auditor_universal_v24(all_valid_links)
-                if not extra_fallos.empty:
-                    canales_fallidos.extend(extra_fallos.to_dict('records'))
-                st.session_state.db_fallidos = pd.DataFrame(canales_fallidos)
-                st.rerun()
-            else: st.error("No se detectaron videos válidos en los canales ingresados.")
-        else: st.warning("Ingresa al menos un canal.")
+                if all_valid_links:
+                    status_bulk.write(f"✅ Detectados {len(all_valid_links)} videos totales. Iniciando auditoría de métricas...")
+                    # Procesar todos los videos encontrados
+                    df_exitos, df_fallos_motor = motor_auditor_universal_v24(all_valid_links)
+                    st.session_state.db_final = df_exitos
+                    # Guardar fallos de canales + fallos del motor
+                    st.session_state.db_fallidos = pd.concat([pd.DataFrame(canales_con_error), df_fallos_motor])
+                    st.rerun()
+                else:
+                    st.error("No se encontraron videos válidos en ninguno de los canales proporcionados.")
+        else:
+            st.warning("Introduce al menos un canal o usuario.")
 
     if not st.session_state.db_final.empty:
         df_elite = st.session_state.db_final[st.session_state.db_final['Vistas'] >= vistas_min].sort_values(by="Vistas", ascending=False)
         if not df_elite.empty:
             st.markdown(f"### 🏆 Resultados Elite (+{vistas_min:,} vistas)")
             m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Vistas", f"{df_elite['Vistas'].sum():,}"); m2.metric("Likes", f"{df_elite['Likes'].sum():,}")
-            m3.metric("Comments", f"{df_elite['Comments'].sum():,}"); m4.metric("Contenido", len(df_elite))
+            m1.metric("Vistas", f"{df_elite['Vistas'].sum():,}")
+            m2.metric("Likes", f"{df_elite['Likes'].sum():,}")
+            m3.metric("Comments", f"{df_elite['Comments'].sum():,}")
+            m4.metric("Contenido", len(df_elite))
             st.code(" + ".join([str(v) for v in df_elite['Vistas'].tolist()]))
             st.dataframe(df_elite, use_container_width=True, hide_index=True)
+
     if not st.session_state.db_fallidos.empty:
-        with st.expander("❌ CANALES O VIDEOS FALLIDOS"): st.table(st.session_state.db_fallidos)
+        with st.expander("❌ REPORTE DE ERRORES (CANALES Y LINKS FALLIDOS)"):
+            st.table(st.session_state.db_fallidos)
