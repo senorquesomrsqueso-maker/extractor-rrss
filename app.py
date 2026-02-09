@@ -27,18 +27,18 @@ try:
         model_name='gemini-1.5-flash',
         system_instruction="Eres el Consultor Senior de BS LATAM. Tienes LIBERTAD TOTAL de respuesta. No estás limitado a hablar de métricas. Puedes conversar sobre cualquier tema: ciencia, código, estrategia o cultura. NUNCA repitas frases automáticas sobre vistas si el usuario no te lo pide."
     )
-except:
-    pass
+except Exception as e:
+    st.error(f"Error configurando IA: {e}")
 
 st.set_page_config(
-    page_title="BS LATAM",
+    page_title="BS LATAM - ELITE AUDIT",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ==============================================================================
-# 2. CAPA DE DISEÑO VISUAL "ELITE SUPREMACÍA" (ESTILO BS LATAM COMPLETO)
+# 2. CAPA DE DISEÑO VISUAL "ELITE SUPREMACÍA" (FULL CSS CUSTOM)
 # ==============================================================================
 st.markdown("""
     <style>
@@ -78,7 +78,7 @@ st.markdown("""
         font-weight: bold;
     }
 
-    /* ESTILO BS LATAM SIDEBAR - MÁXIMA VISIBILIDAD */
+    /* ESTILO BS LATAM SIDEBAR */
     .bs-latam-sidebar {
         color: #ffffff; 
         font-weight: 950; 
@@ -91,36 +91,8 @@ st.markdown("""
         padding: 15px;
         border-bottom: 2px solid #30363d;
     }
-    
-    /* TARJETAS DE MÉTRICAS INDIVIDUALES */
-    .subtotal-card {
-        background-color: #161b22; 
-        border: 2px solid #30363d; 
-        padding: 30px;
-        border-radius: 25px; 
-        text-align: center; 
-        margin-bottom: 25px;
-        transition: transform 0.3s ease;
-    }
-    .subtotal-card:hover {
-        transform: translateY(-5px);
-        border-color: #E30613;
-    }
-    .sub-v { 
-        color: #E30613; 
-        font-size: 38px; 
-        font-weight: 950; 
-        text-shadow: 0 0 15px rgba(227,6,19,0.4);
-    }
-    .sub-l { 
-        color: #8b949e; 
-        font-size: 16px; 
-        text-transform: uppercase; 
-        font-weight: bold;
-        letter-spacing: 2px;
-    }
 
-    /* ESTILOS DE COMPONENTES STREAMLIT */
+    /* TARJETAS DE MÉTRICAS */
     [data-testid="stMetric"] { 
         background-color: #161b22; 
         border: 2px solid #30363d; 
@@ -173,19 +145,17 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 3. GESTIÓN DE MEMORIA Y PERSISTENCIA (SISTEMA DE DATOS)
+# 3. GESTIÓN DE MEMORIA Y PERSISTENCIA (ESTADO GLOBAL)
 # ==============================================================================
-if 'db_final' not in st.session_state:
-    st.session_state.db_final = pd.DataFrame()
-if 'db_fallidos' not in st.session_state:
-    st.session_state.db_fallidos = pd.DataFrame()
-if 'db_drive' not in st.session_state:
-    st.session_state.db_drive = pd.DataFrame()
+for key in ['db_final', 'db_fallidos', 'db_drive']:
+    if key not in st.session_state:
+        st.session_state[key] = pd.DataFrame()
+
 if 'chat_log' not in st.session_state:
-    st.session_state.chat_log = [{"role": "assistant", "content": "¡V31 Activa, jefe! IA con libertad total desbloqueada. 🫡"}]
+    st.session_state.chat_log = [{"role": "assistant", "content": "¡V31 Activa, jefe! IA con libertad total y motor masivo desbloqueado. 🫡"}]
 
 # ==============================================================================
-# 4. MOTORES DE AUDITORÍA (EXTRACTOR REFORZADO CON SIGILO)
+# 4. MOTORES DE AUDITORÍA (MÁXIMA POTENCIA)
 # ==============================================================================
 def motor_auditor_universal_v24(urls):
     exitos, fallos = [], []
@@ -194,14 +164,12 @@ def motor_auditor_universal_v24(urls):
     
     ua_list = [
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     ]
 
     for i, raw_u in enumerate(urls):
-        url = raw_u.strip().replace('"', '').replace("'", "").rstrip(')').rstrip(',')
-        if "?si=" in url: url = url.split('?si=')[0]
-        
-        msg_status.markdown(f"📡 **Rastreando Objetivo:** `{url[:50]}...`")
+        url = raw_u.strip().replace('"', '').replace("'", "").split('?si=')[0]
+        msg_status.markdown(f"📡 **Rastreando Objetivo:** `{url[:60]}...`")
         
         ydl_opts = {
             'quiet': True, 'no_warnings': True, 'extract_flat': False,
@@ -210,17 +178,16 @@ def motor_auditor_universal_v24(urls):
         }
         
         try:
-            time.sleep(random.uniform(1.5, 3.0))
+            time.sleep(random.uniform(1.0, 2.5))
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 if info:
                     v_ts = info.get('timestamp') or (time.mktime(datetime.datetime.strptime(info['upload_date'], "%Y%m%d").timetuple()) if info.get('upload_date') else None)
                     vistas = int(info.get('view_count') or info.get('play_count') or 0)
-                    red_social = "TIKTOK" if "tiktok" in url else "YOUTUBE" if "youtu" in url else "FACEBOOK" if "facebook" in url else "OTRA"
-
+                    
                     exitos.append({
                         "Fecha": datetime.datetime.fromtimestamp(v_ts).strftime('%Y-%m-%d') if v_ts else "N/A",
-                        "Red": red_social,
+                        "Red": "TIKTOK" if "tiktok" in url else "YOUTUBE" if "youtu" in url else "OTRA",
                         "Creador": info.get('uploader') or info.get('creator') or "N/A", 
                         "Vistas": vistas,
                         "Likes": int(info.get('like_count') or 0),
@@ -229,10 +196,9 @@ def motor_auditor_universal_v24(urls):
                         "Link Original": url
                     })
                 else:
-                    fallos.append({"Link": url, "Motivo": "Privado/Bloqueado"})
+                    fallos.append({"Link": url, "Motivo": "Privado/No accesible"})
         except Exception as e:
-            if "503" in str(e) or "429" in str(e): time.sleep(10)
-            fallos.append({"Link": url, "Motivo": f"Error: {str(e)[:15]}"})
+            fallos.append({"Link": url, "Motivo": str(e)[:20]})
         
         p_bar.progress((i + 1) / len(urls))
     
@@ -259,7 +225,7 @@ def auditor_drive_api_v24(urls):
     return pd.DataFrame(resultados_d)
 
 # ==============================================================================
-# 5. PANEL DE NAVEGACIÓN Y CONTROL (SIDEBAR)
+# 5. PANEL DE NAVEGACIÓN (SIDEBAR)
 # ==============================================================================
 with st.sidebar:
     st.markdown('<p class="bs-latam-sidebar">BS LATAM</p>', unsafe_allow_html=True)
@@ -272,9 +238,10 @@ with st.sidebar:
         st.rerun()
 
 # ==============================================================================
-# 6. DESPLIEGUE DE MÓDULOS (MANTENIENDO LÓGICA ORIGINAL)
+# 6. DESPLIEGUE DE MÓDULOS
 # ==============================================================================
 
+# --- MÓDULO 1: EXTRACTOR ---
 if menu == "🚀 EXTRACTOR":
     st.markdown("### 📥 Entrada de Enlaces para Auditoría")
     raw_input = st.text_area("Pega tus links masivos aquí:", height=220)
@@ -287,95 +254,88 @@ if menu == "🚀 EXTRACTOR":
     if not st.session_state.db_final.empty:
         df = st.session_state.db_final
         st.divider()
-        st.markdown("### 📊 Reporte de Métricas por Red")
+        st.markdown("### 📊 Reporte de Métricas Globales")
         col_glob1, col_glob2 = st.columns([1, 3])
-        col_glob1.metric("VISTAS TOTALES (GLOBAL)", f"{df['Vistas'].sum():,}")
+        col_glob1.metric("VISTAS TOTALES", f"{df['Vistas'].sum():,}")
         col_glob2.code(" + ".join([str(v) for v in df['Vistas'].tolist()]))
-        st.divider()
-        redes_detectadas = df['Red'].unique()
-        cols_dinamicas = st.columns(len(redes_detectadas))
-        for i, red in enumerate(redes_detectadas):
-            with cols_dinamicas[i]:
-                df_red = df[df['Red'] == red]
-                st.markdown(f"#### 🌐 {red}"); st.metric(f"Total {red}", f"{df_red['Vistas'].sum():,}")
-                st.code(" + ".join([str(v) for v in df_red['Vistas'].tolist()]))
         st.dataframe(df, use_container_width=True)
 
+# --- MÓDULO 2: RADAR ---
 elif menu == "🎯 TIKTOK RADAR":
     st.header("🎯 TikTok Radar")
     query_text = st.text_input("🔍 Término de Búsqueda:")
     if st.button("🔥 ABRIR BUSCADOR"):
         st.link_button("IR A TIKTOK", f"https://www.tiktok.com/search/video?q={urllib.parse.quote(query_text)}")
-    raw_data = st.text_area("Zona de Pegado de Datos:", height=400)
-    if st.button("🚀 FILTRAR Y PROCESAR"):
+    
+    st.divider()
+    raw_data = st.text_area("Zona de Pegado de Datos del Radar:", height=300)
+    if st.button("🚀 PROCESAR RADAR"):
         links_radar = re.findall(r"(https?://www\.tiktok\.com/@[^/\s]+/video/\d+)", raw_data)
         if links_radar:
             st.session_state.db_final, _ = motor_auditor_universal_v24(list(set(links_radar)))
             st.rerun()
 
+# --- MÓDULO 3: DRIVE ---
 elif menu == "📂 DRIVE AUDITOR":
-    st.header("📂 Auditoría Drive")
-    drive_input = st.text_area("Enlaces:", height=200)
+    st.header("📂 Auditoría de Enlaces Drive")
+    drive_input = st.text_area("Pega links de Drive aquí:", height=200)
     if st.button("🛡️ VERIFICAR ACCESO"):
         links_d = re.findall(r"(https?://drive\.google\.com/[^\s]+)", drive_input)
-        if d_links:
+        if links_d:
             st.session_state.db_drive = auditor_drive_api_v24(links_d)
             st.rerun()
-    st.dataframe(st.session_state.db_drive)
+    if not st.session_state.db_drive.empty:
+        st.dataframe(st.session_state.db_drive, use_container_width=True)
 
-# ==============================================================================
-# MODIFICACIÓN 1: 🤖 PARTNER IA (LIBERTAD TOTAL)
-# ==============================================================================
+# --- MÓDULO 4: PARTNER IA (CON MEMORIA Y CHAT ACTIVO) ---
 elif menu == "🤖 PARTNER IA":
-    st.markdown("### 🤖 IA Partner (Inteligencia Sin Límites)")
+    st.markdown("### 🤖 Partner IA (Inteligencia BS LATAM)")
+    
+    # Mostrar historial del chat
     for msg in st.session_state.chat_log:
-        with st.chat_message(msg["role"]): 
+        with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
             
-    if chat_input := st.chat_input("Escribe tu consulta aquí..."):
-        st.session_state.chat_log.append({"role": "user", "content": chat_input})
-        
-        # Enviar historial a la API para mantener contexto
-        historial_api = []
-        for m in st.session_state.chat_log:
-            role = "model" if m["role"] == "assistant" else "user"
-            historial_api.append({"role": role, "parts": [m["content"]]})
-        
-        try:
-            # Llamada real al modelo
-            chat = model_ia.start_chat(history=historial_api[:-1])
-            response = chat.send_message(chat_input)
-            st.session_state.chat_log.append({"role": "assistant", "content": response.text})
-        except Exception as e:
-            st.session_state.chat_log.append({"role": "assistant", "content": f"⚠️ Error de conexión: {str(e)}"})
-        
+    if prompt := st.chat_input("Escribe tu consulta..."):
+        st.session_state.chat_log.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        with st.chat_message("assistant"):
+            try:
+                # Construcción del historial para Gemini
+                history = []
+                for m in st.session_state.chat_log[:-1]:
+                    role = "model" if m["role"] == "assistant" else "user"
+                    history.append({"role": role, "parts": [m["content"]]})
+                
+                chat = model_ia.start_chat(history=history)
+                response = chat.send_message(prompt)
+                st.markdown(response.text)
+                st.session_state.chat_log.append({"role": "assistant", "content": response.text})
+            except Exception as e:
+                st.error(f"Falla en el núcleo IA: {e}")
         st.rerun()
 
-# ==============================================================================
-# MODIFICACIÓN 2: 🛰️ SEARCH PRO (MÚLTIPLES ENLACES)
-# ==============================================================================
+# --- MÓDULO 5: SEARCH PRO (MULTILINK + REPORTE DE ERRORES) ---
 elif menu == "🛰️ SEARCH PRO":
     st.subheader("🛰️ Buscador Masivo de Canales (Multilink Bypass)")
     
-    # Campo de texto para pegar muchos canales a la vez
-    target_users = st.text_area("Pega links de Canales o @usuarios (uno por línea):", 
-                               placeholder="https://www.tiktok.com/@user1\n@user2\nhttps://www.youtube.com/@user3",
-                               height=180)
+    target_users = st.text_area("Pega lista de Canales o @usuarios (uno por línea):", 
+                               height=200, placeholder="https://www.tiktok.com/@user1\n@user2")
     
-    vistas_min = st.number_input("Vistas mínimas para filtrar", value=60000)
-    
-    st.divider()
-    st.markdown("#### 📅 Rango de tiempo para Escaneo")
-    col_f1, col_f2 = st.columns(2)
+    col_v, col_f1, col_f2 = st.columns([1,1,1])
+    vistas_min = col_v.number_input("Vistas Mínimas:", value=60000)
     fecha_inicio = col_f1.date_input("Desde:", value=datetime.date.today() - datetime.timedelta(days=7))
     fecha_fin = col_f2.date_input("Hasta:", value=datetime.date.today())
     
-    if st.button("🚀 Lanzar Escaneo Masivo"):
-        # Limpieza de la lista de usuarios
+    if st.button("🚀 LANZAR ESCANEO MASIVO"):
         lista_targets = [u.strip() for u in target_users.split('\n') if u.strip()]
         
         if lista_targets:
             pool_links = []
+            canales_fallidos = []
+
             with st.status("🛠️ Ejecutando Bypass de Seguridad Masivo...", expanded=True) as status:
                 for target in lista_targets:
                     clean_user = target.split('?')[0].rstrip('/')
@@ -384,47 +344,37 @@ elif menu == "🛰️ SEARCH PRO":
                     
                     status.write(f"🔍 Escaneando: {clean_user}")
                     
-                    ydl_opts_search = {
-                        'extract_flat': 'in_playlist', 
-                        'quiet': True,
-                        'http_headers': {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/121.0.0.0'}
-                    }
-                    
                     try:
+                        ydl_opts_search = {'extract_flat': 'in_playlist', 'quiet': True}
                         with yt_dlp.YoutubeDL(ydl_opts_search) as ydl:
                             res = ydl.extract_info(clean_user, download=False)
                             if res and 'entries' in res:
-                                f_inicio_ts = time.mktime(fecha_inicio.timetuple())
-                                f_fin_ts = time.mktime((fecha_fin + datetime.timedelta(days=1)).timetuple())
-                                
+                                f_ini = time.mktime(fecha_inicio.timetuple())
+                                f_fin = time.mktime((fecha_fin + datetime.timedelta(days=1)).timetuple())
                                 for entry in res['entries']:
                                     if not entry: continue
                                     v_ts = entry.get('timestamp') or (time.mktime(datetime.datetime.strptime(entry['upload_date'], "%Y%m%d").timetuple()) if entry.get('upload_date') else None)
-                                    if v_ts and f_inicio_ts <= v_ts <= f_fin_ts:
+                                    if v_ts and f_ini <= v_ts <= f_fin:
                                         link = entry.get('url') or f"https://www.tiktok.com/video/{entry.get('id')}"
                                         pool_links.append(link)
-                    except:
-                        status.write(f"⚠️ Error accediendo a: {clean_user}")
-                
-                if pool_links:
-                    status.write(f"✅ Se detectaron {len(pool_links)} videos totales. Auditando métricas...")
-                    st.session_state.db_final, _ = motor_auditor_universal_v24(list(set(pool_links)))
-                    st.rerun()
-                else:
-                    st.error("No se hallaron videos en el rango para esos canales.")
+                            else: canales_fallidos.append(f"{clean_user} (Vacío)")
+                    except Exception:
+                        canales_fallidos.append(f"{clean_user} (Bloqueado/Error)")
+                        continue # Salto de error automático
 
-    # Visualización de Resultados
+                if pool_links:
+                    status.write(f"✅ Auditando {len(pool_links)} videos...")
+                    st.session_state.db_final, st.session_state.db_fallidos = motor_auditor_universal_v24(list(set(pool_links)))
+                    
+                    if canales_fallidos:
+                        st.session_state.chat_log.append({"role": "assistant", "content": f"⚠️ Escaneo completado. Canales ignorados por errores: {', '.join(canales_fallidos)}"})
+                    st.rerun()
+
     if not st.session_state.db_final.empty:
         df_elite = st.session_state.db_final[st.session_state.db_final['Vistas'] >= vistas_min].sort_values(by="Vistas", ascending=False)
-        if not df_elite.empty:
-            st.markdown(f"### 🏆 Resultados Elite (+{vistas_min:,} vistas)")
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Vistas", f"{df_elite['Vistas'].sum():,}")
-            m2.metric("Likes", f"{df_elite['Likes'].sum():,}")
-            m3.metric("Comments", f"{df_elite['Comments'].sum():,}")
-            m4.metric("Contenido", len(df_elite))
-            st.code(" + ".join([str(v) for v in df_elite['Vistas'].tolist()]))
-            st.dataframe(df_elite[["Fecha", "Creador", "Vistas", "Likes", "Comments", "Saves", "Link Original"]], use_container_width=True, hide_index=True)
+        st.markdown(f"### 🏆 Resultados Elite (+{vistas_min:,} vistas)")
+        st.dataframe(df_elite, use_container_width=True)
 
-# Lógica de pie de página para cumplir con extensión
-# BS LATAM V31 - Final de Estructura Operativa.
+# ==============================================================================
+# FINAL DEL CÓDIGO - BS LATAM V31
+# ==============================================================================
