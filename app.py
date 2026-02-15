@@ -283,31 +283,36 @@ if modulo == "🚀 EXTRACTOR":
         st.markdown('<div class="module-header">📋 CENTRO DE EXPORTACIÓN Y COPIADO</div>', unsafe_allow_html=True)
         st.info("Utiliza los botones de la esquina derecha de cada bloque para copiar.")
 
-        c1, c2, c3 = st.columns(3)
+        # Cambio estratégico: De 3 a 4 columnas para incluir contador total
+        c1, c2, c3, c4 = st.columns(4)
         
         with c1:
             st.markdown("**1. TOTAL DE VISTAS (SUMA)**")
-            # CAMBIO: Solo muestra el número total limpio, sin lista
             total_vistas = df['Vistas'].sum()
             st.code(f"{total_vistas}", language="text")
             st.caption("Cifra total limpia.")
 
         with c2:
-            st.markdown("**2. FÓRMULA VISTAS (Formato X+Y+Z)**")
-            # CAMBIO: Sin el signo igual al principio
+            st.markdown("**2. FÓRMULA VISTAS (X+Y+Z)**")
             txt_vistas_plus = "+".join(df['Vistas'].astype(str).tolist())
             st.code(txt_vistas_plus, language="text")
             st.caption("Listo para pegar en celda.")
 
         with c3:
             st.markdown("**3. VISTAS POR PLATAFORMA**")
-            # Agrupación simple
             if 'Plataforma' in df.columns:
                 resumen = df.groupby('Plataforma')['Vistas'].sum().reset_index()
                 txt_resumen = ""
                 for index, row in resumen.iterrows():
                     txt_resumen += f"{row['Plataforma']}: {row['Vistas']}\n"
                 st.code(txt_resumen, language="yaml")
+
+        with c4:
+            st.markdown("**4. TOTAL DE VIDEOS**")
+            # Adición solicitada: Cantidad total de enlaces procesados con éxito
+            total_clips = len(df)
+            st.code(f"{total_clips}", language="text")
+            st.caption("Conteo de registros.")
 
 # ==============================================================================
 # 7. MÓDULO 2: DRIVE AUDITOR (VISION IA INTEGRADA)
