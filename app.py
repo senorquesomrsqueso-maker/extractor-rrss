@@ -30,7 +30,6 @@ st.set_page_config(
 )
 
 # Inicialización de Inteligencia Artificial Gemini 1.5
-# Se actualiza el Prompt del Sistema para consciencia temporal y generalidad.
 try:
     genai.configure(api_key=GEMINI_API_KEY)
     
@@ -44,7 +43,7 @@ try:
         "max_output_tokens": 4096,
     }
     
-    # Instrucción del sistema mejorada para ser "Todoterreno"
+    # Instrucción del sistema "Todoterreno"
     system_instruction_core = (
         f"Eres el Consultor Senior y Partner Estratégico de BS LATAM. "
         f"HOY ES: {fecha_actual}. "
@@ -206,7 +205,7 @@ def analizar_imagen_con_ia(image_file):
         return 0
 
 def motor_auditor_universal_v31(urls):
-    """Core de scraping (mismo que antes, sin cambios funcionales, solo optimizado)"""
+    """Core de scraping optimizado"""
     resultados = []
     fallidos = []
     p_bar = st.progress(0)
@@ -261,7 +260,7 @@ with st.sidebar:
         st.rerun()
 
 # ==============================================================================
-# 6. MÓDULO 1: EXTRACTOR (MEJORADO CON ZONA DE COPIADO)
+# 6. MÓDULO 1: EXTRACTOR (MODIFICADO SEGÚN ORDEN)
 # ==============================================================================
 if modulo == "🚀 EXTRACTOR":
     st.markdown('<div class="module-header">📥 Extractor de Métricas Masivas</div>', unsafe_allow_html=True)
@@ -281,24 +280,24 @@ if modulo == "🚀 EXTRACTOR":
         st.dataframe(df, use_container_width=True, hide_index=True)
 
         # --- ZONA NUEVA: EXPORTACIÓN TÁCTICA ---
-        st.markdown('<div class="module-header">📋 CENTRO DE EXPORTACIÓN Y COPIADO (SHEETS READY)</div>', unsafe_allow_html=True)
-        st.info("Utiliza los botones de la esquina derecha de cada bloque para copiar los datos sin errores de formato.")
+        st.markdown('<div class="module-header">📋 CENTRO DE EXPORTACIÓN Y COPIADO</div>', unsafe_allow_html=True)
+        st.info("Utiliza los botones de la esquina derecha de cada bloque para copiar.")
 
         c1, c2, c3 = st.columns(3)
         
         with c1:
-            st.markdown("**1. COLUMNA VISTAS (Para pegar vertical)**")
-            # Convertimos a string puro separado por saltos de línea
-            txt_vistas_col = "\n".join(df['Vistas'].astype(str).tolist())
-            st.code(txt_vistas_col, language="text")
-            st.caption(f"Total Vistas: {df['Vistas'].sum():,}")
+            st.markdown("**1. TOTAL DE VISTAS (SUMA)**")
+            # CAMBIO: Solo muestra el número total limpio, sin lista
+            total_vistas = df['Vistas'].sum()
+            st.code(f"{total_vistas}", language="text")
+            st.caption("Cifra total limpia.")
 
         with c2:
             st.markdown("**2. FÓRMULA VISTAS (Formato X+Y+Z)**")
-            # Creamos la string concatenada con +
+            # CAMBIO: Sin el signo igual al principio
             txt_vistas_plus = "+".join(df['Vistas'].astype(str).tolist())
-            st.code(f"={txt_vistas_plus}", language="text")
-            st.caption("Listo para pegar en celda de fórmula.")
+            st.code(txt_vistas_plus, language="text")
+            st.caption("Listo para pegar en celda.")
 
         with c3:
             st.markdown("**3. VISTAS POR PLATAFORMA**")
@@ -358,7 +357,7 @@ elif modulo == "📂 DRIVE AUDITOR (VISION IA)":
             lista_vistas = df_v[df_v['Vistas Detectadas'] > 0]['Vistas Detectadas'].tolist()
             if lista_vistas:
                 txt_plus_vision = "+".join(map(str, lista_vistas))
-                st.code(f"={txt_plus_vision}", language="text")
+                st.code(txt_plus_vision, language="text") # También sin el = aquí
             else:
                 st.warning("No se detectaron números válidos.")
                 
@@ -404,15 +403,83 @@ elif modulo == "🤖 PARTNER IA":
 # ==============================================================================
 elif modulo == "🛰️ SEARCH PRO":
     st.markdown('<div class="module-header">🚀 Buscador Inteligente (Radar V32)</div>', unsafe_allow_html=True)
-    # (Código del módulo Search Pro se mantiene igual para ahorrar espacio visual, 
-    # pero está funcionalmente activo si copiaste el bloque anterior completo)
-    st.info("Módulo de escaneo masivo de canales activo y optimizado en background.")
-    # ... [Código del scanner Search Pro iría aquí si se requiriera modificar] ...
-    # Nota: Para mantener las 600 lineas limpias, asumo que usas el mismo scanner 
-    # del código anterior o quieres enfocar en los cambios solicitados.
+    
+    # ENTRADA MASIVA (Text Area para múltiples canales)
+    area_canales = st.text_area(
+        "Pega el link del Canal o @usuario (uno por línea para escaneo masivo):", 
+        height=320, 
+        placeholder="https://www.tiktok.com/@_euren\nhttps://www.tiktok.com/@el_jhoda\n@pkbjaguar\nhttps://www.youtube.com/@CanalEjemplo"
+    )
+    
+    # Parámetros de filtrado técnico
+    col_p1, col_p2 = st.columns([2, 1])
+    with col_p1:
+        st.markdown('<div class="module-header">📅 Rango de tiempo para Escaneo (Filtro Estricto)</div>', unsafe_allow_html=True)
+        c_f1, c_f2 = st.columns(2)
+        f_desde = c_f1.date_input("Desde:", value=datetime.date(2026, 2, 2))
+        f_hasta = c_f2.date_input("Hasta:", value=datetime.date(2026, 2, 9))
+    
+    with col_p2:
+        st.markdown('<div class="module-header">📊 Umbral</div>', unsafe_allow_html=True)
+        v_minimas = st.number_input("Vistas mínimas requeridas:", value=60000, step=5000)
+
+    if st.button("🚀 LANZAR ESCANEO MASIVO MULTI-CANAL"):
+        canales_finales = [c.strip() for c in area_canales.split('\n') if c.strip()]
+        
+        if canales_finales:
+            lista_acumulada_links = []
+            
+            with st.status("🛠️ Iniciando Operación de Rastreo Profundo...", expanded=True) as status_ui:
+                for canal in canales_finales:
+                    url_canal = canal.split('?')[0].rstrip('/')
+                    if not url_canal.startswith('http'):
+                        url_canal = f"https://www.tiktok.com/@{url_canal.replace('@', '')}"
+                    
+                    status_ui.write(f"🔍 Analizando perfil: `{url_canal}`")
+                    
+                    try:
+                        opts_search = {
+                            'extract_flat': 'in_playlist', 'quiet': True, 'ignoreerrors': True,
+                            'playlist_items': '1-30'
+                        }
+                        
+                        with yt_dlp.YoutubeDL(opts_search) as ydl_s:
+                            data_canal = ydl_s.extract_info(url_canal, download=False)
+                            if data_canal and 'entries' in data_canal:
+                                t_inicio_filtro = time.mktime(f_desde.timetuple())
+                                t_fin_filtro = time.mktime((f_hasta + datetime.timedelta(days=1)).timetuple())
+                                
+                                count_perfil = 0
+                                for video in data_canal['entries']:
+                                    if not video: continue
+                                    v_fecha_raw = video.get('upload_date')
+                                    if v_fecha_raw:
+                                        v_timestamp = time.mktime(datetime.datetime.strptime(v_fecha_raw, "%Y%m%d").timetuple())
+                                        if t_inicio_filtro <= v_timestamp <= t_fin_filtro:
+                                            v_url = video.get('url') or f"https://www.tiktok.com/video/{video.get('id')}"
+                                            lista_acumulada_links.append(v_url)
+                                            count_perfil += 1
+                                status_ui.write(f"✅ Se hallaron {count_perfil} videos válidos en este perfil.")
+                    except Exception as e_perfil:
+                        status_ui.write(f"⚠️ Salto de perfil por error en `{url_canal}`.")
+                
+                if lista_acumulada_links:
+                    status_ui.write(f"🔥 Iniciando fase final: Auditoría de {len(lista_acumulada_links)} videos...")
+                    st.session_state.db_final, _ = motor_auditor_universal_v31(list(set(lista_acumulada_links)))
+                    st.rerun()
+                else:
+                    st.error("No se encontraron videos que cumplan con el Filtro Estricto de fecha.")
+        else:
+            st.warning("Debes ingresar al menos un canal o usuario para iniciar el proceso.")
+
+    if not st.session_state.db_final.empty:
+        df_elite = st.session_state.db_final[st.session_state.db_final['Vistas'] >= v_minimas]
+        df_elite = df_elite.sort_values(by="Vistas", ascending=False)
+        st.markdown(f"### 🏆 Resultados Élite Filtrados (+{v_minimas:,} vistas)")
+        st.dataframe(df_elite, use_container_width=True, hide_index=True)
 
 # ==============================================================================
 # PIE DE PÁGINA
 # ==============================================================================
 st.markdown("---")
-st.caption(f"BS LATAM SYSTEM V32 • {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')} • ENCRIPTACIÓN ACTIVA")
+st.caption(f"BS LATAM SYSTEM V32.1 • {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')} • ENCRIPTACIÓN ACTIVA")
