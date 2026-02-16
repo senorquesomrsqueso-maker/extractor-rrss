@@ -393,63 +393,71 @@ def motor_auditor_universal_v32(urls):
     status_text.empty()
     return pd.DataFrame(resultados), pd.DataFrame(fallidos)
 
+# ==============================================================================
+# MOTOR DE BÚSQUEDA TEMPORAL CORREGIDO (FIX TIKTOK)
+# ==============================================================================
 def motor_busqueda_temporal(urls_canales, f_start, f_end, min_views):
     """
-    MOTOR ANTIGUO DE BÚSQUEDA TEMPORAL:
-    1. Entra al canal/perfil.
-    2. Saca la lista de videos (extract_flat).
-    3. Filtra por fechas y vistas.
+    MOTOR REPARADO: Añade headers de evasión para que TikTok no devuelva 0 resultados.
     """
     resultados = []
-    
-    # Convertir fechas a enteros YYYYMMDD para comparación rápida
     d_start = int(f_start.strftime('%Y%m%d'))
     d_end = int(f_end.strftime('%Y%m%d'))
     
     p_bar = st.progress(0)
     status = st.empty()
     
+    # OPCIONES PARA EVITAR BLOQUEO DE TIKTOK Y YT
     ydl_opts_search = {
         'quiet': True,
         'ignoreerrors': True,
-        'extract_flat': True,  # CLAVE: Solo saca metadatos, no descarga.
-        'playlistend': 40,     # SEGURIDAD: Solo mira los últimos 40 videos para no colgarse.
-        'sleep_interval': 1,   # Anti-ban
+        'extract_flat': True,  # Clave para rapidez
+        'playlistend': 50,
+        'sleep_interval': 1,
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+            'Accept-Language': 'es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3',
+        }
     }
     
     for i, url in enumerate(urls_canales):
         url = url.strip()
-        status.markdown(f"🛰️ **ESCANEO RADAR:** Analizando feed de `{url}`...")
+        if not url: continue
+        status.markdown(f"🛰️ **ESCANEO RADAR:** Analizando feed de `{url[:40]}...`")
         
         try:
             with yt_dlp.YoutubeDL(ydl_opts_search) as ydl:
                 info = ydl.extract_info(url, download=False)
                 
-                if 'entries' in info:
+                if info and 'entries' in info:
                     videos = info['entries']
                     for vid in videos:
                         if not vid: continue
                         
-                        # Obtener fecha y vistas del video
+                        # Fix: TikTok a veces usa 'upload_date' y otras veces 'timestamp'
                         v_date_str = vid.get('upload_date')
+                        if not v_date_str and vid.get('timestamp'):
+                            v_date_str = datetime.datetime.fromtimestamp(vid.get('timestamp')).strftime('%Y%m%d')
+                        
                         v_views = vid.get('view_count')
                         
-                        # Validar que existan datos
                         if v_date_str and v_views is not None:
                             v_date_int = int(v_date_str)
                             
-                            # LÓGICA DE FILTRADO (El corazón del motor antiguo)
+                            # Filtro estricto por fecha y umbral de vistas
                             if d_start <= v_date_int <= d_end:
-                                if v_views >= min_views:
+                                if int(v_views) >= min_views:
                                     resultados.append({
                                         "Fecha": f"{v_date_str[:4]}-{v_date_str[4:6]}-{v_date_str[6:]}",
-                                        "Canal/Fuente": info.get('title', 'Desconocido'),
+                                        "Canal/Fuente": info.get('title', 'N/A'),
                                         "Título Video": vid.get('title', 'N/A')[:60],
                                         "Vistas": int(v_views),
-                                        "Link": vid.get('url', vid.get('webpage_url', url))
+                                        "Link": vid.get('url') or vid.get('webpage_url') or url
                                     })
+                else:
+                    print(f"No se pudieron extraer entradas de: {url}")
         except Exception as e:
-            # Si falla un canal, seguimos con el siguiente
             print(f"Error en canal {url}: {e}")
             
         p_bar.progress((i + 1) / len(urls_canales))
@@ -678,7 +686,7 @@ elif modulo == "🤖 PARTNER IA":
                 st.error(f"FALLO EN LA CONEXIÓN NEURAL: {str(e_chat)}")
 
 # ==============================================================================
-# 9. MÓDULO 4: SEARCH PRO (CON MOTOR DE BÚSQUEDA TEMPORAL ANTIGUO)
+# 9. MÓDULO 4: SEARCH PRO (CON MOTOR DE BÚSQUEDA TEMPORAL CORREGIDO)
 # ==============================================================================
 
 elif modulo == "🛰️ SEARCH PRO":
@@ -690,7 +698,7 @@ elif modulo == "🛰️ SEARCH PRO":
     col_s1, col_s2, col_s3 = st.columns(3)
     f_inicio = col_s1.date_input("Desde:", value=datetime.date(2026, 2, 1))
     f_fin = col_s2.date_input("Hasta:", value=datetime.date(2026, 2, 28))
-    v_umbral = col_s3.number_input("Vistas Mínimas (Filtro):", value=10000)
+    v_umbral = col_s3.number_input("Vistas Mínimas (Filtro):", value=1000)
 
     if st.button("🚀 ACTIVAR BARRIDO TEMPORAL"):
         perfiles = [p.strip() for p in area_search.split('\n') if p.strip()]
@@ -698,9 +706,9 @@ elif modulo == "🛰️ SEARCH PRO":
         if perfiles:
             with st.status("📡 Escaneando feeds de contenido...", expanded=True) as status:
                 st.write(f"Iniciando extracción profunda en {len(perfiles)} canales...")
-                st.write("Filtrando por fecha y umbral de vistas...")
+                st.write("Aplicando protocolos de evasión para TikTok/YouTube...")
                 
-                # LLAMADA AL NUEVO MOTOR "ANTIGUO" QUE FILTRA POR FECHAS
+                # LLAMADA AL MOTOR REPARADO
                 res_search = motor_busqueda_temporal(perfiles, f_inicio, f_fin, v_umbral)
                 
                 status.update(label="✅ Escaneo Completado", state="complete", expanded=False)
@@ -713,13 +721,14 @@ elif modulo == "🛰️ SEARCH PRO":
                 st.markdown('<div class="tactical-summary">', unsafe_allow_html=True)
                 total_radar = res_search['Vistas'].sum()
                 st.markdown(f"**VISTAS TOTALES ENCONTRADAS:** {total_radar:,}")
+                st.markdown(f"**TOTAL VIDEOS:** {len(res_search)}")
                 st.markdown('</div>', unsafe_allow_html=True)
                 
                 st.markdown("**FÓRMULA TOTAL COPIABLE:**")
                 f_search_total = "+".join(res_search['Vistas'].astype(str).tolist())
                 st.code(f_search_total if f_search_total else "0", language="text")
             else:
-                st.warning("No se encontraron videos que cumplan con los filtros de fecha y vistas en los canales proporcionados.")
+                st.warning("No se encontraron videos que cumplan con los filtros. Si el perfil tiene videos, prueba bajando el umbral de vistas a 0 o revisa que el link sea público.")
         else:
             st.error("Error: Debe ingresar al menos un canal para el radar.")
 
