@@ -14,10 +14,12 @@ import random
 import google.generativeai as genai
 from io import BytesIO
 from PIL import Image
+from bs4 import BeautifulSoup
 
 # ==============================================================================
 # 1. CONFIGURACIÓN ESTRUCTURAL Y NÚCLEO IA DE ALTO RENDIMIENTO
 # ==============================================================================
+
 # Credenciales de Acceso - Protocolo BS LATAM
 DRIVE_API_KEY = "AIzaSyBjETNqerBHpqCBQBH7B1bZl55eYWrtMQk" 
 GEMINI_API_KEY = "AIzaSyA8HsM0vSCopd1s05nOryhbNIGU26dvxG4"
@@ -56,18 +58,20 @@ try:
         "NUNCA uses frases robóticas ni disculpas innecesarias."
     )
 
-    # SE CORRIGE A 'latest' PARA EVITAR ERROR 404 DE VERSIÓN
+    # SE CORRIGE A 'gemini-1.5-flash' PARA ESTABILIDAD Y EVITAR ERROR 404
     model_ia = genai.GenerativeModel(
-        model_name='gemini-1.5-flash-latest',
+        model_name='gemini-1.5-flash',
         generation_config=generation_config,
         system_instruction=system_instruction_core
     )
+
 except Exception as e_ia_init:
     st.error(f"FALLA CRÍTICA EN NÚCLEO NEURAL: {e_ia_init}")
 
 # ==============================================================================
 # 2. CAPA DE DISEÑO VISUAL "ELITE SUPREMACÍA" (CSS EXTENDIDO)
 # ==============================================================================
+
 st.markdown("""
     <style>
     /* Estética General Dark Industrial */
@@ -76,7 +80,10 @@ st.markdown("""
         color: #e6edf3; 
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
     }
-    .stApp { background-color: #0b0d11; }
+
+    .stApp { 
+        background-color: #0b0d11; 
+    }
     
     /* BLOQUE DE TÍTULO PRINCIPAL EXTENDIDO */
     .title-box { 
@@ -87,45 +94,79 @@ st.markdown("""
         border-radius: 0 40px 40px 0;
         box-shadow: 20px 0 50px rgba(0,0,0,0.7);
     }
+
     .m-title { 
-        font-size: 60px; font-weight: 900; color: #ffffff; 
-        text-transform: uppercase; letter-spacing: 12px; margin: 0; 
-        line-height: 1.1; text-shadow: 5px 5px 10px rgba(0,0,0,1);
+        font-size: 60px; 
+        font-weight: 900; 
+        color: #ffffff; 
+        text-transform: uppercase; 
+        letter-spacing: 12px; 
+        margin: 0; 
+        line-height: 1.1; 
+        text-shadow: 5px 5px 10px rgba(0,0,0,1);
     }
+
     .s-title { 
-        font-size: 26px; color: #8b949e; font-family: 'Courier New', monospace; 
-        margin-top: 25px; letter-spacing: 5px; font-weight: bold;
+        font-size: 26px; 
+        color: #8b949e; 
+        font-family: 'Courier New', monospace; 
+        margin-top: 25px; 
+        letter-spacing: 5px; 
+        font-weight: bold;
     }
 
     /* ESTILO DE LOS ENCABEZADOS DE MÓDULO */
     .module-header {
-        font-size: 32px; font-weight: 700; color: #ffffff;
-        margin-top: 40px; margin-bottom: 25px;
-        display: flex; align-items: center; gap: 15px;
-        border-bottom: 1px solid #30363d; padding-bottom: 15px;
+        font-size: 32px; 
+        font-weight: 700; 
+        color: #ffffff;
+        margin-top: 40px; 
+        margin-bottom: 25px;
+        display: flex; 
+        align-items: center; 
+        gap: 15px;
+        border-bottom: 1px solid #30363d; 
+        padding-bottom: 15px;
     }
+
     .sub-header {
-        font-size: 20px; font-weight: 600; color: #E30613;
-        margin-top: 20px; text-transform: uppercase; letter-spacing: 2px;
+        font-size: 20px; 
+        font-weight: 600; 
+        color: #E30613;
+        margin-top: 20px; 
+        text-transform: uppercase; 
+        letter-spacing: 2px;
     }
 
     /* ESTILO BS LATAM SIDEBAR */
     .bs-latam-sidebar {
-        color: #ffffff; font-weight: 950; font-size: 45px; text-align: center;
-        text-transform: uppercase; letter-spacing: 7px;
+        color: #ffffff; 
+        font-weight: 950; 
+        font-size: 45px; 
+        text-align: center;
+        text-transform: uppercase; 
+        letter-spacing: 7px;
         text-shadow: 0px 0px 30px #0055ff, 4px 4px 0px #000000;
-        margin-bottom: 45px; padding: 25px; border-bottom: 4px solid #E30613;
+        margin-bottom: 45px; 
+        padding: 25px; 
+        border-bottom: 4px solid #E30613;
     }
 
     /* BOTONERÍA ÉLITE */
     .stButton>button { 
         background: linear-gradient(135deg, #E30613 0%, #9e040d 100%) !important;
-        color: #ffffff !important; font-weight: 900 !important; 
-        text-transform: uppercase; border-radius: 30px; 
-        height: 70px; width: 100%; font-size: 22px !important;
-        border: none; box-shadow: 0 10px 20px rgba(227,6,19,0.35);
+        color: #ffffff !important; 
+        font-weight: 900 !important; 
+        text-transform: uppercase; 
+        border-radius: 30px; 
+        height: 70px; 
+        width: 100%; 
+        font-size: 22px !important;
+        border: none; 
+        box-shadow: 0 10px 20px rgba(227,6,19,0.35);
         transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
+
     .stButton>button:hover {
         transform: scale(1.02) translateY(-4px);
         box-shadow: 0 15px 35px rgba(227,6,19,0.55);
@@ -134,17 +175,23 @@ st.markdown("""
     
     /* INPUTS Y TEXT AREAS MASIVAS */
     .stTextArea textarea, .stTextInput input, .stNumberInput input { 
-        background-color: #161b22 !important; color: #e6edf3 !important; 
-        border: 2px solid #30363d !important; border-radius: 15px;
-        font-size: 16px; padding: 15px;
+        background-color: #161b22 !important; 
+        color: #e6edf3 !important; 
+        border: 2px solid #30363d !important; 
+        border-radius: 15px;
+        font-size: 16px; 
+        padding: 15px;
     }
+
     .stTextArea textarea:focus, .stTextInput input:focus { 
         border-color: #E30613 !important; 
     }
 
     /* TABLAS Y DATAFRAMES */
     [data-testid="stDataFrame"] {
-        border: 2px solid #30363d; border-radius: 20px; overflow: hidden;
+        border: 2px solid #30363d; 
+        border-radius: 20px; 
+        overflow: hidden;
         background-color: #161b22;
     }
     
@@ -165,10 +212,12 @@ st.markdown("""
 
     /* MÉTRICAS FLOTANTES */
     .metric-value {
-        color: #E30613; font-size: 38px; font-weight: 900;
+        color: #E30613; 
+        font-size: 38px; 
+        font-weight: 900;
     }
 
-    /* ESTILO RESUMEN TÁCTICO V32.8 (No copiable) */
+    /* ESTILO RESUMEN TÁCTICO V32.9 */
     .tactical-summary {
         background: linear-gradient(135deg, #161b22 0%, #0b0d11 100%);
         border: 1px solid #30363d;
@@ -178,9 +227,24 @@ st.markdown("""
         color: #e6edf3;
         font-family: 'Courier New', monospace;
     }
-    .tactical-item { margin-bottom: 8px; display: flex; justify-content: space-between; }
-    .tactical-label { color: #8b949e; text-transform: uppercase; font-size: 14px; }
-    .tactical-value { color: #ffffff; font-weight: bold; border-bottom: 1px solid #E30613; }
+
+    .tactical-item { 
+        margin-bottom: 8px; 
+        display: flex; 
+        justify-content: space-between; 
+    }
+
+    .tactical-label { 
+        color: #8b949e; 
+        text-transform: uppercase; 
+        font-size: 14px; 
+    }
+
+    .tactical-value { 
+        color: #ffffff; 
+        font-weight: bold; 
+        border-bottom: 1px solid #E30613; 
+    }
     </style>
     
     <div class="title-box">
@@ -192,6 +256,7 @@ st.markdown("""
 # ==============================================================================
 # 3. GESTIÓN DE MEMORIA, VARIABLES DE ESTADO Y LOGS
 # ==============================================================================
+
 if 'db_final' not in st.session_state: 
     st.session_state.db_final = pd.DataFrame()
 
@@ -209,12 +274,16 @@ if 'chat_log' not in st.session_state:
 # ==============================================================================
 # 4. FUNCIONES CORE - LÓGICA DE PROCESAMIENTO MULTI-PLATAFORMA
 # ==============================================================================
+
 def limpiar_url_táctica(url):
     """Limpia parámetros de rastreo para evitar errores de scraping."""
     url = url.strip().replace('"', '').replace("'", "")
-    if '?si=' in url: url = url.split('?si=')[0]
-    if '&pp=' in url: url = url.split('&pp=')[0]
-    if 'fb.watch' in url: return url 
+    if '?si=' in url: 
+        url = url.split('?si=')[0]
+    if '&pp=' in url: 
+        url = url.split('&pp=')[0]
+    if 'fb.watch' in url: 
+        return url 
     return url
 
 def obtener_tipo_video(url, info_dict):
@@ -232,6 +301,22 @@ def obtener_tipo_video(url, info_dict):
         return "YouTube Video"
     
     return "Contenido Externo"
+
+def navegar_ia_en_enlace(url):
+    """Permite que el sistema 'entre' en un enlace y extraiga texto para la IA."""
+    try:
+        header_request = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+        r = requests.get(url, headers=header_request, timeout=12)
+        if r.status_code == 200:
+            s = BeautifulSoup(r.text, 'html.parser')
+            for tag in s(["script", "style", "header", "footer", "nav"]):
+                tag.decompose()
+            return s.get_text(separator=' ')[:5000]
+        return "Error: No se pudo acceder al sitio."
+    except Exception as e:
+        return f"Error de conexión: {str(e)}"
 
 def analizar_imagen_con_ia(image_file):
     """Usa Gemini Vision para leer métricas de imágenes."""
@@ -311,6 +396,7 @@ def motor_auditor_universal_v32(urls):
 # ==============================================================================
 # 5. SIDEBAR - CONTROL DE MISIONES
 # ==============================================================================
+
 with st.sidebar:
     st.markdown('<p class="bs-latam-sidebar">BS LATAM</p>', unsafe_allow_html=True)
     
@@ -333,13 +419,14 @@ with st.sidebar:
 # ==============================================================================
 # 6. MÓDULO 1: EXTRACTOR ELITE (MODO MULTI-PLATAFORMA)
 # ==============================================================================
+
 if modulo == "🚀 EXTRACTOR ELITE":
     st.markdown('<div class="module-header">📥 Extractor de Métricas Masivas</div>', unsafe_allow_html=True)
     
     texto_entrada = st.text_area(
         "Pega los enlaces (uno por línea o separados por comas):", 
         height=250, 
-        placeholder="https://www.facebook.com/watch/?v=...\nhttps://www.youtube.com/shorts/...\nhttps://tiktok.com/@user/video/..."
+        placeholder="https://..."
     )
     
     c_btn1, c_btn2 = st.columns([1, 4])
@@ -400,65 +487,38 @@ if modulo == "🚀 EXTRACTOR ELITE":
         col_copy1, col_copy2 = st.columns(2)
         
         with col_copy1:
-            # Fórmula YouTube Largos
             st.markdown("**1. FÓRMULA YT LARGOS (X+Y+Z)**")
             f_yt_largos = "+".join(df_yt_v['Vistas'].astype(str).tolist())
             st.code(f_yt_largos if f_yt_largos else "0", language="text")
             
-            # Fórmula Facebook
             st.markdown("**2. FÓRMULA FACEBOOK (X+Y+Z)**")
             f_fb = "+".join(df_fb['Vistas'].astype(str).tolist())
             st.code(f_fb if f_fb else "0", language="text")
             
-            # Fórmula YouTube Shorts
             st.markdown("**3. FÓRMULA YT SHORTS (X+Y+Z)**")
             df_shorts = df[df['Tipo'] == 'YouTube Shorts']
             f_shorts = "+".join(df_shorts['Vistas'].astype(str).tolist())
             st.code(f_shorts if f_shorts else "0", language="text")
 
-            # --- CAMBIO APLICADO: SUMA GLOBAL EN FORMATO COPIABLE ---
             st.markdown("**4. VISTAS TOTALES DE TODO (SUMA GLOBAL)**")
             st.code(f"{total_v}", language="text")
 
         with col_copy2:
-            # Fórmula TikTok 
             st.markdown("**5. FÓRMULA TIKTOK (X+Y+Z)**")
             f_tk = "+".join(df_tk['Vistas'].astype(str).tolist())
             st.code(f_tk if f_tk else "0", language="text")
 
-            # --- CAMBIO APLICADO: SUMA GLOBAL EN FORMATO COPIABLE ---
             st.markdown("**6. FÓRMULA TOTAL GENERAL**")
             st.code(f"{total_v}", language="text")
             
-            # Resumen Ejecutivo ESTÉTICO (NO COPIABLE)
             st.markdown("**7. RESUMEN TÁCTICO DE OPERACIÓN**")
-            urls_count = len(re.findall(r"(https?://[^\s\"\'\)\],]+)", texto_entrada))
             st.markdown(f"""
                 <div class="tactical-summary">
-                    <div class="tactical-item">
-                        <span class="tactical-label">Protocolo:</span>
-                        <span class="tactical-value">BS LATAM AUDIT ELITE</span>
-                    </div>
-                    <div class="tactical-item">
-                        <span class="tactical-label">Enlaces Procesados:</span>
-                        <span class="tactical-value">{urls_count}</span>
-                    </div>
-                    <div class="tactical-item">
-                        <span class="tactical-label">Auditorías Exitosas:</span>
-                        <span class="tactical-value">{len(df)}</span>
-                    </div>
-                    <div class="tactical-item">
-                        <span class="tactical-label">YouTube (Total):</span>
-                        <span class="tactical-value">{df_yt_v['Vistas'].sum() + df_shorts['Vistas'].sum():,}</span>
-                    </div>
-                    <div class="tactical-item">
-                        <span class="tactical-label">Facebook (Total):</span>
-                        <span class="tactical-value">{df_fb['Vistas'].sum():,}</span>
-                    </div>
-                    <div class="tactical-item">
-                        <span class="tactical-label">TikTok (Total):</span>
-                        <span class="tactical-value">{df_tk['Vistas'].sum():,}</span>
-                    </div>
+                    <div class="tactical-item"><span class="tactical-label">Protocolo:</span><span class="tactical-value">BS LATAM AUDIT ELITE</span></div>
+                    <div class="tactical-item"><span class="tactical-label">Exitosos:</span><span class="tactical-value">{len(df)}</span></div>
+                    <div class="tactical-item"><span class="tactical-label">YouTube:</span><span class="tactical-value">{df_yt_v['Vistas'].sum() + df_shorts['Vistas'].sum():,}</span></div>
+                    <div class="tactical-item"><span class="tactical-label">Facebook:</span><span class="tactical-value">{df_fb['Vistas'].sum():,}</span></div>
+                    <div class="tactical-item"><span class="tactical-label">TikTok:</span><span class="tactical-value">{df_tk['Vistas'].sum():,}</span></div>
                     <div style="border-top: 1px dashed #E30613; margin-top: 10px; padding-top: 10px;" class="tactical-item">
                         <span class="tactical-label" style="color:#E30613;">Acumulado Global:</span>
                         <span class="tactical-value" style="font-size: 18px;">{total_v:,}</span>
@@ -467,14 +527,15 @@ if modulo == "🚀 EXTRACTOR ELITE":
             """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 7. MÓDULO 2: DRIVE AUDITOR (VISION IA + EXTRACTOR DE ENLACES)
+# 7. MÓDULO 2: DRIVE AUDITOR (VISION IA + NAVEGACIÓN)
 # ==============================================================================
+
 elif modulo == "📂 DRIVE AUDITOR (VISION)":
     st.markdown('<div class="module-header">👁️ Auditor Visual y de Enlaces</div>', unsafe_allow_html=True)
     
-    st.markdown('<div class="sub-header">🔗 Auditoría por Enlaces Drive / Otros</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-header">🔗 Auditoría por Navegación IA (Lectura de Link)</div>', unsafe_allow_html=True)
     entrada_enlaces_drive = st.text_area(
-        "Pega aquí los enlaces para extraer data técnica:", 
+        "Pega aquí los enlaces (La IA 'entrará' a leer la data):", 
         height=150, 
         placeholder="Pega múltiples enlaces aquí..."
     )
@@ -482,43 +543,44 @@ elif modulo == "📂 DRIVE AUDITOR (VISION)":
     st.divider()
     
     st.markdown('<div class="sub-header">📸 Auditoría por Evidencia Visual (OCR)</div>', unsafe_allow_html=True)
-    st.info("Sube capturas de pantalla de analíticas. La IA leerá los números automáticamente.")
     up_files = st.file_uploader("Arrastra las evidencias aquí:", type=['png', 'jpg', 'jpeg', 'webp'], accept_multiple_files=True)
     
-    if st.button("🧠 INICIAR AUDITORÍA DRIVE"):
-        # Procesamiento de Enlaces
+    if st.button("🧠 INICIAR AUDITORÍA PROFUNDA"):
+        v_results_final = []
+        
+        # Procesamiento de Enlaces mediante Navegación Textual IA
         urls_drive = re.findall(r"(https?://[^\s\"\'\)\],]+)", entrada_enlaces_drive)
         if urls_drive:
-            res_d, fails_d = motor_auditor_universal_v32(urls_drive)
-            st.session_state.db_drive_vision = res_d
-            if not res_d.empty:
-                st.success(f"Se extrajo data de {len(res_d)} enlaces.")
-        
-        # Procesamiento de Imágenes
+            for u in urls_drive:
+                with st.spinner(f"IA Navegando en {u[:30]}..."):
+                    texto_web = navegar_ia_en_enlace(u)
+                    prompt_ia_link = f"Analiza este texto extraído de una web y busca el número de VISTAS o REPRODUCCIONES. Solo responde el número: {texto_web}"
+                    res_ia_link = model_ia.generate_content(prompt_ia_link)
+                    vistas_final = re.sub(r'[^0-9]', '', res_ia_link.text)
+                    
+                    v_results_final.append({
+                        "Fecha": "Enlace IA", "Plataforma": "LINK", "Tipo": "Scraping IA", 
+                        "Creador": "N/A", "Título": u[:50], 
+                        "Vistas": int(vistas_final) if vistas_final else 0, "Link": u
+                    })
+
+        # Procesamiento de Imágenes Vision
         if up_files:
-            v_results = []
             v_bar = st.progress(0)
             for idx, f in enumerate(up_files):
-                vistas_img = analizar_imagen_con_ia(f)
-                v_results.append({
-                    "Fecha": "Visual OCR", 
-                    "Plataforma": "VISION", 
-                    "Tipo": "Captura", 
-                    "Creador": "N/A", 
-                    "Título": f.name, 
-                    "Vistas": vistas_img, 
-                    "Link": "Archivo Local"
+                v_img = analizar_imagen_con_ia(f)
+                v_results_final.append({
+                    "Fecha": "OCR IA", "Plataforma": "VISION", "Tipo": "Captura", 
+                    "Creador": "N/A", "Título": f.name, "Vistas": v_img, "Link": "Archivo Local"
                 })
                 v_bar.progress((idx + 1) / len(up_files))
-            
-            df_vision = pd.DataFrame(v_results)
-            st.session_state.db_drive_vision = pd.concat([st.session_state.db_drive_vision, df_vision], ignore_index=True)
-            st.success("Análisis Visual Completado.")
+        
+        st.session_state.db_drive_vision = pd.DataFrame(v_results_final)
+        st.success("Análisis Profundo Completado.")
 
     if not st.session_state.db_drive_vision.empty:
         st.markdown('<div class="sub-header">📊 DATA CONSOLIDADA DRIVE/VISION</div>', unsafe_allow_html=True)
         st.dataframe(st.session_state.db_drive_vision, use_container_width=True, hide_index=True)
-        # Fórmula de suma para las vistas detectadas
         f_ia = "+".join(st.session_state.db_drive_vision['Vistas'].astype(str).tolist())
         st.markdown("**FÓRMULA DE SUMA DRIVE/VISION**")
         st.code(f_ia, language="text")
@@ -526,6 +588,7 @@ elif modulo == "📂 DRIVE AUDITOR (VISION)":
 # ==============================================================================
 # 8. MÓDULO 3: PARTNER IA (ARREGLADO)
 # ==============================================================================
+
 elif modulo == "🤖 PARTNER IA":
     st.markdown('<div class="module-header">🤖 Partner IA - Consultor Estratégico</div>', unsafe_allow_html=True)
     
@@ -540,46 +603,56 @@ elif modulo == "🤖 PARTNER IA":
         
         with st.chat_message("assistant"):
             try:
+                # SE USA EL MODELO ESTABLE PARA EVITAR 404
                 response = model_ia.generate_content(p_user)
                 if response and response.text:
                     texto_ia = response.text
                     st.markdown(texto_ia)
                     st.session_state.chat_log.append({"role": "assistant", "content": texto_ia})
-                else:
-                    st.error("La IA no devolvió contenido.")
             except Exception as e_chat:
                 st.error(f"FALLO EN LA CONEXIÓN NEURAL: {str(e_chat)}")
 
 # ==============================================================================
-# 9. MÓDULO 4: SEARCH PRO (ACTUALIZADO CON RANGO DE FECHAS)
+# 9. MÓDULO 4: SEARCH PRO (IMPLEMENTADO MULTI-PERFIL)
 # ==============================================================================
+
 elif modulo == "🛰️ SEARCH PRO":
     st.markdown('<div class="module-header">🚀 Buscador Inteligente (Radar V32.9)</div>', unsafe_allow_html=True)
-    st.warning("Este módulo requiere procesamiento intensivo de API.")
     
-    area_search = st.text_area("Canales o perfiles a rastrear:", height=150)
+    area_search = st.text_area("Canales o perfiles a rastrear (uno por línea):", height=150, placeholder="https://youtube.com/@Canal1\nhttps://tiktok.com/@User2")
     
-    # ACTUALIZACIÓN: RANGO DE FECHAS (DESDE - HASTA)
     col_s1, col_s2, col_s3 = st.columns(3)
     f_inicio = col_s1.date_input("Desde:", value=datetime.date(2026, 2, 1))
     f_fin = col_s2.date_input("Hasta:", value=datetime.date(2026, 2, 28))
     v_umbral = col_s3.number_input("Vistas Mínimas:", value=50000)
 
-    if st.button("🚀 INICIAR ESCANEO"):
-        # ACTUALIZACIÓN: BARRA DE ESTADO DE TRABAJO
-        with st.status("📡 Iniciando barrido de frecuencias...", expanded=True) as status:
-            st.write("🔍 Conectando con API de búsqueda...")
-            time.sleep(1)
-            st.write(f"📂 Filtrando contenido entre {f_inicio} y {f_fin}...")
-            time.sleep(1)
-            st.write("⚙️ Analizando métricas de engagement...")
-            time.sleep(1)
-            status.update(label="✅ Escaneo Completado", state="complete", expanded=False)
+    if st.button("🚀 INICIAR ESCANEO RADAR"):
+        perfiles = [p.strip() for p in area_search.split('\n') if p.strip()]
         
-        st.info(f"Buscando contenido que cumpla los parámetros entre {f_inicio} y {f_fin}...")
+        if perfiles:
+            with st.status("📡 Iniciando barrido masivo...", expanded=True) as status:
+                st.write(f"🔍 Detectados {len(perfiles)} perfiles para auditoría...")
+                res_search, _ = motor_auditor_universal_v32(perfiles)
+                status.update(label="✅ Escaneo Completado", state="complete", expanded=False)
+            
+            st.markdown('<div class="sub-header">📊 RESULTADOS DEL RADAR</div>', unsafe_allow_html=True)
+            st.dataframe(res_search, use_container_width=True, hide_index=True)
+            
+            # Cálculo de Reporte
+            st.markdown('<div class="tactical-summary">', unsafe_allow_html=True)
+            total_radar = res_search['Vistas'].sum()
+            st.markdown(f"**VISTAS TOTALES DETECTADAS:** {total_radar:,}")
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.markdown("**FÓRMULA TOTAL COPIABLE:**")
+            f_search_total = "+".join(res_search['Vistas'].astype(str).tolist())
+            st.code(f_search_total if f_search_total else "0", language="text")
+        else:
+            st.error("Error: Debe ingresar al menos un perfil para el radar.")
 
 # ==============================================================================
 # PIE DE PÁGINA Y METADATOS
 # ==============================================================================
+
 st.markdown("---")
 st.caption(f"BS LATAM SYSTEM V32.9 • {fecha_actual_global} • SECURE PROTOCOL")
