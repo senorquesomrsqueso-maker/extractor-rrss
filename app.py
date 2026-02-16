@@ -415,19 +415,24 @@ if modulo == "🚀 EXTRACTOR ELITE":
             f_shorts = "+".join(df_shorts['Vistas'].astype(str).tolist())
             st.code(f_shorts if f_shorts else "0", language="text")
 
+            # SOLICITUD: VISTAS TOTALES DE TODO DEBAJO DE SHORTS
+            st.markdown("**4. VISTAS TOTALES DE TODO (SUMA GLOBAL)**")
+            f_todas = "+".join(df['Vistas'].astype(str).tolist())
+            st.code(f_todas if f_todas else "0", language="text")
+
         with col_copy2:
             # Fórmula TikTok 
-            st.markdown("**4. FÓRMULA TIKTOK (X+Y+Z)**")
+            st.markdown("**5. FÓRMULA TIKTOK (X+Y+Z)**")
             f_tk = "+".join(df_tk['Vistas'].astype(str).tolist())
             st.code(f_tk if f_tk else "0", language="text")
 
             # Fórmula General
-            st.markdown("**5. FÓRMULA TOTAL GENERAL**")
+            st.markdown("**6. FÓRMULA TOTAL GENERAL**")
             f_general = "+".join(df['Vistas'].astype(str).tolist())
             st.code(f_general if f_general else "0", language="text")
             
             # Resumen Ejecutivo ESTÉTICO (NO COPIABLE)
-            st.markdown("**6. RESUMEN TÁCTICO DE OPERACIÓN**")
+            st.markdown("**7. RESUMEN TÁCTICO DE OPERACIÓN**")
             urls_count = len(re.findall(r"(https?://[^\s\"\'\)\],]+)", texto_entrada))
             st.markdown(f"""
                 <div class="tactical-summary">
@@ -463,52 +468,94 @@ if modulo == "🚀 EXTRACTOR ELITE":
             """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 7. MÓDULO 2: DRIVE AUDITOR (VISION IA)
+# 7. MÓDULO 2: DRIVE AUDITOR (VISION IA + EXTRACTOR DE ENLACES)
 # ==============================================================================
 elif modulo == "📂 DRIVE AUDITOR (VISION)":
-    st.markdown('<div class="module-header">👁️ Auditor Visual de Métricas</div>', unsafe_allow_html=True)
-    st.info("Sube capturas de pantalla de analíticas. La IA leerá los números automáticamente.")
+    st.markdown('<div class="module-header">👁️ Auditor Visual y de Enlaces</div>', unsafe_allow_html=True)
     
+    # SOLICITUD: Espacio para colocar enlaces y sacar la data
+    st.markdown('<div class="sub-header">🔗 Auditoría por Enlaces Drive / Otros</div>', unsafe_allow_html=True)
+    entrada_enlaces_drive = st.text_area(
+        "Pega aquí los enlaces para extraer data técnica:", 
+        height=150, 
+        placeholder="Pega múltiples enlaces aquí..."
+    )
+    
+    st.divider()
+    
+    st.markdown('<div class="sub-header">📸 Auditoría por Evidencia Visual (OCR)</div>', unsafe_allow_html=True)
+    st.info("Sube capturas de pantalla de analíticas. La IA leerá los números automáticamente.")
     up_files = st.file_uploader("Arrastra las evidencias aquí:", type=['png', 'jpg', 'jpeg', 'webp'], accept_multiple_files=True)
     
-    if st.button("🧠 PROCESAR EVIDENCIA VISUAL"):
+    if st.button("🧠 INICIAR AUDITORÍA DRIVE"):
+        # Procesamiento de Enlaces
+        urls_drive = re.findall(r"(https?://[^\s\"\'\)\],]+)", entrada_enlaces_drive)
+        if urls_drive:
+            res_d, fails_d = motor_auditor_universal_v32(urls_drive)
+            st.session_state.db_drive_vision = res_d
+            if not res_d.empty:
+                st.success(f"Se extrajo data de {len(res_d)} enlaces.")
+        
+        # Procesamiento de Imágenes
         if up_files:
             v_results = []
             v_bar = st.progress(0)
             for idx, f in enumerate(up_files):
                 vistas_img = analizar_imagen_con_ia(f)
-                v_results.append({"Archivo": f.name, "Vistas Detectadas": vistas_img})
+                v_results.append({
+                    "Fecha": "Visual OCR", 
+                    "Plataforma": "VISION", 
+                    "Tipo": "Captura", 
+                    "Creador": "N/A", 
+                    "Título": f.name, 
+                    "Vistas": vistas_img, 
+                    "Link": "Archivo Local"
+                })
                 v_bar.progress((idx + 1) / len(up_files))
-            st.session_state.db_drive_vision = pd.DataFrame(v_results)
+            
+            df_vision = pd.DataFrame(v_results)
+            st.session_state.db_drive_vision = pd.concat([st.session_state.db_drive_vision, df_vision], ignore_index=True)
             st.success("Análisis Visual Completado.")
 
     if not st.session_state.db_drive_vision.empty:
+        st.markdown('<div class="sub-header">📊 DATA CONSOLIDADA DRIVE/VISION</div>', unsafe_allow_html=True)
         st.dataframe(st.session_state.db_drive_vision, use_container_width=True, hide_index=True)
-        # Fórmula de suma para las vistas detectadas por IA
-        f_ia = "+".join(st.session_state.db_drive_vision['Vistas Detectadas'].astype(str).tolist())
+        # Fórmula de suma para las vistas detectadas
+        f_ia = "+".join(st.session_state.db_drive_vision['Vistas'].astype(str).tolist())
+        st.markdown("**FÓRMULA DE SUMA DRIVE/VISION**")
         st.code(f_ia, language="text")
 
 # ==============================================================================
-# 8. MÓDULO 3: PARTNER IA
+# 8. MÓDULO 3: PARTNER IA (ARREGLADO)
 # ==============================================================================
 elif modulo == "🤖 PARTNER IA":
     st.markdown('<div class="module-header">🤖 Partner IA - Consultor Estratégico</div>', unsafe_allow_html=True)
     
+    # Mostrar el historial del chat de forma limpia
     for msg in st.session_state.chat_log:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
     
+    # Campo de entrada de usuario
     if p_user := st.chat_input("Instrucción técnica..."):
+        # Agregar mensaje del usuario al historial
         st.session_state.chat_log.append({"role": "user", "content": p_user})
-        with st.chat_message("user"): st.markdown(p_user)
+        with st.chat_message("user"): 
+            st.markdown(p_user)
         
+        # Generar respuesta de la IA
         with st.chat_message("assistant"):
             try:
-                resp = model_ia.generate_content(p_user)
-                st.markdown(resp.text)
-                st.session_state.chat_log.append({"role": "assistant", "content": resp.text})
-            except:
-                st.error("Error en conexión neural.")
+                # Arreglo: Se eliminó el bloque vacío y se aseguró el manejo de respuesta
+                response = model_ia.generate_content(p_user)
+                if response and response.text:
+                    texto_ia = response.text
+                    st.markdown(texto_ia)
+                    st.session_state.chat_log.append({"role": "assistant", "content": texto_ia})
+                else:
+                    st.error("La IA no devolvió contenido.")
+            except Exception as e_chat:
+                st.error(f"FALLO EN LA CONEXIÓN NEURAL: {str(e_chat)}")
 
 # ==============================================================================
 # 9. MÓDULO 4: SEARCH PRO (SISTEMA DE RADAR)
