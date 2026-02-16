@@ -415,10 +415,10 @@ if modulo == "🚀 EXTRACTOR ELITE":
             f_shorts = "+".join(df_shorts['Vistas'].astype(str).tolist())
             st.code(f_shorts if f_shorts else "0", language="text")
 
-            # SOLICITUD: VISTAS TOTALES DE TODO DEBAJO DE SHORTS
+            # ARREGLO SOLICITADO: Vistas totales de todo (Suma de cada video individualmente)
             st.markdown("**4. VISTAS TOTALES DE TODO (SUMA GLOBAL)**")
-            f_todas = "+".join(df['Vistas'].astype(str).tolist())
-            st.code(f_todas if f_todas else "0", language="text")
+            f_suma_global = "+".join(df['Vistas'].astype(str).tolist())
+            st.code(f_suma_global if f_suma_global else "0", language="text")
 
         with col_copy2:
             # Fórmula TikTok 
@@ -426,7 +426,7 @@ if modulo == "🚀 EXTRACTOR ELITE":
             f_tk = "+".join(df_tk['Vistas'].astype(str).tolist())
             st.code(f_tk if f_tk else "0", language="text")
 
-            # Fórmula General
+            # Fórmula General (Total de Totales)
             st.markdown("**6. FÓRMULA TOTAL GENERAL**")
             f_general = "+".join(df['Vistas'].astype(str).tolist())
             st.code(f_general if f_general else "0", language="text")
@@ -473,7 +473,6 @@ if modulo == "🚀 EXTRACTOR ELITE":
 elif modulo == "📂 DRIVE AUDITOR (VISION)":
     st.markdown('<div class="module-header">👁️ Auditor Visual y de Enlaces</div>', unsafe_allow_html=True)
     
-    # SOLICITUD: Espacio para colocar enlaces y sacar la data
     st.markdown('<div class="sub-header">🔗 Auditoría por Enlaces Drive / Otros</div>', unsafe_allow_html=True)
     entrada_enlaces_drive = st.text_area(
         "Pega aquí los enlaces para extraer data técnica:", 
@@ -531,22 +530,17 @@ elif modulo == "📂 DRIVE AUDITOR (VISION)":
 elif modulo == "🤖 PARTNER IA":
     st.markdown('<div class="module-header">🤖 Partner IA - Consultor Estratégico</div>', unsafe_allow_html=True)
     
-    # Mostrar el historial del chat de forma limpia
     for msg in st.session_state.chat_log:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
     
-    # Campo de entrada de usuario
     if p_user := st.chat_input("Instrucción técnica..."):
-        # Agregar mensaje del usuario al historial
         st.session_state.chat_log.append({"role": "user", "content": p_user})
         with st.chat_message("user"): 
             st.markdown(p_user)
         
-        # Generar respuesta de la IA
         with st.chat_message("assistant"):
             try:
-                # Arreglo: Se eliminó el bloque vacío y se aseguró el manejo de respuesta
                 response = model_ia.generate_content(p_user)
                 if response and response.text:
                     texto_ia = response.text
