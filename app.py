@@ -379,6 +379,7 @@ def motor_auditor_universal_v32(urls):
                         "Vistas": vistas,
                         "Likes": int(info.get('like_count') or 0),
                         "Comments": int(info.get('comment_count') or 0),
+                        "Saves": int(info.get('repost_count') or 0),
                         "Link": url
                     })
                 else:
@@ -394,11 +395,11 @@ def motor_auditor_universal_v32(urls):
     return pd.DataFrame(resultados), pd.DataFrame(fallidos)
 
 # ==============================================================================
-# MOTOR DE BÚSQUEDA TEMPORAL CORREGIDO (FIX TIKTOK)
+# MOTOR DE BÚSQUEDA TEMPORAL CORREGIDO (FIX TIKTOK + LIKES/COMMENTS/SAVES)
 # ==============================================================================
 def motor_busqueda_temporal(urls_canales, f_start, f_end, min_views):
     """
-    MOTOR REPARADO: Añade headers de evasión para que TikTok no devuelva 0 resultados.
+    MOTOR REPARADO: Añade headers de evasión y extrae Likes, Comentarios y Saves.
     """
     resultados = []
     d_start = int(f_start.strftime('%Y%m%d'))
@@ -453,6 +454,9 @@ def motor_busqueda_temporal(urls_canales, f_start, f_end, min_views):
                                         "Canal/Fuente": info.get('title', 'N/A'),
                                         "Título Video": vid.get('title', 'N/A')[:60],
                                         "Vistas": int(v_views),
+                                        "Likes": int(vid.get('like_count') or 0),
+                                        "Comments": int(vid.get('comment_count') or 0),
+                                        "Saves": int(vid.get('repost_count') or 0),
                                         "Link": vid.get('url') or vid.get('webpage_url') or url
                                     })
                 else:
@@ -708,7 +712,7 @@ elif modulo == "🛰️ SEARCH PRO":
                 st.write(f"Iniciando extracción profunda en {len(perfiles)} canales...")
                 st.write("Aplicando protocolos de evasión para TikTok/YouTube...")
                 
-                # LLAMADA AL MOTOR REPARADO
+                # LLAMADA AL MOTOR REPARADO (INCLUYE LIKES, COMMENTS, SAVES)
                 res_search = motor_busqueda_temporal(perfiles, f_inicio, f_fin, v_umbral)
                 
                 status.update(label="✅ Escaneo Completado", state="complete", expanded=False)
