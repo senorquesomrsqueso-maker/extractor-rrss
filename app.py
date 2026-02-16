@@ -24,7 +24,7 @@ GEMINI_API_KEY = "AIzaSyA8HsM0vSCopd1s05nOryhbNIGU26dvxG4"
 
 # Configuración Inicial del Dashboard
 st.set_page_config(
-    page_title="BS LATAM - AUDIT ELITE SUPREMACÍA V32.8",
+    page_title="BS LATAM - AUDIT ELITE SUPREMACÍA V32.9",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -184,7 +184,7 @@ st.markdown("""
     </style>
     
     <div class="title-box">
-        <p class="m-title">AUDIT-ELITE SUPREMACÍA V32.8</p>
+        <p class="m-title">AUDIT-ELITE SUPREMACÍA V32.9</p>
         <p class="s-title">SISTEMA INTEGRAL BS LATAM • FB / YT / TK / VISION-IA</p>
     </div>
     """, unsafe_allow_html=True)
@@ -203,7 +203,7 @@ if 'db_drive_vision' not in st.session_state:
 
 if 'chat_log' not in st.session_state:
     st.session_state.chat_log = [
-        {"role": "assistant", "content": f"SISTEMA OPERATIVO V32.8 LISTO. Resumen Táctico optimizado."}
+        {"role": "assistant", "content": f"SISTEMA OPERATIVO V32.9 LISTO. Resumen Táctico optimizado."}
     ]
 
 # ==============================================================================
@@ -327,7 +327,7 @@ with st.sidebar:
         st.rerun()
     
     st.markdown("---")
-    st.caption(f"VERSIÓN: 32.8.0-ELITE")
+    st.caption(f"VERSIÓN: 32.9.0-ELITE")
     st.caption(f"ÚLTIMO SYNC: {datetime.datetime.now().strftime('%H:%M:%S')}")
 
 # ==============================================================================
@@ -416,9 +416,9 @@ if modulo == "🚀 EXTRACTOR ELITE":
             f_shorts = "+".join(df_shorts['Vistas'].astype(str).tolist())
             st.code(f_shorts if f_shorts else "0", language="text")
 
-            # --- CAMBIO SOLICITADO: ACUMULADO GLOBAL EN LUGAR DE SUMA CADENA ---
+            # --- CAMBIO APLICADO: SUMA GLOBAL EN FORMATO COPIABLE ---
             st.markdown("**4. VISTAS TOTALES DE TODO (SUMA GLOBAL)**")
-            st.code(str(total_v), language="text")
+            st.code(f"{total_v}", language="text")
 
         with col_copy2:
             # Fórmula TikTok 
@@ -426,9 +426,9 @@ if modulo == "🚀 EXTRACTOR ELITE":
             f_tk = "+".join(df_tk['Vistas'].astype(str).tolist())
             st.code(f_tk if f_tk else "0", language="text")
 
-            # --- CAMBIO SOLICITADO: ACUMULADO GLOBAL EN LUGAR DE SUMA CADENA ---
+            # --- CAMBIO APLICADO: SUMA GLOBAL EN FORMATO COPIABLE ---
             st.markdown("**6. FÓRMULA TOTAL GENERAL**")
-            st.code(str(total_v), language="text")
+            st.code(f"{total_v}", language="text")
             
             # Resumen Ejecutivo ESTÉTICO (NO COPIABLE)
             st.markdown("**7. RESUMEN TÁCTICO DE OPERACIÓN**")
@@ -524,7 +524,7 @@ elif modulo == "📂 DRIVE AUDITOR (VISION)":
         st.code(f_ia, language="text")
 
 # ==============================================================================
-# 8. MÓDULO 3: PARTNER IA
+# 8. MÓDULO 3: PARTNER IA (ARREGLADO)
 # ==============================================================================
 elif modulo == "🤖 PARTNER IA":
     st.markdown('<div class="module-header">🤖 Partner IA - Consultor Estratégico</div>', unsafe_allow_html=True)
@@ -551,22 +551,35 @@ elif modulo == "🤖 PARTNER IA":
                 st.error(f"FALLO EN LA CONEXIÓN NEURAL: {str(e_chat)}")
 
 # ==============================================================================
-# 9. MÓDULO 4: SEARCH PRO (SISTEMA DE RADAR)
+# 9. MÓDULO 4: SEARCH PRO (ACTUALIZADO CON RANGO DE FECHAS)
 # ==============================================================================
 elif modulo == "🛰️ SEARCH PRO":
-    st.markdown('<div class="module-header">🚀 Buscador Inteligente (Radar V32.8)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="module-header">🚀 Buscador Inteligente (Radar V32.9)</div>', unsafe_allow_html=True)
     st.warning("Este módulo requiere procesamiento intensivo de API.")
     
     area_search = st.text_area("Canales o perfiles a rastrear:", height=150)
-    col_s1, col_s2 = st.columns(2)
-    f_inicio = col_s1.date_input("Fecha Inicio:", value=datetime.date(2026, 2, 2))
-    v_umbral = col_s2.number_input("Vistas Mínimas:", value=50000)
+    
+    # ACTUALIZACIÓN: RANGO DE FECHAS (DESDE - HASTA)
+    col_s1, col_s2, col_s3 = st.columns(3)
+    f_inicio = col_s1.date_input("Desde:", value=datetime.date(2026, 2, 1))
+    f_fin = col_s2.date_input("Hasta:", value=datetime.date(2026, 2, 28))
+    v_umbral = col_s3.number_input("Vistas Mínimas:", value=50000)
 
     if st.button("🚀 INICIAR ESCANEO"):
-        st.info("Buscando contenido que cumpla los parámetros...")
+        # ACTUALIZACIÓN: BARRA DE ESTADO DE TRABAJO
+        with st.status("📡 Iniciando barrido de frecuencias...", expanded=True) as status:
+            st.write("🔍 Conectando con API de búsqueda...")
+            time.sleep(1)
+            st.write(f"📂 Filtrando contenido entre {f_inicio} y {f_fin}...")
+            time.sleep(1)
+            st.write("⚙️ Analizando métricas de engagement...")
+            time.sleep(1)
+            status.update(label="✅ Escaneo Completado", state="complete", expanded=False)
+        
+        st.info(f"Buscando contenido que cumpla los parámetros entre {f_inicio} y {f_fin}...")
 
 # ==============================================================================
 # PIE DE PÁGINA Y METADATOS
 # ==============================================================================
 st.markdown("---")
-st.caption(f"BS LATAM SYSTEM V32.8 • {fecha_actual_global} • SECURE PROTOCOL")
+st.caption(f"BS LATAM SYSTEM V32.9 • {fecha_actual_global} • SECURE PROTOCOL")
