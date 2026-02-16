@@ -393,6 +393,71 @@ def motor_auditor_universal_v32(urls):
     status_text.empty()
     return pd.DataFrame(resultados), pd.DataFrame(fallidos)
 
+def motor_busqueda_temporal(urls_canales, f_start, f_end, min_views):
+    """
+    MOTOR ANTIGUO DE BÚSQUEDA TEMPORAL:
+    1. Entra al canal/perfil.
+    2. Saca la lista de videos (extract_flat).
+    3. Filtra por fechas y vistas.
+    """
+    resultados = []
+    
+    # Convertir fechas a enteros YYYYMMDD para comparación rápida
+    d_start = int(f_start.strftime('%Y%m%d'))
+    d_end = int(f_end.strftime('%Y%m%d'))
+    
+    p_bar = st.progress(0)
+    status = st.empty()
+    
+    ydl_opts_search = {
+        'quiet': True,
+        'ignoreerrors': True,
+        'extract_flat': True,  # CLAVE: Solo saca metadatos, no descarga.
+        'playlistend': 40,     # SEGURIDAD: Solo mira los últimos 40 videos para no colgarse.
+        'sleep_interval': 1,   # Anti-ban
+    }
+    
+    for i, url in enumerate(urls_canales):
+        url = url.strip()
+        status.markdown(f"🛰️ **ESCANEO RADAR:** Analizando feed de `{url}`...")
+        
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts_search) as ydl:
+                info = ydl.extract_info(url, download=False)
+                
+                if 'entries' in info:
+                    videos = info['entries']
+                    for vid in videos:
+                        if not vid: continue
+                        
+                        # Obtener fecha y vistas del video
+                        v_date_str = vid.get('upload_date')
+                        v_views = vid.get('view_count')
+                        
+                        # Validar que existan datos
+                        if v_date_str and v_views is not None:
+                            v_date_int = int(v_date_str)
+                            
+                            # LÓGICA DE FILTRADO (El corazón del motor antiguo)
+                            if d_start <= v_date_int <= d_end:
+                                if v_views >= min_views:
+                                    resultados.append({
+                                        "Fecha": f"{v_date_str[:4]}-{v_date_str[4:6]}-{v_date_str[6:]}",
+                                        "Canal/Fuente": info.get('title', 'Desconocido'),
+                                        "Título Video": vid.get('title', 'N/A')[:60],
+                                        "Vistas": int(v_views),
+                                        "Link": vid.get('url', vid.get('webpage_url', url))
+                                    })
+        except Exception as e:
+            # Si falla un canal, seguimos con el siguiente
+            print(f"Error en canal {url}: {e}")
+            
+        p_bar.progress((i + 1) / len(urls_canales))
+
+    p_bar.empty()
+    status.empty()
+    return pd.DataFrame(resultados)
+
 # ==============================================================================
 # 5. SIDEBAR - CONTROL DE MISIONES
 # ==============================================================================
@@ -613,42 +678,50 @@ elif modulo == "🤖 PARTNER IA":
                 st.error(f"FALLO EN LA CONEXIÓN NEURAL: {str(e_chat)}")
 
 # ==============================================================================
-# 9. MÓDULO 4: SEARCH PRO (IMPLEMENTADO MULTI-PERFIL)
+# 9. MÓDULO 4: SEARCH PRO (CON MOTOR DE BÚSQUEDA TEMPORAL ANTIGUO)
 # ==============================================================================
 
 elif modulo == "🛰️ SEARCH PRO":
-    st.markdown('<div class="module-header">🚀 Buscador Inteligente (Radar V32.9)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="module-header">🚀 Radar de Canales (Motor Temporal)</div>', unsafe_allow_html=True)
+    st.markdown("Pega los enlaces de canales o perfiles. El sistema buscará videos dentro de las fechas indicadas.")
     
-    area_search = st.text_area("Canales o perfiles a rastrear (uno por línea):", height=150, placeholder="https://youtube.com/@Canal1\nhttps://tiktok.com/@User2")
+    area_search = st.text_area("Canales a rastrear (uno por línea):", height=150, placeholder="https://youtube.com/@CanalX\nhttps://tiktok.com/@UserY")
     
     col_s1, col_s2, col_s3 = st.columns(3)
     f_inicio = col_s1.date_input("Desde:", value=datetime.date(2026, 2, 1))
     f_fin = col_s2.date_input("Hasta:", value=datetime.date(2026, 2, 28))
-    v_umbral = col_s3.number_input("Vistas Mínimas:", value=50000)
+    v_umbral = col_s3.number_input("Vistas Mínimas (Filtro):", value=10000)
 
-    if st.button("🚀 INICIAR ESCANEO RADAR"):
+    if st.button("🚀 ACTIVAR BARRIDO TEMPORAL"):
         perfiles = [p.strip() for p in area_search.split('\n') if p.strip()]
         
         if perfiles:
-            with st.status("📡 Iniciando barrido masivo...", expanded=True) as status:
-                st.write(f"🔍 Detectados {len(perfiles)} perfiles para auditoría...")
-                res_search, _ = motor_auditor_universal_v32(perfiles)
+            with st.status("📡 Escaneando feeds de contenido...", expanded=True) as status:
+                st.write(f"Iniciando extracción profunda en {len(perfiles)} canales...")
+                st.write("Filtrando por fecha y umbral de vistas...")
+                
+                # LLAMADA AL NUEVO MOTOR "ANTIGUO" QUE FILTRA POR FECHAS
+                res_search = motor_busqueda_temporal(perfiles, f_inicio, f_fin, v_umbral)
+                
                 status.update(label="✅ Escaneo Completado", state="complete", expanded=False)
             
-            st.markdown('<div class="sub-header">📊 RESULTADOS DEL RADAR</div>', unsafe_allow_html=True)
-            st.dataframe(res_search, use_container_width=True, hide_index=True)
-            
-            # Cálculo de Reporte
-            st.markdown('<div class="tactical-summary">', unsafe_allow_html=True)
-            total_radar = res_search['Vistas'].sum()
-            st.markdown(f"**VISTAS TOTALES DETECTADAS:** {total_radar:,}")
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            st.markdown("**FÓRMULA TOTAL COPIABLE:**")
-            f_search_total = "+".join(res_search['Vistas'].astype(str).tolist())
-            st.code(f_search_total if f_search_total else "0", language="text")
+            if not res_search.empty:
+                st.markdown('<div class="sub-header">📊 VIDEOS DETECTADOS (FILTRADOS)</div>', unsafe_allow_html=True)
+                st.dataframe(res_search, use_container_width=True, hide_index=True)
+                
+                # Cálculo de Reporte
+                st.markdown('<div class="tactical-summary">', unsafe_allow_html=True)
+                total_radar = res_search['Vistas'].sum()
+                st.markdown(f"**VISTAS TOTALES ENCONTRADAS:** {total_radar:,}")
+                st.markdown('</div>', unsafe_allow_html=True)
+                
+                st.markdown("**FÓRMULA TOTAL COPIABLE:**")
+                f_search_total = "+".join(res_search['Vistas'].astype(str).tolist())
+                st.code(f_search_total if f_search_total else "0", language="text")
+            else:
+                st.warning("No se encontraron videos que cumplan con los filtros de fecha y vistas en los canales proporcionados.")
         else:
-            st.error("Error: Debe ingresar al menos un perfil para el radar.")
+            st.error("Error: Debe ingresar al menos un canal para el radar.")
 
 # ==============================================================================
 # PIE DE PÁGINA Y METADATOS
