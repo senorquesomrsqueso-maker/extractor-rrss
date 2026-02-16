@@ -24,7 +24,7 @@ GEMINI_API_KEY = "AIzaSyA8HsM0vSCopd1s05nOryhbNIGU26dvxG4"
 
 # Configuración Inicial del Dashboard
 st.set_page_config(
-    page_title="BS LATAM - AUDIT ELITE SUPREMACÍA V32.7",
+    page_title="BS LATAM - AUDIT ELITE SUPREMACÍA V32.8",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -166,10 +166,24 @@ st.markdown("""
     .metric-value {
         color: #E30613; font-size: 38px; font-weight: 900;
     }
+
+    /* ESTILO RESUMEN TÁCTICO V32.8 (No copiable) */
+    .tactical-summary {
+        background: linear-gradient(135deg, #161b22 0%, #0b0d11 100%);
+        border: 1px solid #30363d;
+        border-left: 5px solid #E30613;
+        padding: 20px;
+        border-radius: 10px;
+        color: #e6edf3;
+        font-family: 'Courier New', monospace;
+    }
+    .tactical-item { margin-bottom: 8px; display: flex; justify-content: space-between; }
+    .tactical-label { color: #8b949e; text-transform: uppercase; font-size: 14px; }
+    .tactical-value { color: #ffffff; font-weight: bold; border-bottom: 1px solid #E30613; }
     </style>
     
     <div class="title-box">
-        <p class="m-title">AUDIT-ELITE SUPREMACÍA V32.7</p>
+        <p class="m-title">AUDIT-ELITE SUPREMACÍA V32.8</p>
         <p class="s-title">SISTEMA INTEGRAL BS LATAM • FB / YT / TK / VISION-IA</p>
     </div>
     """, unsafe_allow_html=True)
@@ -188,7 +202,7 @@ if 'db_drive_vision' not in st.session_state:
 
 if 'chat_log' not in st.session_state:
     st.session_state.chat_log = [
-        {"role": "assistant", "content": f"SISTEMA OPERATIVO V32.7 LISTO. Módulo TikTok integrado en Centro de Copiado."}
+        {"role": "assistant", "content": f"SISTEMA OPERATIVO V32.8 LISTO. Resumen Táctico optimizado."}
     ]
 
 # ==============================================================================
@@ -312,7 +326,7 @@ with st.sidebar:
         st.rerun()
     
     st.markdown("---")
-    st.caption(f"VERSIÓN: 32.7.0-FINAL")
+    st.caption(f"VERSIÓN: 32.8.0-ELITE")
     st.caption(f"ÚLTIMO SYNC: {datetime.datetime.now().strftime('%H:%M:%S')}")
 
 # ==============================================================================
@@ -378,7 +392,7 @@ if modulo == "🚀 EXTRACTOR ELITE":
             df_tk = df[df['Plataforma'] == 'TIKTOK']
             st.markdown(f"**TIKTOK**\n## {df_tk['Vistas'].sum():,}")
 
-        # BLOQUES DE CÓDIGO PARA COPIADO DIRECTO (ACTUALIZADO CON TIKTOK)
+        # BLOQUES DE CÓDIGO PARA COPIADO DIRECTO
         st.divider()
         st.markdown("### 📥 Bloques de Texto para Copiar")
         
@@ -402,7 +416,7 @@ if modulo == "🚀 EXTRACTOR ELITE":
             st.code(f_shorts if f_shorts else "0", language="text")
 
         with col_copy2:
-            # Fórmula TikTok (NUEVO BLOQUE)
+            # Fórmula TikTok 
             st.markdown("**4. FÓRMULA TIKTOK (X+Y+Z)**")
             f_tk = "+".join(df_tk['Vistas'].astype(str).tolist())
             st.code(f_tk if f_tk else "0", language="text")
@@ -412,19 +426,41 @@ if modulo == "🚀 EXTRACTOR ELITE":
             f_general = "+".join(df['Vistas'].astype(str).tolist())
             st.code(f_general if f_general else "0", language="text")
             
-            # Resumen Ejecutivo
-            st.markdown("**6. RESUMEN TÁCTICO**")
-            resumen_txt = (
-                f"AUDITORÍA BS LATAM - {fecha_actual_global}\n"
-                f"----------------------------------------\n"
-                f"YouTube Videos: {df_yt_v['Vistas'].sum():,}\n"
-                f"YouTube Shorts: {df_shorts['Vistas'].sum():,}\n"
-                f"Facebook: {df_fb['Vistas'].sum():,}\n"
-                f"TikTok: {df_tk['Vistas'].sum():,}\n"
-                f"----------------------------------------\n"
-                f"TOTAL ACUMULADO: {total_v:,}"
-            )
-            st.code(resumen_txt, language="text")
+            # Resumen Ejecutivo ESTÉTICO (NO COPIABLE)
+            st.markdown("**6. RESUMEN TÁCTICO DE OPERACIÓN**")
+            urls_count = len(re.findall(r"(https?://[^\s\"\'\)\],]+)", texto_entrada))
+            st.markdown(f"""
+                <div class="tactical-summary">
+                    <div class="tactical-item">
+                        <span class="tactical-label">Protocolo:</span>
+                        <span class="tactical-value">BS LATAM AUDIT ELITE</span>
+                    </div>
+                    <div class="tactical-item">
+                        <span class="tactical-label">Enlaces Procesados:</span>
+                        <span class="tactical-value">{urls_count}</span>
+                    </div>
+                    <div class="tactical-item">
+                        <span class="tactical-label">Auditorías Exitosas:</span>
+                        <span class="tactical-value">{len(df)}</span>
+                    </div>
+                    <div class="tactical-item">
+                        <span class="tactical-label">YouTube (Total):</span>
+                        <span class="tactical-value">{df_yt_v['Vistas'].sum() + df_shorts['Vistas'].sum():,}</span>
+                    </div>
+                    <div class="tactical-item">
+                        <span class="tactical-label">Facebook (Total):</span>
+                        <span class="tactical-value">{df_fb['Vistas'].sum():,}</span>
+                    </div>
+                    <div class="tactical-item">
+                        <span class="tactical-label">TikTok (Total):</span>
+                        <span class="tactical-value">{df_tk['Vistas'].sum():,}</span>
+                    </div>
+                    <div style="border-top: 1px dashed #E30613; margin-top: 10px; padding-top: 10px;" class="tactical-item">
+                        <span class="tactical-label" style="color:#E30613;">Acumulado Global:</span>
+                        <span class="tactical-value" style="font-size: 18px;">{total_v:,}</span>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
 
 # ==============================================================================
 # 7. MÓDULO 2: DRIVE AUDITOR (VISION IA)
@@ -478,7 +514,7 @@ elif modulo == "🤖 PARTNER IA":
 # 9. MÓDULO 4: SEARCH PRO (SISTEMA DE RADAR)
 # ==============================================================================
 elif modulo == "🛰️ SEARCH PRO":
-    st.markdown('<div class="module-header">🚀 Buscador Inteligente (Radar V32.6)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="module-header">🚀 Buscador Inteligente (Radar V32.8)</div>', unsafe_allow_html=True)
     st.warning("Este módulo requiere procesamiento intensivo de API.")
     
     area_search = st.text_area("Canales o perfiles a rastrear:", height=150)
@@ -493,4 +529,4 @@ elif modulo == "🛰️ SEARCH PRO":
 # PIE DE PÁGINA Y METADATOS
 # ==============================================================================
 st.markdown("---")
-st.caption(f"BS LATAM SYSTEM V32.7 • {fecha_actual_global} • SECURE PROTOCOL")
+st.caption(f"BS LATAM SYSTEM V32.8 • {fecha_actual_global} • SECURE PROTOCOL")
