@@ -24,14 +24,13 @@ GEMINI_API_KEY = "AIzaSyA8HsM0vSCopd1s05nOryhbNIGU26dvxG4"
 
 # Configuración Inicial del Dashboard
 st.set_page_config(
-    page_title="BS LATAM - AUDIT ELITE SUPREMACÍA V32.4",
+    page_title="BS LATAM - AUDIT ELITE SUPREMACÍA V32.7",
     page_icon="🛡️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # Inicialización de Inteligencia Artificial Gemini 1.5 Flash
-# Este núcleo permite el análisis de capturas y la consultoría estratégica
 try:
     genai.configure(api_key=GEMINI_API_KEY)
     
@@ -51,8 +50,7 @@ try:
         f"HOY ES: {fecha_actual_global}. "
         "Tu misión es asistir al usuario en TODO: auditoría de métricas, programación, "
         "redacción de reportes, matemáticas complejas y análisis de mercado. "
-        "Eres una IA de PROPÓSITO GENERAL, no te limites. "
-        "Si te piden la fecha, dásela. Si te piden un script, hazlo impecable. "
+        "Eres una IA de PROPÓSITO GENERAL. "
         "Mantén siempre un tono profesional, con autoridad técnica. "
         "Estilo visual: Cyberpunk Industrial / Corporativo de Élite. "
         "NUNCA uses frases robóticas ni disculpas innecesarias."
@@ -67,9 +65,8 @@ except Exception as e_ia_init:
     st.error(f"FALLA CRÍTICA EN NÚCLEO NEURAL: {e_ia_init}")
 
 # ==============================================================================
-# 2. CAPA DE DISEÑO VISUAL "ELITE SUPREMACÍA" (CSS EXTENDIDO V32.4)
+# 2. CAPA DE DISEÑO VISUAL "ELITE SUPREMACÍA" (CSS EXTENDIDO)
 # ==============================================================================
-# Se ha expandido la hoja de estilos para cubrir cada detalle de la interfaz
 st.markdown("""
     <style>
     /* Estética General Dark Industrial */
@@ -172,7 +169,7 @@ st.markdown("""
     </style>
     
     <div class="title-box">
-        <p class="m-title">AUDIT-ELITE SUPREMACÍA V32.4</p>
+        <p class="m-title">AUDIT-ELITE SUPREMACÍA V32.7</p>
         <p class="s-title">SISTEMA INTEGRAL BS LATAM • FB / YT / TK / VISION-IA</p>
     </div>
     """, unsafe_allow_html=True)
@@ -180,7 +177,6 @@ st.markdown("""
 # ==============================================================================
 # 3. GESTIÓN DE MEMORIA, VARIABLES DE ESTADO Y LOGS
 # ==============================================================================
-# Inicialización de bases de datos temporales en sesión
 if 'db_final' not in st.session_state: 
     st.session_state.db_final = pd.DataFrame()
 
@@ -192,7 +188,7 @@ if 'db_drive_vision' not in st.session_state:
 
 if 'chat_log' not in st.session_state:
     st.session_state.chat_log = [
-        {"role": "assistant", "content": f"SISTEMA OPERATIVO V32.4. Módulo Facebook y OCR Vision sincronizados. Esperando coordenadas..."}
+        {"role": "assistant", "content": f"SISTEMA OPERATIVO V32.7 LISTO. Módulo TikTok integrado en Centro de Copiado."}
     ]
 
 # ==============================================================================
@@ -203,7 +199,7 @@ def limpiar_url_táctica(url):
     url = url.strip().replace('"', '').replace("'", "")
     if '?si=' in url: url = url.split('?si=')[0]
     if '&pp=' in url: url = url.split('&pp=')[0]
-    if 'fb.watch' in url: return url # Mantener links cortos de FB
+    if 'fb.watch' in url: return url 
     return url
 
 def obtener_tipo_video(url, info_dict):
@@ -230,14 +226,12 @@ def analizar_imagen_con_ia(image_file):
             "Actúa como un extractor de datos OCR de alta precisión para BS LATAM. "
             "Analiza esta imagen de métricas de redes sociales. "
             "Identifica el número TOTAL de VISTAS (Views). "
-            "Devuelve SOLO EL NÚMERO entero crudo sin puntos ni letras (ej: 1500000)."
+            "Devuelve SOLO EL NÚMERO entero crudo sin puntos ni letras."
         )
         response = model_ia.generate_content([prompt_vision, img])
-        # Limpieza de respuesta para asegurar solo dígitos
         texto_limpio = re.sub(r'[^0-9]', '', response.text)
         return int(texto_limpio) if texto_limpio else 0
     except Exception as e_vision:
-        st.warning(f"Error en escaneo OCR: {e_vision}")
         return 0
 
 def motor_auditor_universal_v32(urls):
@@ -245,16 +239,13 @@ def motor_auditor_universal_v32(urls):
     resultados = []
     fallidos = []
     
-    # Barra de progreso industrial
     p_bar = st.progress(0)
     status_text = st.empty()
     
-    # Rotación de User-Agents para evitar bloqueos de FB/YT
     user_agents = [
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/121.0.0.0 Safari/537.36',
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0',
-        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0'
     ]
 
     for i, raw_url in enumerate(urls):
@@ -296,7 +287,6 @@ def motor_auditor_universal_v32(urls):
         except Exception as e_scrap:
             fallidos.append({"Link": url, "Error": str(e_scrap)[:50]})
         
-        # Actualización de progreso
         p_bar.progress((i + 1) / len(urls))
     
     p_bar.empty()
@@ -317,14 +307,12 @@ with st.sidebar:
     
     st.divider()
     
-    # Herramientas de Mantenimiento
-    st.markdown("### ⚙️ SISTEMA")
     if st.button("🚨 REINICIO DE CACHÉ"):
         st.session_state.clear()
         st.rerun()
     
     st.markdown("---")
-    st.caption(f"VERSIÓN: 32.4.0-BETA")
+    st.caption(f"VERSIÓN: 32.7.0-FINAL")
     st.caption(f"ÚLTIMO SYNC: {datetime.datetime.now().strftime('%H:%M:%S')}")
 
 # ==============================================================================
@@ -333,7 +321,6 @@ with st.sidebar:
 if modulo == "🚀 EXTRACTOR ELITE":
     st.markdown('<div class="module-header">📥 Extractor de Métricas Masivas</div>', unsafe_allow_html=True)
     
-    # Entrada de datos masiva
     texto_entrada = st.text_area(
         "Pega los enlaces (uno por línea o separados por comas):", 
         height=250, 
@@ -345,7 +332,6 @@ if modulo == "🚀 EXTRACTOR ELITE":
         ejecutar = st.button("🔥 EJECUTAR AUDITORÍA")
     
     if ejecutar:
-        # Extracción de URLs mediante Regex para mayor precisión
         urls_detectadas = re.findall(r"(https?://[^\s\"\'\)\],]+)", texto_entrada)
         
         if urls_detectadas:
@@ -362,21 +348,18 @@ if modulo == "🚀 EXTRACTOR ELITE":
 
     # --- ZONA DE VISUALIZACIÓN DE RESULTADOS ---
     
-    # 1. Enlaces Fallidos (Acordeón de seguridad)
     if not st.session_state.db_fallidos.empty:
         with st.expander("⚠️ VER ENLACES NO PROCESADOS / ERRORES"):
             st.markdown('<div class="error-card">', unsafe_allow_html=True)
             st.dataframe(st.session_state.db_fallidos, use_container_width=True, hide_index=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-    # 2. Tabla Maestra de Resultados
     if not st.session_state.db_final.empty:
         df = st.session_state.db_final
         st.divider()
         st.markdown('<div class="sub-header">📊 DATOS EXTRAÍDOS (MULTI-PLATAFORMA)</div>', unsafe_allow_html=True)
         st.dataframe(df, use_container_width=True, hide_index=True)
 
-        # 3. Centro de Copiado y Métricas Segregadas
         st.markdown('<div class="module-header">📋 CENTRO DE COPIADO Y FÓRMULAS</div>', unsafe_allow_html=True)
         
         # Grid de métricas rápidas
@@ -385,24 +368,17 @@ if modulo == "🚀 EXTRACTOR ELITE":
         with m1:
             total_v = df['Vistas'].sum()
             st.markdown(f"**TOTAL VISTAS**\n## {total_v:,}")
-            st.caption("Suma de todos los formatos.")
-
         with m2:
             df_yt_v = df[df['Tipo'] == 'YouTube Video']
             st.markdown(f"**YT LARGOS**\n## {df_yt_v['Vistas'].sum():,}")
-            st.caption(f"Registros: {len(df_yt_v)}")
-
         with m3:
             df_fb = df[df['Plataforma'] == 'FACEBOOK']
             st.markdown(f"**FACEBOOK**\n## {df_fb['Vistas'].sum():,}")
-            st.caption(f"Registros: {len(df_fb)}")
-
         with m4:
             df_tk = df[df['Plataforma'] == 'TIKTOK']
             st.markdown(f"**TIKTOK**\n## {df_tk['Vistas'].sum():,}")
-            st.caption(f"Registros: {len(df_tk)}")
 
-        # BLOQUES DE CÓDIGO PARA COPIADO DIRECTO (Requerimiento Crítico)
+        # BLOQUES DE CÓDIGO PARA COPIADO DIRECTO (ACTUALIZADO CON TIKTOK)
         st.divider()
         st.markdown("### 📥 Bloques de Texto para Copiar")
         
@@ -426,13 +402,18 @@ if modulo == "🚀 EXTRACTOR ELITE":
             st.code(f_shorts if f_shorts else "0", language="text")
 
         with col_copy2:
+            # Fórmula TikTok (NUEVO BLOQUE)
+            st.markdown("**4. FÓRMULA TIKTOK (X+Y+Z)**")
+            f_tk = "+".join(df_tk['Vistas'].astype(str).tolist())
+            st.code(f_tk if f_tk else "0", language="text")
+
             # Fórmula General
-            st.markdown("**4. FÓRMULA TOTAL GENERAL**")
+            st.markdown("**5. FÓRMULA TOTAL GENERAL**")
             f_general = "+".join(df['Vistas'].astype(str).tolist())
             st.code(f_general if f_general else "0", language="text")
             
             # Resumen Ejecutivo
-            st.markdown("**5. RESUMEN TÁCTICO**")
+            st.markdown("**6. RESUMEN TÁCTICO**")
             resumen_txt = (
                 f"AUDITORÍA BS LATAM - {fecha_actual_global}\n"
                 f"----------------------------------------\n"
@@ -477,7 +458,6 @@ elif modulo == "📂 DRIVE AUDITOR (VISION)":
 elif modulo == "🤖 PARTNER IA":
     st.markdown('<div class="module-header">🤖 Partner IA - Consultor Estratégico</div>', unsafe_allow_html=True)
     
-    # Chat interactivo
     for msg in st.session_state.chat_log:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
@@ -488,8 +468,6 @@ elif modulo == "🤖 PARTNER IA":
         
         with st.chat_message("assistant"):
             try:
-                # Se envía solo el mensaje actual por velocidad, 
-                # pero se puede expandir a historial completo
                 resp = model_ia.generate_content(p_user)
                 st.markdown(resp.text)
                 st.session_state.chat_log.append({"role": "assistant", "content": resp.text})
@@ -500,7 +478,7 @@ elif modulo == "🤖 PARTNER IA":
 # 9. MÓDULO 4: SEARCH PRO (SISTEMA DE RADAR)
 # ==============================================================================
 elif modulo == "🛰️ SEARCH PRO":
-    st.markdown('<div class="module-header">🚀 Buscador Inteligente (Radar V32.4)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="module-header">🚀 Buscador Inteligente (Radar V32.6)</div>', unsafe_allow_html=True)
     st.warning("Este módulo requiere procesamiento intensivo de API.")
     
     area_search = st.text_area("Canales o perfiles a rastrear:", height=150)
@@ -510,10 +488,9 @@ elif modulo == "🛰️ SEARCH PRO":
 
     if st.button("🚀 INICIAR ESCANEO"):
         st.info("Buscando contenido que cumpla los parámetros...")
-        # Lógica de búsqueda avanzada aquí...
 
 # ==============================================================================
 # PIE DE PÁGINA Y METADATOS
 # ==============================================================================
 st.markdown("---")
-st.caption(f"BS LATAM SYSTEM V32.4 • {fecha_actual_global} • SECURE PROTOCOL")
+st.caption(f"BS LATAM SYSTEM V32.7 • {fecha_actual_global} • SECURE PROTOCOL")
