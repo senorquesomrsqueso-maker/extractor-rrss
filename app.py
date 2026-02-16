@@ -30,7 +30,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Inicialización de Inteligencia Artificial Gemini 1.5 Flash
+# Inicialización de Inteligencia Artificial Gemini
 try:
     genai.configure(api_key=GEMINI_API_KEY)
     
@@ -56,8 +56,9 @@ try:
         "NUNCA uses frases robóticas ni disculpas innecesarias."
     )
 
+    # SE CORRIGE A 'latest' PARA EVITAR ERROR 404 DE VERSIÓN
     model_ia = genai.GenerativeModel(
-        model_name='gemini-1.5-flash',
+        model_name='gemini-1.5-flash-latest',
         generation_config=generation_config,
         system_instruction=system_instruction_core
     )
@@ -415,10 +416,9 @@ if modulo == "🚀 EXTRACTOR ELITE":
             f_shorts = "+".join(df_shorts['Vistas'].astype(str).tolist())
             st.code(f_shorts if f_shorts else "0", language="text")
 
-            # ARREGLO SOLICITADO: Vistas totales de todo (Suma de cada video individualmente)
+            # --- CAMBIO SOLICITADO: ACUMULADO GLOBAL EN LUGAR DE SUMA CADENA ---
             st.markdown("**4. VISTAS TOTALES DE TODO (SUMA GLOBAL)**")
-            f_suma_global = "+".join(df['Vistas'].astype(str).tolist())
-            st.code(f_suma_global if f_suma_global else "0", language="text")
+            st.code(str(total_v), language="text")
 
         with col_copy2:
             # Fórmula TikTok 
@@ -426,10 +426,9 @@ if modulo == "🚀 EXTRACTOR ELITE":
             f_tk = "+".join(df_tk['Vistas'].astype(str).tolist())
             st.code(f_tk if f_tk else "0", language="text")
 
-            # Fórmula General (Total de Totales)
+            # --- CAMBIO SOLICITADO: ACUMULADO GLOBAL EN LUGAR DE SUMA CADENA ---
             st.markdown("**6. FÓRMULA TOTAL GENERAL**")
-            f_general = "+".join(df['Vistas'].astype(str).tolist())
-            st.code(f_general if f_general else "0", language="text")
+            st.code(str(total_v), language="text")
             
             # Resumen Ejecutivo ESTÉTICO (NO COPIABLE)
             st.markdown("**7. RESUMEN TÁCTICO DE OPERACIÓN**")
@@ -525,7 +524,7 @@ elif modulo == "📂 DRIVE AUDITOR (VISION)":
         st.code(f_ia, language="text")
 
 # ==============================================================================
-# 8. MÓDULO 3: PARTNER IA (ARREGLADO)
+# 8. MÓDULO 3: PARTNER IA
 # ==============================================================================
 elif modulo == "🤖 PARTNER IA":
     st.markdown('<div class="module-header">🤖 Partner IA - Consultor Estratégico</div>', unsafe_allow_html=True)
