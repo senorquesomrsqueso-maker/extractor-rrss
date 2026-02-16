@@ -6,3 +6,5 @@ pandas
 requests
 xlsxwriter
 google-generativeai
+Pillow
+beautifulsoup4
