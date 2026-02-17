@@ -565,7 +565,8 @@ if modulo == "🚀 EXTRACTOR ELITE":
         
         with col_copy1:
             st.markdown("**1. FÓRMULA YT LARGOS (X+Y+Z)**")
-            f_yt_largos = "+".join(df_yt_v['Vistas'].astype(str).tolist())
+            # MODIFICADO: APLICA X3 DIRECTAMENTE EN LA FÓRMULA
+            f_yt_largos = "+".join((df_yt_v['Vistas'] * 3).astype(str).tolist())
             st.code(f_yt_largos if f_yt_largos else "0", language="text")
             
             st.markdown("**2. FÓRMULA FACEBOOK (X+Y+Z)**")
@@ -578,9 +579,8 @@ if modulo == "🚀 EXTRACTOR ELITE":
             st.code(f_shorts if f_shorts else "0", language="text")
 
             st.markdown("**4. VISTAS TOTALES DE TODO (SUMA GLOBAL)**")
-            # AQUI CAMBIADO: AHORA MUESTRA LA FORMULA CON +
-            f_total_todo = "+".join(df['Vistas'].astype(str).tolist())
-            st.code(f_total_todo if f_total_todo else "0", language="text")
+            # MODIFICADO: MUESTRA SOLO EL NÚMERO TOTAL SIN LOS SIGNOS +
+            st.code(f"{total_v}", language="text")
 
         with col_copy2:
             st.markdown("**5. FÓRMULA TIKTOK (X+Y+Z)**")
@@ -588,8 +588,11 @@ if modulo == "🚀 EXTRACTOR ELITE":
             st.code(f_tk if f_tk else "0", language="text")
 
             st.markdown("**6. FÓRMULA TOTAL GENERAL**")
-            # AQUI CAMBIADO: AHORA MUESTRA LA FORMULA CON +
-            st.code(f_total_todo if f_total_todo else "0", language="text")
+            # MODIFICADO: SI TIENEN YT VIDEOS, AGREGA CANTIDADES CON EL X3 YA APLICADO
+            # Se crea una serie calculada donde solo los YT Videos se multiplican por 3
+            vistas_mix = df.apply(lambda x: x['Vistas'] * 3 if x['Tipo'] == 'YouTube Video' else x['Vistas'], axis=1)
+            f_total_mix = "+".join(vistas_mix.astype(str).tolist())
+            st.code(f_total_mix if f_total_mix else "0", language="text")
             
             # --- NUEVA SECCIÓN SOLICITADA (BOOSTER YT x3) ---
             st.divider()
