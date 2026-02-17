@@ -578,7 +578,9 @@ if modulo == "🚀 EXTRACTOR ELITE":
             st.code(f_shorts if f_shorts else "0", language="text")
 
             st.markdown("**4. VISTAS TOTALES DE TODO (SUMA GLOBAL)**")
-            st.code(f"{total_v}", language="text")
+            # AQUI CAMBIADO: AHORA MUESTRA LA FORMULA CON +
+            f_total_todo = "+".join(df['Vistas'].astype(str).tolist())
+            st.code(f_total_todo if f_total_todo else "0", language="text")
 
         with col_copy2:
             st.markdown("**5. FÓRMULA TIKTOK (X+Y+Z)**")
@@ -586,8 +588,28 @@ if modulo == "🚀 EXTRACTOR ELITE":
             st.code(f_tk if f_tk else "0", language="text")
 
             st.markdown("**6. FÓRMULA TOTAL GENERAL**")
-            st.code(f"{total_v}", language="text")
+            # AQUI CAMBIADO: AHORA MUESTRA LA FORMULA CON +
+            st.code(f_total_todo if f_total_todo else "0", language="text")
             
+            # --- NUEVA SECCIÓN SOLICITADA (BOOSTER YT x3) ---
+            st.divider()
+            st.markdown("### 🚀 CÁLCULO ESTELAR (YT x3 + TOTAL)")
+            
+            # Cálculo: (Suma de YT Videos x 3) + Suma Total General Actual
+            val_yt_long = df_yt_v['Vistas'].sum()
+            val_total_actual = df['Vistas'].sum()
+            val_booster = (val_yt_long * 3) + val_total_actual
+            
+            st.markdown(f"""
+            <div style="background:#161b22; padding:15px; border-radius:10px; border:1px solid #E30613;">
+                <span style="color:#8b949e;">LÓGICA:</span> (YT Largos: <b>{val_yt_long:,}</b> x 3) + Total Global: <b>{val_total_actual:,}</b>
+                <br>
+                <span style="color:#ffffff; font-size:24px; font-weight:bold;">RESULTADO FINAL: {val_booster:,}</span>
+            </div>
+            """, unsafe_allow_html=True)
+            st.code(f"{val_booster}", language="text")
+            # ------------------------------------------------
+
             st.markdown("**7. RESUMEN TÁCTICO DE OPERACIÓN**")
             st.markdown(f"""
                 <div class="tactical-summary">
