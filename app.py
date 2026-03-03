@@ -58,7 +58,6 @@ try:
         "NUNCA uses frases robóticas ni disculpas innecesarias."
     )
 
-    # SE CORRIGE A 'gemini-1.5-flash' PARA ESTABILIDAD Y EVITAR ERROR 404
     model_ia = genai.GenerativeModel(
         model_name='gemini-1.5-flash',
         generation_config=generation_config,
@@ -394,9 +393,6 @@ def motor_auditor_universal_v32(urls):
     status_text.empty()
     return pd.DataFrame(resultados), pd.DataFrame(fallidos)
 
-# ==============================================================================
-# MOTOR DE BÚSQUEDA TEMPORAL CORREGIDO (FIX TIKTOK + LIKES/COMMENTS/SAVES)
-# ==============================================================================
 def motor_busqueda_temporal(urls_canales, f_start, f_end, min_views):
     """
     MOTOR REPARADO: Añade headers de evasión y extrae Likes, Comentarios y Saves.
@@ -408,11 +404,10 @@ def motor_busqueda_temporal(urls_canales, f_start, f_end, min_views):
     p_bar = st.progress(0)
     status = st.empty()
     
-    # OPCIONES PARA EVITAR BLOQUEO DE TIKTOK Y YT
     ydl_opts_search = {
         'quiet': True,
         'ignoreerrors': True,
-        'extract_flat': True,  # Clave para rapidez
+        'extract_flat': True,
         'playlistend': 50,
         'sleep_interval': 1,
         'http_headers': {
@@ -436,7 +431,6 @@ def motor_busqueda_temporal(urls_canales, f_start, f_end, min_views):
                     for vid in videos:
                         if not vid: continue
                         
-                        # Fix: TikTok a veces usa 'upload_date' y otras veces 'timestamp'
                         v_date_str = vid.get('upload_date')
                         if not v_date_str and vid.get('timestamp'):
                             v_date_str = datetime.datetime.fromtimestamp(vid.get('timestamp')).strftime('%Y%m%d')
@@ -446,7 +440,6 @@ def motor_busqueda_temporal(urls_canales, f_start, f_end, min_views):
                         if v_date_str and v_views is not None:
                             v_date_int = int(v_date_str)
                             
-                            # Filtro estricto por fecha y umbral de vistas
                             if d_start <= v_date_int <= d_end:
                                 if int(v_views) >= min_views:
                                     resultados.append({
@@ -565,8 +558,7 @@ if modulo == "🚀 EXTRACTOR ELITE":
         
         with col_copy1:
             st.markdown("**1. FÓRMULA YT LARGOS (X+Y+Z)**")
-            # MODIFICADO: APLICA X3 DIRECTAMENTE EN LA FÓRMULA
-            f_yt_largos = "+".join((df_yt_v['Vistas'] * 3).astype(str).tolist())
+            f_yt_largos = "+".join(df_yt_v['Vistas'].astype(str).tolist())
             st.code(f_yt_largos if f_yt_largos else "0", language="text")
             
             st.markdown("**2. FÓRMULA FACEBOOK (X+Y+Z)**")
@@ -579,8 +571,8 @@ if modulo == "🚀 EXTRACTOR ELITE":
             st.code(f_shorts if f_shorts else "0", language="text")
 
             st.markdown("**4. VISTAS TOTALES DE TODO (SUMA GLOBAL)**")
-            # MODIFICADO: MUESTRA SOLO EL NÚMERO TOTAL SIN LOS SIGNOS +
-            st.code(f"{total_v}", language="text")
+            f_total_todo = "+".join(df['Vistas'].astype(str).tolist())
+            st.code(f_total_todo if f_total_todo else "0", language="text")
 
         with col_copy2:
             st.markdown("**5. FÓRMULA TIKTOK (X+Y+Z)**")
@@ -588,30 +580,26 @@ if modulo == "🚀 EXTRACTOR ELITE":
             st.code(f_tk if f_tk else "0", language="text")
 
             st.markdown("**6. FÓRMULA TOTAL GENERAL**")
-            # MODIFICADO: SI TIENEN YT VIDEOS, AGREGA CANTIDADES CON EL X3 YA APLICADO
-            # Se crea una serie calculada donde solo los YT Videos se multiplican por 3
-            vistas_mix = df.apply(lambda x: x['Vistas'] * 3 if x['Tipo'] == 'YouTube Video' else x['Vistas'], axis=1)
-            f_total_mix = "+".join(vistas_mix.astype(str).tolist())
-            st.code(f_total_mix if f_total_mix else "0", language="text")
+            st.code(f_total_todo if f_total_todo else "0", language="text")
             
-            # --- NUEVA SECCIÓN SOLICITADA (BOOSTER YT x3) ---
+            # --- SECCIÓN CORREGIDA SEGÚN SOLICITUD ---
             st.divider()
-            st.markdown("### 🚀 CÁLCULO ESTELAR (YT x3 + TOTAL)")
+            st.markdown("### 🚀 CÁLCULO ESTELAR (YT + TOTAL)")
             
-            # Cálculo: (Suma de YT Videos x 3) + Suma Total General Actual
+            # Cálculo: Suma directa sin multiplicar por 3 otra vez
             val_yt_long = df_yt_v['Vistas'].sum()
             val_total_actual = df['Vistas'].sum()
-            val_booster = (val_yt_long * 3) + val_total_actual
+            val_booster = val_yt_long + val_total_actual
             
             st.markdown(f"""
             <div style="background:#161b22; padding:15px; border-radius:10px; border:1px solid #E30613;">
-                <span style="color:#8b949e;">LÓGICA:</span> (YT Largos: <b>{val_yt_long:,}</b> x 3) + Total Global: <b>{val_total_actual:,}</b>
+                <span style="color:#8b949e;">LÓGICA:</span> (YT Largos: <b>{val_yt_long:,}</b>) + Total Global: <b>{val_total_actual:,}</b>
                 <br>
                 <span style="color:#ffffff; font-size:24px; font-weight:bold;">RESULTADO FINAL: {val_booster:,}</span>
             </div>
             """, unsafe_allow_html=True)
             st.code(f"{val_booster}", language="text")
-            # ------------------------------------------------
+            # ----------------------------------------
 
             st.markdown("**7. RESUMEN TÁCTICO DE OPERACIÓN**")
             st.markdown(f"""
@@ -650,7 +638,6 @@ elif modulo == "📂 DRIVE AUDITOR (VISION)":
     if st.button("🧠 INICIAR AUDITORÍA PROFUNDA"):
         v_results_final = []
         
-        # Procesamiento de Enlaces mediante Navegación Textual IA
         urls_drive = re.findall(r"(https?://[^\s\"\'\)\],]+)", entrada_enlaces_drive)
         if urls_drive:
             for u in urls_drive:
@@ -666,7 +653,6 @@ elif modulo == "📂 DRIVE AUDITOR (VISION)":
                         "Vistas": int(vistas_final) if vistas_final else 0, "Link": u
                     })
 
-        # Procesamiento de Imágenes Vision
         if up_files:
             v_bar = st.progress(0)
             for idx, f in enumerate(up_files):
@@ -688,7 +674,7 @@ elif modulo == "📂 DRIVE AUDITOR (VISION)":
         st.code(f_ia, language="text")
 
 # ==============================================================================
-# 8. MÓDULO 3: PARTNER IA (ARREGLADO)
+# 8. MÓDULO 3: PARTNER IA
 # ==============================================================================
 
 elif modulo == "🤖 PARTNER IA":
@@ -705,7 +691,6 @@ elif modulo == "🤖 PARTNER IA":
         
         with st.chat_message("assistant"):
             try:
-                # SE USA EL MODELO ESTABLE PARA EVITAR 404
                 response = model_ia.generate_content(p_user)
                 if response and response.text:
                     texto_ia = response.text
@@ -715,7 +700,7 @@ elif modulo == "🤖 PARTNER IA":
                 st.error(f"FALLO EN LA CONEXIÓN NEURAL: {str(e_chat)}")
 
 # ==============================================================================
-# 9. MÓDULO 4: SEARCH PRO (CON MOTOR DE BÚSQUEDA TEMPORAL CORREGIDO)
+# 9. MÓDULO 4: SEARCH PRO 
 # ==============================================================================
 
 elif modulo == "🛰️ SEARCH PRO":
@@ -737,7 +722,6 @@ elif modulo == "🛰️ SEARCH PRO":
                 st.write(f"Iniciando extracción profunda en {len(perfiles)} canales...")
                 st.write("Aplicando protocolos de evasión para TikTok/YouTube...")
                 
-                # LLAMADA AL MOTOR REPARADO (INCLUYE LIKES, COMMENTS, SAVES)
                 res_search = motor_busqueda_temporal(perfiles, f_inicio, f_fin, v_umbral)
                 
                 status.update(label="✅ Escaneo Completado", state="complete", expanded=False)
@@ -746,7 +730,6 @@ elif modulo == "🛰️ SEARCH PRO":
                 st.markdown('<div class="sub-header">📊 VIDEOS DETECTADOS (FILTRADOS)</div>', unsafe_allow_html=True)
                 st.dataframe(res_search, use_container_width=True, hide_index=True)
                 
-                # Cálculo de Reporte
                 st.markdown('<div class="tactical-summary">', unsafe_allow_html=True)
                 total_radar = res_search['Vistas'].sum()
                 st.markdown(f"**VISTAS TOTALES ENCONTRADAS:** {total_radar:,}")
