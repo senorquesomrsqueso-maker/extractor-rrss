@@ -350,7 +350,7 @@ def motor_auditor_universal_v32(urls):
 
     for i, raw_url in enumerate(urls):
         url = limpiar_url_táctica(raw_url)
-        status_text.markdown(f"🔍 **AUDITANDO:** `{url[:50]}...`")
+        status_text.markdown(f"🔍 **AUDITANDO (#{i+1}):** `{url[:50]}...`")
         
         ydl_opts = {
             'quiet': True,
@@ -371,6 +371,7 @@ def motor_auditor_universal_v32(urls):
                     plataforma = tipo.split(' ')[0].upper()
 
                     resultados.append({
+                        "ID": i + 1,
                         "Fecha": info.get('upload_date', 'N/A'),
                         "Plataforma": plataforma,
                         "Tipo": tipo,
@@ -383,10 +384,12 @@ def motor_auditor_universal_v32(urls):
                         "Link": url
                     })
                 else:
-                    fallidos.append({"Link": url, "Error": "Sin respuesta / Privado"})
+                    # FIX: Guardamos el ID y el enlace completo original
+                    fallidos.append({"ID": i + 1, "Link": raw_url, "Error": "Sin respuesta / Privado"})
         
         except Exception as e_scrap:
-            fallidos.append({"Link": url, "Error": str(e_scrap)[:50]})
+            # FIX: Guardamos el ID y el error real
+            fallidos.append({"ID": i + 1, "Link": raw_url, "Error": str(e_scrap)[:50]})
         
         p_bar.progress((i + 1) / len(urls))
     
@@ -505,13 +508,14 @@ if modulo == "🚀 EXTRACTOR ELITE":
         ejecutar = st.button("🔥 EJECUTAR AUDITORÍA")
     
     if ejecutar:
-        # MEJORA: Reconocimiento universal de enlaces (Incluso sin "https://")
+        # MEJORA: Reconocimiento inteligente de enlaces (Filtro por dominios reales para evitar capturar texto como "TikTok:")
         raw_words = texto_entrada.replace(',', ' ').replace('\n', ' ').split()
         urls_detectadas = []
         for word in raw_words:
             word = word.strip('"\'()[]')
             wl = word.lower()
-            if 'tiktok' in wl or 'facebook' in wl or 'fb.watch' in wl or 'fb.com' in wl or 'youtube' in wl or 'youtu.be' in wl:
+            # FIX: Solo acepta si contiene partes de dominios reales de video
+            if any(domain in wl for domain in ['tiktok.com', 'facebook.com', 'fb.watch', 'fb.com', 'youtube.com', 'youtu.be', '/shorts/']):
                 if not word.startswith('http'):
                     word = 'https://' + word
                 urls_detectadas.append(word)
@@ -533,6 +537,7 @@ if modulo == "🚀 EXTRACTOR ELITE":
     if not st.session_state.db_fallidos.empty:
         with st.expander("⚠️ VER ENLACES NO PROCESADOS / ERRORES"):
             st.markdown('<div class="error-card">', unsafe_allow_html=True)
+            # FIX: Se muestra el ID y el Link completo para identificar el fallo
             st.dataframe(st.session_state.db_fallidos, use_container_width=True, hide_index=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -547,6 +552,7 @@ if modulo == "🚀 EXTRACTOR ELITE":
         
         st.divider()
         st.markdown('<div class="sub-header">📊 DATOS EXTRAÍDOS (MULTI-PLATAFORMA)</div>', unsafe_allow_html=True)
+        # Se muestra la tabla con el ID para referencia rápida
         st.dataframe(df.drop(columns=['Vistas_Calc']), use_container_width=True, hide_index=True)
 
         st.markdown('<div class="module-header">📋 CENTRO DE COPIADO Y FÓRMULAS</div>', unsafe_allow_html=True)
