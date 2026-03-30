@@ -286,16 +286,17 @@ def limpiar_url_táctica(url):
     return url
 
 def obtener_tipo_video(url, info_dict):
-    """Determina la categoría exacta del contenido."""
-    if "facebook.com" in url or "fb.watch" in url:
+    """Determina la categoría exacta del contenido de forma flexible."""
+    url_l = url.lower()
+    if "facebook.com" in url_l or "fb.watch" in url_l or "fb.com" in url_l:
         return "Facebook Video"
     
-    if "tiktok.com" in url:
+    if "tiktok.com" in url_l:
         return "TikTok"
     
-    if "youtube.com" in url or "youtu.be" in url:
+    if "youtube.com" in url_l or "youtu.be" in url_l:
         duration = info_dict.get('duration', 0)
-        if "/shorts/" in url or (duration and duration <= 65):
+        if "/shorts/" in url_l or (duration and duration <= 65):
             return "YouTube Shorts"
         return "YouTube Video"
     
@@ -494,9 +495,9 @@ if modulo == "🚀 EXTRACTOR ELITE":
     st.markdown('<div class="module-header">📥 Extractor de Métricas Masivas</div>', unsafe_allow_html=True)
     
     texto_entrada = st.text_area(
-        "Pega los enlaces (uno por línea o separados por comas):", 
+        "Pega los enlaces (uno por línea o separados por espacios):", 
         height=250, 
-        placeholder="https://..."
+        placeholder="www.tiktok.com/... \nhttps://fb.watch/..."
     )
     
     c_btn1, c_btn2 = st.columns([1, 4])
@@ -504,7 +505,16 @@ if modulo == "🚀 EXTRACTOR ELITE":
         ejecutar = st.button("🔥 EJECUTAR AUDITORÍA")
     
     if ejecutar:
-        urls_detectadas = re.findall(r"(https?://[^\s\"\'\)\],]+)", texto_entrada)
+        # MEJORA: Reconocimiento universal de enlaces (Incluso sin "https://")
+        raw_words = texto_entrada.replace(',', ' ').replace('\n', ' ').split()
+        urls_detectadas = []
+        for word in raw_words:
+            word = word.strip('"\'()[]')
+            wl = word.lower()
+            if 'tiktok' in wl or 'facebook' in wl or 'fb.watch' in wl or 'fb.com' in wl or 'youtube' in wl or 'youtu.be' in wl:
+                if not word.startswith('http'):
+                    word = 'https://' + word
+                urls_detectadas.append(word)
         
         if urls_detectadas:
             res, fails = motor_auditor_universal_v32(urls_detectadas)
@@ -516,7 +526,7 @@ if modulo == "🚀 EXTRACTOR ELITE":
             if not fails.empty:
                 st.warning(f"AVISO: {len(fails)} enlaces presentaron anomalías.")
         else:
-            st.error("ERROR: No se detectaron URLs válidas en el campo de texto.")
+            st.error("ERROR: No se detectaron URLs válidas en el campo de texto. Asegúrate de pegar links de FB, TK o YT.")
 
     # --- ZONA DE VISUALIZACIÓN DE RESULTADOS ---
     
@@ -527,27 +537,34 @@ if modulo == "🚀 EXTRACTOR ELITE":
             st.markdown('</div>', unsafe_allow_html=True)
 
     if not st.session_state.db_final.empty:
-        df = st.session_state.db_final
+        df = st.session_state.db_final.copy()
+        
+        # --- NÚCLEO MATEMÁTICO: APLICACIÓN DEL FACTOR X3 A YT LARGOS ---
+        df['Vistas_Calc'] = df.apply(
+            lambda row: int(row['Vistas'] * 3) if row['Tipo'] == 'YouTube Video' else int(row['Vistas']), 
+            axis=1
+        )
+        
         st.divider()
         st.markdown('<div class="sub-header">📊 DATOS EXTRAÍDOS (MULTI-PLATAFORMA)</div>', unsafe_allow_html=True)
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.dataframe(df.drop(columns=['Vistas_Calc']), use_container_width=True, hide_index=True)
 
         st.markdown('<div class="module-header">📋 CENTRO DE COPIADO Y FÓRMULAS</div>', unsafe_allow_html=True)
         
-        # Grid de métricas rápidas
+        df_yt_v = df[df['Tipo'] == 'YouTube Video']
+        df_shorts = df[df['Tipo'] == 'YouTube Shorts']
+        df_fb = df[df['Plataforma'] == 'FACEBOOK']
+        df_tk = df[df['Plataforma'] == 'TIKTOK']
+
+        # Grid de métricas rápidas (Reflejando el peso real x3 en YT Largos y Global)
         m1, m2, m3, m4 = st.columns(4)
-        
         with m1:
-            total_v = df['Vistas'].sum()
-            st.markdown(f"**TOTAL VISTAS**\n## {total_v:,}")
+            st.markdown(f"**TOTAL VISTAS (PONDERADO)**\n## {df['Vistas_Calc'].sum():,}")
         with m2:
-            df_yt_v = df[df['Tipo'] == 'YouTube Video']
-            st.markdown(f"**YT LARGOS**\n## {df_yt_v['Vistas'].sum():,}")
+            st.markdown(f"**YT LARGOS (x3 APLICADO)**\n## {df_yt_v['Vistas_Calc'].sum():,}")
         with m3:
-            df_fb = df[df['Plataforma'] == 'FACEBOOK']
             st.markdown(f"**FACEBOOK**\n## {df_fb['Vistas'].sum():,}")
         with m4:
-            df_tk = df[df['Plataforma'] == 'TIKTOK']
             st.markdown(f"**TIKTOK**\n## {df_tk['Vistas'].sum():,}")
 
         # BLOQUES DE CÓDIGO PARA COPIADO DIRECTO
@@ -557,61 +574,60 @@ if modulo == "🚀 EXTRACTOR ELITE":
         col_copy1, col_copy2 = st.columns(2)
         
         with col_copy1:
-            st.markdown("**1. FÓRMULA YT LARGOS (X+Y+Z)**")
-            f_yt_largos = "+".join(df_yt_v['Vistas'].astype(str).tolist())
+            st.markdown("**1. FÓRMULA YT LARGOS (X+Y+Z) [YA MULTIPLICADO X3]**")
+            f_yt_largos = "+".join(df_yt_v['Vistas_Calc'].astype(str).tolist())
             st.code(f_yt_largos if f_yt_largos else "0", language="text")
             
             st.markdown("**2. FÓRMULA FACEBOOK (X+Y+Z)**")
-            f_fb = "+".join(df_fb['Vistas'].astype(str).tolist())
-            st.code(f_fb if f_fb else "0", language="text")
+            f_fb_str = "+".join(df_fb['Vistas'].astype(str).tolist())
+            st.code(f_fb_str if f_fb_str else "0", language="text")
             
             st.markdown("**3. FÓRMULA YT SHORTS (X+Y+Z)**")
-            df_shorts = df[df['Tipo'] == 'YouTube Shorts']
-            f_shorts = "+".join(df_shorts['Vistas'].astype(str).tolist())
-            st.code(f_shorts if f_shorts else "0", language="text")
+            f_shorts_str = "+".join(df_shorts['Vistas'].astype(str).tolist())
+            st.code(f_shorts_str if f_shorts_str else "0", language="text")
 
-            st.markdown("**4. VISTAS TOTALES DE TODO (SUMA GLOBAL)**")
-            f_total_todo = "+".join(df['Vistas'].astype(str).tolist())
+            st.markdown("**4. VISTAS TOTALES DE TODO (SUMA GLOBAL PONDERADA)**")
+            f_total_todo = "+".join(df['Vistas_Calc'].astype(str).tolist())
             st.code(f_total_todo if f_total_todo else "0", language="text")
 
         with col_copy2:
             st.markdown("**5. FÓRMULA TIKTOK (X+Y+Z)**")
-            f_tk = "+".join(df_tk['Vistas'].astype(str).tolist())
-            st.code(f_tk if f_tk else "0", language="text")
+            f_tk_str = "+".join(df_tk['Vistas'].astype(str).tolist())
+            st.code(f_tk_str if f_tk_str else "0", language="text")
 
             st.markdown("**6. FÓRMULA TOTAL GENERAL**")
             st.code(f_total_todo if f_total_todo else "0", language="text")
             
-            # --- SECCIÓN CORREGIDA SEGÚN SOLICITUD ---
+            # --- CÁLCULO ESTELAR CORREGIDO ---
             st.divider()
-            st.markdown("### 🚀 CÁLCULO ESTELAR (YT + TOTAL)")
+            st.markdown("### 🚀 CÁLCULO ESTELAR (YT + RESTO)")
             
-            # Cálculo: Suma directa sin multiplicar por 3 otra vez
-            val_yt_long = df_yt_v['Vistas'].sum()
-            val_total_actual = df['Vistas'].sum()
-            val_booster = val_yt_long + val_total_actual
+            val_yt_long_x3 = df_yt_v['Vistas_Calc'].sum()
+            val_resto = df[df['Tipo'] != 'YouTube Video']['Vistas_Calc'].sum()
+            val_booster = val_yt_long_x3 + val_resto
             
             st.markdown(f"""
             <div style="background:#161b22; padding:15px; border-radius:10px; border:1px solid #E30613;">
-                <span style="color:#8b949e;">LÓGICA:</span> (YT Largos: <b>{val_yt_long:,}</b>) + Total Global: <b>{val_total_actual:,}</b>
+                <span style="color:#8b949e;">LÓGICA:</span> (YT Largos x3: <b>{val_yt_long_x3:,}</b>) + Resto Global: <b>{val_resto:,}</b>
                 <br>
                 <span style="color:#ffffff; font-size:24px; font-weight:bold;">RESULTADO FINAL: {val_booster:,}</span>
             </div>
             """, unsafe_allow_html=True)
             st.code(f"{val_booster}", language="text")
-            # ----------------------------------------
 
+            # --- RESUMEN TÁCTICO CORREGIDO ---
             st.markdown("**7. RESUMEN TÁCTICO DE OPERACIÓN**")
             st.markdown(f"""
                 <div class="tactical-summary">
                     <div class="tactical-item"><span class="tactical-label">Protocolo:</span><span class="tactical-value">BS LATAM AUDIT ELITE</span></div>
                     <div class="tactical-item"><span class="tactical-label">Exitosos:</span><span class="tactical-value">{len(df)}</span></div>
-                    <div class="tactical-item"><span class="tactical-label">YouTube:</span><span class="tactical-value">{df_yt_v['Vistas'].sum() + df_shorts['Vistas'].sum():,}</span></div>
+                    <div class="tactical-item"><span class="tactical-label">YouTube Largos (x3):</span><span class="tactical-value">{val_yt_long_x3:,}</span></div>
+                    <div class="tactical-item"><span class="tactical-label">YouTube Shorts (x1):</span><span class="tactical-value">{df_shorts['Vistas'].sum():,}</span></div>
                     <div class="tactical-item"><span class="tactical-label">Facebook:</span><span class="tactical-value">{df_fb['Vistas'].sum():,}</span></div>
                     <div class="tactical-item"><span class="tactical-label">TikTok:</span><span class="tactical-value">{df_tk['Vistas'].sum():,}</span></div>
                     <div style="border-top: 1px dashed #E30613; margin-top: 10px; padding-top: 10px;" class="tactical-item">
-                        <span class="tactical-label" style="color:#E30613;">Acumulado Global:</span>
-                        <span class="tactical-value" style="font-size: 18px;">{total_v:,}</span>
+                        <span class="tactical-label" style="color:#E30613;">Acumulado Ponderado:</span>
+                        <span class="tactical-value" style="font-size: 18px;">{df['Vistas_Calc'].sum():,}</span>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
