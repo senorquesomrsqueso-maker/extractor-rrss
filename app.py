@@ -399,7 +399,7 @@ def motor_auditor_universal_v32(urls):
 
 def motor_busqueda_temporal(urls_canales, f_start, f_end, min_views):
     """
-    MOTOR REPARADO: Añade headers de evasión y extrae Likes, Comentarios y Saves.
+    MOTOR REPARADO: Añade headers de evasión y soporte explícito para FB, YT y TK.
     """
     resultados = []
     d_start = int(f_start.strftime('%Y%m%d'))
@@ -424,6 +424,19 @@ def motor_busqueda_temporal(urls_canales, f_start, f_end, min_views):
     for i, url in enumerate(urls_canales):
         url = url.strip()
         if not url: continue
+        
+        # --- ADAPTACIÓN DE ENLACES PARA FB Y YOUTUBE ---
+        url_lower = url.lower()
+        if "facebook.com" in url_lower and "/videos" not in url_lower and "watch" not in url_lower:
+            if not url.endswith("/"):
+                url += "/"
+            url += "videos/"
+        elif "youtube.com" in url_lower and "@" in url_lower and "/videos" not in url_lower and "/shorts" not in url_lower:
+            if not url.endswith("/"):
+                url += "/"
+            url += "videos"
+        # -----------------------------------------------
+
         status.markdown(f"🛰️ **ESCANEO RADAR:** Analizando feed de `{url[:40]}...`")
         
         try:
@@ -727,9 +740,9 @@ elif modulo == "🤖 PARTNER IA":
 
 elif modulo == "🛰️ SEARCH PRO":
     st.markdown('<div class="module-header">🚀 Radar de Canales (Motor Temporal)</div>', unsafe_allow_html=True)
-    st.markdown("Pega los enlaces de canales o perfiles. El sistema buscará videos dentro de las fechas indicadas.")
+    st.markdown("Pega los enlaces de canales o perfiles de **TikTok, YouTube o Facebook**. El sistema buscará videos dentro de las fechas indicadas.")
     
-    area_search = st.text_area("Canales a rastrear (uno por línea):", height=150, placeholder="https://youtube.com/@CanalX\nhttps://tiktok.com/@UserY")
+    area_search = st.text_area("Canales a rastrear (uno por línea):", height=150, placeholder="https://youtube.com/@CanalX\nhttps://facebook.com/PaginaY\nhttps://tiktok.com/@UserZ")
     
     col_s1, col_s2, col_s3 = st.columns(3)
     f_inicio = col_s1.date_input("Desde:", value=datetime.date(2026, 2, 1))
@@ -742,7 +755,7 @@ elif modulo == "🛰️ SEARCH PRO":
         if perfiles:
             with st.status("📡 Escaneando feeds de contenido...", expanded=True) as status:
                 st.write(f"Iniciando extracción profunda en {len(perfiles)} canales...")
-                st.write("Aplicando protocolos de evasión para TikTok/YouTube...")
+                st.write("Aplicando protocolos multiplataforma (FB / YT / TK)...")
                 
                 res_search = motor_busqueda_temporal(perfiles, f_inicio, f_fin, v_umbral)
                 
@@ -770,5 +783,8 @@ elif modulo == "🛰️ SEARCH PRO":
 # PIE DE PÁGINA Y METADATOS
 # ==============================================================================
 
+
+
 st.markdown("---")
-st.caption(f"BS LATAM SYSTEM V32.9 • {fecha_actual_global} • SECURE PROTOCOL")
+
+st.caption(f"BS LATAM TOOls • {fecha_actual_global} • Blood Strike")
