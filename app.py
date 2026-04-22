@@ -384,11 +384,9 @@ def motor_auditor_universal_v32(urls):
                         "Link": url
                     })
                 else:
-                    # FIX: Guardamos el ID y el enlace completo original
                     fallidos.append({"ID": i + 1, "Link": raw_url, "Error": "Sin respuesta / Privado"})
         
         except Exception as e_scrap:
-            # FIX: Guardamos el ID y el error real
             fallidos.append({"ID": i + 1, "Link": raw_url, "Error": str(e_scrap)[:50]})
         
         p_bar.progress((i + 1) / len(urls))
@@ -397,9 +395,15 @@ def motor_auditor_universal_v32(urls):
     status_text.empty()
     return pd.DataFrame(resultados), pd.DataFrame(fallidos)
 
+# ==============================================================================
+# REPARACIÓN ESTRUCTURAL: MOTOR SEARCH PRO (OPTIMIZACIÓN DUAL YT + FB)
+# ==============================================================================
+
 def motor_busqueda_temporal(urls_canales, f_start, f_end, min_views):
     """
-    MOTOR REPARADO: Añade headers de evasión y soporte explícito para FB, YT y TK.
+    MOTOR REPARADO V32.9: 
+    Escanea Pestañas de Videos y Shorts en YT de forma secuencial.
+    Mejorada la detección de Facebook Videos y Reels en feed masivo.
     """
     resultados = []
     d_start = int(f_start.strftime('%Y%m%d'))
@@ -412,73 +416,85 @@ def motor_busqueda_temporal(urls_canales, f_start, f_end, min_views):
         'quiet': True,
         'ignoreerrors': True,
         'extract_flat': True,
-        'playlistend': 50,
+        'playlistend': 60, # Profundidad aumentada para capturar el mes completo
         'sleep_interval': 1,
         'http_headers': {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
-            'Accept-Language': 'es-ES,es;q=0.8,en-US;q=0.5,en;q=0.3',
         }
     }
     
-    for i, url in enumerate(urls_canales):
-        url = url.strip()
-        if not url: continue
+    for i, base_url in enumerate(urls_canales):
+        base_url = base_url.strip()
+        if not base_url: continue
         
-        # --- ADAPTACIÓN DE ENLACES PARA FB Y YOUTUBE ---
-        url_lower = url.lower()
-        if "facebook.com" in url_lower and "/videos" not in url_lower and "watch" not in url_lower:
-            if not url.endswith("/"):
-                url += "/"
-            url += "videos/"
-        elif "youtube.com" in url_lower and "@" in url_lower and "/videos" not in url_lower and "/shorts" not in url_lower:
-            if not url.endswith("/"):
-                url += "/"
-            url += "videos"
-        # -----------------------------------------------
+        # --- GENERACIÓN DE RUTAS DE ESCANEO (DUAL-SCAN YT / OPT FB) ---
+        target_urls = []
+        url_lower = base_url.lower()
 
-        status.markdown(f"🛰️ **ESCANEO RADAR:** Analizando feed de `{url[:40]}...`")
-        
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts_search) as ydl:
-                info = ydl.extract_info(url, download=False)
-                
-                if info and 'entries' in info:
-                    videos = info['entries']
-                    for vid in videos:
-                        if not vid: continue
-                        
-                        v_date_str = vid.get('upload_date')
-                        if not v_date_str and vid.get('timestamp'):
-                            v_date_str = datetime.datetime.fromtimestamp(vid.get('timestamp')).strftime('%Y%m%d')
-                        
-                        v_views = vid.get('view_count')
-                        
-                        if v_date_str and v_views is not None:
-                            v_date_int = int(v_date_str)
+        if "youtube.com" in url_lower and "@" in url_lower:
+            # Forzar escaneo de ambas pestañas críticas para no perder data
+            clean_base = base_url.split('/videos')[0].split('/shorts')[0].rstrip('/')
+            target_urls.append(f"{clean_base}/videos") # Pestaña Videos Largos
+            target_urls.append(f"{clean_base}/shorts") # Pestaña Shorts
+        elif "facebook.com" in url_lower:
+            # Optimización para entrar directamente al apartado de videos/reels de la página
+            if "/videos" not in url_lower and "watch" not in url_lower:
+                clean_fb = base_url.rstrip('/')
+                target_urls.append(f"{clean_fb}/videos/")
+            else:
+                target_urls.append(base_url)
+        else:
+            target_urls.append(base_url)
+
+        # --- PROCESAMIENTO DE LAS RUTAS GENERADAS ---
+        for sub_url in target_urls:
+            tipo_label = "YouTube Shorts" if "/shorts" in sub_url else "Video Feed"
+            status.markdown(f"🛰️ **RADAR:** Escaneando `{sub_url[:45]}...` ({tipo_label})")
+            
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts_search) as ydl:
+                    info = ydl.extract_info(sub_url, download=False)
+                    
+                    if info and 'entries' in info:
+                        for vid in info['entries']:
+                            if not vid: continue
                             
-                            if d_start <= v_date_int <= d_end:
-                                if int(v_views) >= min_views:
-                                    resultados.append({
-                                        "Fecha": f"{v_date_str[:4]}-{v_date_str[4:6]}-{v_date_str[6:]}",
-                                        "Canal/Fuente": info.get('title', 'N/A'),
-                                        "Título Video": vid.get('title', 'N/A')[:60],
-                                        "Vistas": int(v_views),
-                                        "Likes": int(vid.get('like_count') or 0),
-                                        "Comments": int(vid.get('comment_count') or 0),
-                                        "Saves": int(vid.get('repost_count') or 0),
-                                        "Link": vid.get('url') or vid.get('webpage_url') or url
-                                    })
-                else:
-                    print(f"No se pudieron extraer entradas de: {url}")
-        except Exception as e:
-            print(f"Error en canal {url}: {e}")
+                            v_date_str = vid.get('upload_date')
+                            if not v_date_str and vid.get('timestamp'):
+                                v_date_str = datetime.datetime.fromtimestamp(vid.get('timestamp')).strftime('%Y%m%d')
+                            
+                            v_views = vid.get('view_count')
+                            
+                            if v_date_str and v_views is not None:
+                                v_date_int = int(v_date_str)
+                                
+                                # Filtro táctico por rango de fechas y umbral de vistas
+                                if d_start <= v_date_int <= d_end:
+                                    if int(v_views) >= min_views:
+                                        # Identificación refinada de tipo de contenido
+                                        v_link = vid.get('url') or vid.get('webpage_url') or ""
+                                        final_tipo = "YouTube Shorts" if "/shorts/" in v_link.lower() or "/shorts" in sub_url else obtener_tipo_video(v_link, vid)
+                                        
+                                        resultados.append({
+                                            "Fecha": f"{v_date_str[:4]}-{v_date_str[4:6]}-{v_date_str[6:]}",
+                                            "Canal/Fuente": info.get('title', 'N/A'),
+                                            "Título Video": vid.get('title', 'N/A')[:60],
+                                            "Tipo": final_tipo,
+                                            "Vistas": int(v_views),
+                                            "Likes": int(vid.get('like_count') or 0),
+                                            "Comments": int(vid.get('comment_count') or 0),
+                                            "Link": v_link
+                                        })
+            except Exception:
+                pass # Errores silenciosos para permitir que el radar siga con otros canales
             
         p_bar.progress((i + 1) / len(urls_canales))
 
     p_bar.empty()
     status.empty()
-    return pd.DataFrame(resultados)
+    # Limpieza de duplicados por link (en caso de que un video aparezca en varios feeds)
+    return pd.DataFrame(resultados).drop_duplicates(subset=['Link'])
 
 # ==============================================================================
 # 5. SIDEBAR - CONTROL DE MISIONES
@@ -504,7 +520,7 @@ with st.sidebar:
     st.caption(f"ÚLTIMO SYNC: {datetime.datetime.now().strftime('%H:%M:%S')}")
 
 # ==============================================================================
-# 6. MÓDULO 1: EXTRACTOR ELITE (MODO MULTI-PLATAFORMA)
+# 6. MÓDULO 1: EXTRACTOR ELITE
 # ==============================================================================
 
 if modulo == "🚀 EXTRACTOR ELITE":
@@ -521,14 +537,12 @@ if modulo == "🚀 EXTRACTOR ELITE":
         ejecutar = st.button("🔥 EJECUTAR AUDITORÍA")
     
     if ejecutar:
-        # MEJORA: Reconocimiento inteligente de enlaces (Filtro por dominios reales para evitar capturar texto como "TikTok:")
         raw_words = texto_entrada.replace(',', ' ').replace('\n', ' ').split()
         urls_detectadas = []
         for word in raw_words:
             word = word.strip('"\'()[]')
             wl = word.lower()
-            # FIX: Solo acepta si contiene partes de dominios reales de video
-            if any(domain in wl for domain in ['tiktok.com', 'facebook.com', 'fb.watch', 'fb.com', 'youtube.com', 'youtu.be', '/shorts/']):
+            if any(domain in wl for domain in ['tiktok.com', 'facebook.com', 'fb.watch', 'fb.com', 'youtube.com', 'youtu.be']):
                 if not word.startswith('http'):
                     word = 'https://' + word
                 urls_detectadas.append(word)
@@ -543,21 +557,16 @@ if modulo == "🚀 EXTRACTOR ELITE":
             if not fails.empty:
                 st.warning(f"AVISO: {len(fails)} enlaces presentaron anomalías.")
         else:
-            st.error("ERROR: No se detectaron URLs válidas en el campo de texto. Asegúrate de pegar links de FB, TK o YT.")
+            st.error("ERROR: No se detectaron URLs válidas.")
 
-    # --- ZONA DE VISUALIZACIÓN DE RESULTADOS ---
-    
     if not st.session_state.db_fallidos.empty:
         with st.expander("⚠️ VER ENLACES NO PROCESADOS / ERRORES"):
             st.markdown('<div class="error-card">', unsafe_allow_html=True)
-            # FIX: Se muestra el ID y el Link completo para identificar el fallo
             st.dataframe(st.session_state.db_fallidos, use_container_width=True, hide_index=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
     if not st.session_state.db_final.empty:
         df = st.session_state.db_final.copy()
-        
-        # --- NÚCLEO MATEMÁTICO: APLICACIÓN DEL FACTOR X3 A YT LARGOS ---
         df['Vistas_Calc'] = df.apply(
             lambda row: int(row['Vistas'] * 3) if row['Tipo'] == 'YouTube Video' else int(row['Vistas']), 
             axis=1
@@ -565,7 +574,6 @@ if modulo == "🚀 EXTRACTOR ELITE":
         
         st.divider()
         st.markdown('<div class="sub-header">📊 DATOS EXTRAÍDOS (MULTI-PLATAFORMA)</div>', unsafe_allow_html=True)
-        # Se muestra la tabla con el ID para referencia rápida
         st.dataframe(df.drop(columns=['Vistas_Calc']), use_container_width=True, hide_index=True)
 
         st.markdown('<div class="module-header">📋 CENTRO DE COPIADO Y FÓRMULAS</div>', unsafe_allow_html=True)
@@ -575,25 +583,15 @@ if modulo == "🚀 EXTRACTOR ELITE":
         df_fb = df[df['Plataforma'] == 'FACEBOOK']
         df_tk = df[df['Plataforma'] == 'TIKTOK']
 
-        # Grid de métricas rápidas (Reflejando el peso real x3 en YT Largos y Global)
         m1, m2, m3, m4 = st.columns(4)
-        with m1:
-            st.markdown(f"**TOTAL VISTAS (PONDERADO)**\n## {df['Vistas_Calc'].sum():,}")
-        with m2:
-            st.markdown(f"**YT LARGOS (x3 APLICADO)**\n## {df_yt_v['Vistas_Calc'].sum():,}")
-        with m3:
-            st.markdown(f"**FACEBOOK**\n## {df_fb['Vistas'].sum():,}")
-        with m4:
-            st.markdown(f"**TIKTOK**\n## {df_tk['Vistas'].sum():,}")
+        with m1: st.markdown(f"**TOTAL VISTAS (PONDERADO)**\n## {df['Vistas_Calc'].sum():,}")
+        with m2: st.markdown(f"**YT LARGOS (x3)**\n## {df_yt_v['Vistas_Calc'].sum():,}")
+        with m3: st.markdown(f"**FACEBOOK**\n## {df_fb['Vistas'].sum():,}")
+        with m4: st.markdown(f"**TIKTOK**\n## {df_tk['Vistas'].sum():,}")
 
-        # BLOQUES DE CÓDIGO PARA COPIADO DIRECTO
-        st.divider()
-        st.markdown("### 📥 Bloques de Texto para Copiar")
-        
         col_copy1, col_copy2 = st.columns(2)
-        
         with col_copy1:
-            st.markdown("**1. FÓRMULA YT LARGOS (X+Y+Z) [YA MULTIPLICADO X3]**")
+            st.markdown("**1. FÓRMULA YT LARGOS (X+Y+Z) [X3]**")
             f_yt_largos = "+".join(df_yt_v['Vistas_Calc'].astype(str).tolist())
             st.code(f_yt_largos if f_yt_largos else "0", language="text")
             
@@ -605,7 +603,7 @@ if modulo == "🚀 EXTRACTOR ELITE":
             f_shorts_str = "+".join(df_shorts['Vistas'].astype(str).tolist())
             st.code(f_shorts_str if f_shorts_str else "0", language="text")
 
-            st.markdown("**4. VISTAS TOTALES DE TODO (SUMA GLOBAL PONDERADA)**")
+            st.markdown("**4. VISTAS TOTALES (SUMA GLOBAL)**")
             f_total_todo = "+".join(df['Vistas_Calc'].astype(str).tolist())
             st.code(f_total_todo if f_total_todo else "0", language="text")
 
@@ -617,96 +615,64 @@ if modulo == "🚀 EXTRACTOR ELITE":
             st.markdown("**6. FÓRMULA TOTAL GENERAL**")
             st.code(f_total_todo if f_total_todo else "0", language="text")
             
-            # --- CÁLCULO ESTELAR CORREGIDO ---
             st.divider()
-            st.markdown("### 🚀 CÁLCULO ESTELAR (YT + RESTO)")
-            
+            st.markdown("### 🚀 CÁLCULO ESTELAR (YT + TOTAL)")
             val_yt_long_x3 = df_yt_v['Vistas_Calc'].sum()
             val_resto = df[df['Tipo'] != 'YouTube Video']['Vistas_Calc'].sum()
             val_booster = val_yt_long_x3 + val_resto
             
             st.markdown(f"""
             <div style="background:#161b22; padding:15px; border-radius:10px; border:1px solid #E30613;">
-                <span style="color:#8b949e;">LÓGICA:</span> (YT Largos x3: <b>{val_yt_long_x3:,}</b>) + Resto Global: <b>{val_resto:,}</b>
+                <span style="color:#8b949e;">LÓGICA:</span> (YT Largos: <b>{val_yt_long_x3:,}</b>) + Total Global: <b>{val_resto:,}</b>
                 <br>
                 <span style="color:#ffffff; font-size:24px; font-weight:bold;">RESULTADO FINAL: {val_booster:,}</span>
             </div>
             """, unsafe_allow_html=True)
             st.code(f"{val_booster}", language="text")
 
-            # --- RESUMEN TÁCTICO CORREGIDO ---
             st.markdown("**7. RESUMEN TÁCTICO DE OPERACIÓN**")
             st.markdown(f"""
                 <div class="tactical-summary">
-                    <div class="tactical-item"><span class="tactical-label">Protocolo:</span><span class="tactical-value">BS LATAM AUDIT ELITE</span></div>
                     <div class="tactical-item"><span class="tactical-label">Exitosos:</span><span class="tactical-value">{len(df)}</span></div>
-                    <div class="tactical-item"><span class="tactical-label">YouTube Largos (x3):</span><span class="tactical-value">{val_yt_long_x3:,}</span></div>
-                    <div class="tactical-item"><span class="tactical-label">YouTube Shorts (x1):</span><span class="tactical-value">{df_shorts['Vistas'].sum():,}</span></div>
+                    <div class="tactical-item"><span class="tactical-label">YT Largos (x3):</span><span class="tactical-value">{val_yt_long_x3:,}</span></div>
+                    <div class="tactical-item"><span class="tactical-label">YT Shorts (x1):</span><span class="tactical-value">{df_shorts['Vistas'].sum():,}</span></div>
                     <div class="tactical-item"><span class="tactical-label">Facebook:</span><span class="tactical-value">{df_fb['Vistas'].sum():,}</span></div>
                     <div class="tactical-item"><span class="tactical-label">TikTok:</span><span class="tactical-value">{df_tk['Vistas'].sum():,}</span></div>
                     <div style="border-top: 1px dashed #E30613; margin-top: 10px; padding-top: 10px;" class="tactical-item">
-                        <span class="tactical-label" style="color:#E30613;">Acumulado Ponderado:</span>
+                        <span class="tactical-label" style="color:#E30613;">Acumulado:</span>
                         <span class="tactical-value" style="font-size: 18px;">{df['Vistas_Calc'].sum():,}</span>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 7. MÓDULO 2: DRIVE AUDITOR (VISION IA + NAVEGACIÓN)
+# 7. MÓDULO 2: DRIVE AUDITOR (VISION)
 # ==============================================================================
 
 elif modulo == "📂 DRIVE AUDITOR (VISION)":
     st.markdown('<div class="module-header">👁️ Auditor Visual y de Enlaces</div>', unsafe_allow_html=True)
-    
-    st.markdown('<div class="sub-header">🔗 Auditoría por Navegación IA (Lectura de Link)</div>', unsafe_allow_html=True)
-    entrada_enlaces_drive = st.text_area(
-        "Pega aquí los enlaces (La IA 'entrará' a leer la data):", 
-        height=150, 
-        placeholder="Pega múltiples enlaces aquí..."
-    )
-    
-    st.divider()
-    
-    st.markdown('<div class="sub-header">📸 Auditoría por Evidencia Visual (OCR)</div>', unsafe_allow_html=True)
+    entrada_enlaces_drive = st.text_area("Pega aquí los enlaces (La IA 'entrará' a leer la data):", height=150)
     up_files = st.file_uploader("Arrastra las evidencias aquí:", type=['png', 'jpg', 'jpeg', 'webp'], accept_multiple_files=True)
     
     if st.button("🧠 INICIAR AUDITORÍA PROFUNDA"):
         v_results_final = []
-        
         urls_drive = re.findall(r"(https?://[^\s\"\'\)\],]+)", entrada_enlaces_drive)
         if urls_drive:
             for u in urls_drive:
-                with st.spinner(f"IA Navegando en {u[:30]}..."):
-                    texto_web = navegar_ia_en_enlace(u)
-                    prompt_ia_link = f"Analiza este texto extraído de una web y busca el número de VISTAS o REPRODUCCIONES. Solo responde el número: {texto_web}"
-                    res_ia_link = model_ia.generate_content(prompt_ia_link)
-                    vistas_final = re.sub(r'[^0-9]', '', res_ia_link.text)
-                    
-                    v_results_final.append({
-                        "Fecha": "Enlace IA", "Plataforma": "LINK", "Tipo": "Scraping IA", 
-                        "Creador": "N/A", "Título": u[:50], 
-                        "Vistas": int(vistas_final) if vistas_final else 0, "Link": u
-                    })
-
+                texto_web = navegar_ia_en_enlace(u)
+                prompt_ia_link = f"Busca el número de VISTAS. Solo responde el número: {texto_web}"
+                res_ia_link = model_ia.generate_content(prompt_ia_link)
+                vistas_final = re.sub(r'[^0-9]', '', res_ia_link.text)
+                v_results_final.append({"Fecha": "Link IA", "Plataforma": "LINK", "Vistas": int(vistas_final) if vistas_final else 0, "Link": u})
         if up_files:
-            v_bar = st.progress(0)
-            for idx, f in enumerate(up_files):
+            for f in up_files:
                 v_img = analizar_imagen_con_ia(f)
-                v_results_final.append({
-                    "Fecha": "OCR IA", "Plataforma": "VISION", "Tipo": "Captura", 
-                    "Creador": "N/A", "Título": f.name, "Vistas": v_img, "Link": "Archivo Local"
-                })
-                v_bar.progress((idx + 1) / len(up_files))
-        
+                v_results_final.append({"Fecha": "OCR IA", "Plataforma": "VISION", "Vistas": v_img, "Link": f.name})
         st.session_state.db_drive_vision = pd.DataFrame(v_results_final)
-        st.success("Análisis Profundo Completado.")
 
     if not st.session_state.db_drive_vision.empty:
-        st.markdown('<div class="sub-header">📊 DATA CONSOLIDADA DRIVE/VISION</div>', unsafe_allow_html=True)
         st.dataframe(st.session_state.db_drive_vision, use_container_width=True, hide_index=True)
-        f_ia = "+".join(st.session_state.db_drive_vision['Vistas'].astype(str).tolist())
-        st.markdown("**FÓRMULA DE SUMA DRIVE/VISION**")
-        st.code(f_ia, language="text")
+        st.code("+".join(st.session_state.db_drive_vision['Vistas'].astype(str).tolist()), language="text")
 
 # ==============================================================================
 # 8. MÓDULO 3: PARTNER IA
@@ -714,77 +680,72 @@ elif modulo == "📂 DRIVE AUDITOR (VISION)":
 
 elif modulo == "🤖 PARTNER IA":
     st.markdown('<div class="module-header">🤖 Partner IA - Consultor Estratégico</div>', unsafe_allow_html=True)
-    
     for msg in st.session_state.chat_log:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
-    
+        with st.chat_message(msg["role"]): st.markdown(msg["content"])
     if p_user := st.chat_input("Instrucción técnica..."):
         st.session_state.chat_log.append({"role": "user", "content": p_user})
-        with st.chat_message("user"): 
-            st.markdown(p_user)
-        
+        with st.chat_message("user"): st.markdown(p_user)
         with st.chat_message("assistant"):
-            try:
-                response = model_ia.generate_content(p_user)
-                if response and response.text:
-                    texto_ia = response.text
-                    st.markdown(texto_ia)
-                    st.session_state.chat_log.append({"role": "assistant", "content": texto_ia})
-            except Exception as e_chat:
-                st.error(f"FALLO EN LA CONEXIÓN NEURAL: {str(e_chat)}")
+            response = model_ia.generate_content(p_user)
+            st.markdown(response.text)
+            st.session_state.chat_log.append({"role": "assistant", "content": response.text})
 
 # ==============================================================================
-# 9. MÓDULO 4: SEARCH PRO 
+# 9. MÓDULO 4: SEARCH PRO (MOTOR DUAL-SCAN REPARADO)
 # ==============================================================================
 
 elif modulo == "🛰️ SEARCH PRO":
     st.markdown('<div class="module-header">🚀 Radar de Canales (Motor Temporal)</div>', unsafe_allow_html=True)
-    st.markdown("Pega los enlaces de canales o perfiles de **TikTok, YouTube o Facebook**. El sistema buscará videos dentro de las fechas indicadas.")
+    st.info("El sistema ahora escanea automáticamente Videos y Shorts en YouTube, además de optimizar la captura en Facebook y TikTok.")
     
-    area_search = st.text_area("Canales a rastrear (uno por línea):", height=150, placeholder="https://youtube.com/@CanalX\nhttps://facebook.com/PaginaY\nhttps://tiktok.com/@UserZ")
+    area_search = st.text_area(
+        "Canales a rastrear (YouTube, Facebook, TikTok):", 
+        height=150, 
+        placeholder="https://youtube.com/@CanalX \nhttps://facebook.com/PaginaY"
+    )
     
     col_s1, col_s2, col_s3 = st.columns(3)
     f_inicio = col_s1.date_input("Desde:", value=datetime.date(2026, 2, 1))
     f_fin = col_s2.date_input("Hasta:", value=datetime.date(2026, 2, 28))
-    v_umbral = col_s3.number_input("Vistas Mínimas (Filtro):", value=1000)
+    v_umbral = col_s3.number_input("Vistas Mínimas:", value=0)
 
     if st.button("🚀 ACTIVAR BARRIDO TEMPORAL"):
-        perfiles = [p.strip() for p in area_search.split('\n') if p.strip()]
+        raw_words = area_search.replace(',', ' ').replace('\n', ' ').split()
+        perfiles = []
+        for word in raw_words:
+            word = word.strip('"\'()[]')
+            wl = word.lower()
+            if any(domain in wl for domain in ['tiktok.com', 'facebook.com', 'fb.watch', 'fb.com', 'youtube.com', 'youtu.be']):
+                if not word.startswith('http'): word = 'https://' + word
+                perfiles.append(word)
         
         if perfiles:
-            with st.status("📡 Escaneando feeds de contenido...", expanded=True) as status:
-                st.write(f"Iniciando extracción profunda en {len(perfiles)} canales...")
-                st.write("Aplicando protocolos multiplataforma (FB / YT / TK)...")
-                
+            with st.status("📡 Escaneando feeds multiplataforma...", expanded=True) as status:
                 res_search = motor_busqueda_temporal(perfiles, f_inicio, f_fin, v_umbral)
-                
                 status.update(label="✅ Escaneo Completado", state="complete", expanded=False)
             
             if not res_search.empty:
-                st.markdown('<div class="sub-header">📊 VIDEOS DETECTADOS (FILTRADOS)</div>', unsafe_allow_html=True)
+                st.markdown('<div class="sub-header">📊 CONTENIDO DETECTADO (YT DUAL + FB + TK)</div>', unsafe_allow_html=True)
                 st.dataframe(res_search, use_container_width=True, hide_index=True)
                 
-                st.markdown('<div class="tactical-summary">', unsafe_allow_html=True)
-                total_radar = res_search['Vistas'].sum()
-                st.markdown(f"**VISTAS TOTALES ENCONTRADAS:** {total_radar:,}")
-                st.markdown(f"**TOTAL VIDEOS:** {len(res_search)}")
-                st.markdown('</div>', unsafe_allow_html=True)
+                m_c1, m_c2 = st.columns(2)
+                with m_c1:
+                    total_radar = res_search['Vistas'].sum()
+                    st.markdown(f"**VISTAS TOTALES:** {total_radar:,}")
+                with m_c2:
+                    st.markdown(f"**TOTAL VIDEOS:** {len(res_search)}")
                 
                 st.markdown("**FÓRMULA TOTAL COPIABLE:**")
                 f_search_total = "+".join(res_search['Vistas'].astype(str).tolist())
                 st.code(f_search_total if f_search_total else "0", language="text")
             else:
-                st.warning("No se encontraron videos que cumplan con los filtros. Si el perfil tiene videos, prueba bajando el umbral de vistas a 0 o revisa que el link sea público.")
+                st.warning("No se encontró contenido. Prueba bajando el umbral de vistas o revisando el rango de fechas.")
         else:
-            st.error("Error: Debe ingresar al menos un canal para el radar.")
+            st.error("Error: Ingrese enlaces válidos.")
 
 # ==============================================================================
 # PIE DE PÁGINA Y METADATOS
 # ==============================================================================
 
-
-
 st.markdown("---")
-
-st.caption(f"BS LATAM TOOls • {fecha_actual_global} • Blood Strike")
+st.caption(f"BS LATAM TOOLS • {fecha_actual_global} • Blood Strike")
