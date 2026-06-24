@@ -20,9 +20,9 @@ from bs4 import BeautifulSoup
 # 1. CONFIGURACIÓN ESTRUCTURAL Y NÚCLEO IA DE ALTO RENDIMIENTO
 # ==============================================================================
 
-# Credenciales de Acceso Seguras - Protocolo BS LATAM
-DRIVE_API_KEY = st.secrets["DRIVE_API_KEY"]
-GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
+# Credenciales de Acceso - Protocolo BS LATAM
+DRIVE_API_KEY = "AIzaSyBjETNqerBHpqCBQBH7B1bZl55eYWrtMQk" 
+GEMINI_API_KEY = "AIzaSyA8HsM0vSCopd1s05nOryhbNIGU26dvxG4"
 
 # Configuración Inicial del Dashboard
 st.set_page_config(
@@ -279,17 +279,14 @@ def limpiar_url_táctica(url):
     url = url.strip().replace('"', '').replace("'", "")
     url_l = url.lower()
     
-    # Corrección estratégica para enlaces móviles o alternativos de Facebook
     if "web.facebook.com" in url_l:
         url = url.replace("web.facebook.com", "www.facebook.com")
     
-    # Limpieza estricta de parámetros de tracking comunes
     if '?si=' in url: 
         url = url.split('?si=')[0]
     if '&pp=' in url: 
         url = url.split('&pp=')[0]
         
-    # Limpieza de tokens pesados en enlaces de Facebook que rompen yt-dlp (ej. mibextid, xid)
     if 'facebook.com' in url or 'fb.watch' in url:
         if '?' in url and 'fb.watch' not in url:
             url = url.split('?')[0]
@@ -350,12 +347,10 @@ def analizar_imagen_con_ia(image_file):
 def analizar_imagen_drive_con_ia(url_drive):
     """Módulo Vision Avanzado: Descarga capturas desde Google Drive público y extrae vistas con IA."""
     try:
-        # Extraer el ID único del archivo de Google Drive usando expresiones regulares
         file_id = re.findall(r'[-\w]{25,}', url_drive)
         if not file_id: 
             return 0, "ID de Drive no encontrado en la URL"
         
-        # Construir endpoint oficial de descarga directa de assets de Google Drive
         url_download = f"https://drive.google.com/uc?export=download&id={file_id[0]}"
         response = requests.get(url_download, timeout=15)
         
@@ -375,8 +370,24 @@ def analizar_imagen_drive_con_ia(url_drive):
     except Exception as e:
         return 0, str(e)
 
+def convertir_k_m(valor_str):
+    """Convierte strings de Facebook como '6.1K' o '1.2M' a enteros reales."""
+    if not valor_str: return 0
+    valor_str = str(valor_str).upper().strip()
+    multiplicador = 1
+    if 'K' in valor_str:
+        multiplicador = 1000
+        valor_str = valor_str.replace('K', '')
+    elif 'M' in valor_str:
+        multiplicador = 1000000
+        valor_str = valor_str.replace('M', '')
+    try:
+        return int(float(valor_str) * multiplicador)
+    except:
+        return 0
+
 def motor_auditor_universal_v32(urls):
-    """Core de scraping masivo con soporte para FACEBOOK, YT y TIKTOK."""
+    """Core de scraping masivo con parche táctico para títulos de Facebook Reels."""
     resultados = []
     fallidos = []
     
@@ -407,9 +418,27 @@ def motor_auditor_universal_v32(urls):
                 info = ydl.extract_info(url, download=False)
                 
                 if info:
+                    titulo_raw = info.get('title', 'N/A')
                     vistas = int(info.get('view_count') or 0)
+                    likes = int(info.get('like_count') or 0)
                     tipo = obtener_tipo_video(url, info)
                     plataforma = tipo.split(' ')[0].upper()
+
+                    # =========================================================
+                    # 🛠️ PARCHE FACEBOOK: EXTRACCIÓN DE METADATA EN EL TÍTULO
+                    # =========================================================
+                    if plataforma == 'FACEBOOK':
+                        match_fb = re.search(r"([\d\.]+[KMkm]?)\s*views.*?([\d\.]+[KMkm]?)\s*reactions\s*\|\s*(.*)", titulo_raw, re.IGNORECASE)
+                        if match_fb:
+                            vistas = convertir_k_m(match_fb.group(1))
+                            likes = convertir_k_m(match_fb.group(2))
+                            titulo_raw = match_fb.group(3).strip()
+                        else:
+                            match_fb_views = re.search(r"([\d\.]+[KMkm]?)\s*views\s*\|\s*(.*)", titulo_raw, re.IGNORECASE)
+                            if match_fb_views:
+                                vistas = convertir_k_m(match_fb_views.group(1))
+                                titulo_raw = match_fb_views.group(2).strip()
+                    # =========================================================
 
                     resultados.append({
                         "ID": i + 1,
@@ -417,9 +446,9 @@ def motor_auditor_universal_v32(urls):
                         "Plataforma": plataforma,
                         "Tipo": tipo,
                         "Creador": info.get('uploader', 'N/A'),
-                        "Título": info.get('title', 'N/A')[:65],
+                        "Título": titulo_raw[:65],
                         "Vistas": vistas,
-                        "Likes": int(info.get('like_count') or 0),
+                        "Likes": likes,
                         "Comments": int(info.get('comment_count') or 0),
                         "Saves": int(info.get('repost_count') or 0),
                         "Link": url
