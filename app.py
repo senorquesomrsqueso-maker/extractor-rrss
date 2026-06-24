@@ -20,9 +20,9 @@ from bs4 import BeautifulSoup
 # 1. CONFIGURACIÓN ESTRUCTURAL Y NÚCLEO IA DE ALTO RENDIMIENTO
 # ==============================================================================
 
-# Credenciales de Acceso - Protocolo BS LATAM
-DRIVE_API_KEY = "AIzaSyBjETNqerBHpqCBQBH7B1bZl55eYWrtMQk" 
-GEMINI_API_KEY = "AIzaSyA8HsM0vSCopd1s05nOryhbNIGU26dvxG4"
+# Credenciales de Acceso Seguras - Protocolo BS LATAM
+DRIVE_API_KEY = st.secrets["DRIVE_API_KEY"]
+GEMINI_API_KEY = st.secrets["GEMINI_API_KEY"]
 
 # Configuración Inicial del Dashboard
 st.set_page_config(
