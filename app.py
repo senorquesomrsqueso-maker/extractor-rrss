@@ -275,24 +275,37 @@ if 'chat_log' not in st.session_state:
 # ==============================================================================
 
 def limpiar_url_táctica(url):
-    """Limpia parámetros de rastreo para evitar errores de scraping."""
+    """Limpia parámetros de rastreo y corrige dominios para evitar fallos de scraping en Facebook y TikTok."""
     url = url.strip().replace('"', '').replace("'", "")
+    url_l = url.lower()
+    
+    # Corrección estratégica para enlaces móviles o alternativos de Facebook
+    if "web.facebook.com" in url_l:
+        url = url.replace("web.facebook.com", "www.facebook.com")
+    
+    # Limpieza estricta de parámetros de tracking comunes
     if '?si=' in url: 
         url = url.split('?si=')[0]
     if '&pp=' in url: 
         url = url.split('&pp=')[0]
-    if 'fb.watch' in url: 
-        return url 
+        
+    # Limpieza de tokens pesados en enlaces de Facebook que rompen yt-dlp (ej. mibextid, xid)
+    if 'facebook.com' in url or 'fb.watch' in url:
+        if '?' in url and 'fb.watch' not in url:
+            url = url.split('?')[0]
+            
     return url
 
 def obtener_tipo_video(url, info_dict):
-    """Determina la categoría exacta del contenido de forma flexible."""
+    """Determina la categoría exacta del contenido, incluyendo soporte para TikTok Photos/Carousels."""
     url_l = url.lower()
     if "facebook.com" in url_l or "fb.watch" in url_l or "fb.com" in url_l:
         return "Facebook Video"
     
     if "tiktok.com" in url_l:
-        return "TikTok"
+        if "/photo/" in url_l:
+            return "TikTok Photo Carousel"
+        return "TikTok Video"
     
     if "youtube.com" in url_l or "youtu.be" in url_l:
         duration = info_dict.get('duration', 0)
@@ -319,7 +332,7 @@ def navegar_ia_en_enlace(url):
         return f"Error de conexión: {str(e)}"
 
 def analizar_imagen_con_ia(image_file):
-    """Usa Gemini Vision para leer métricas de imágenes."""
+    """Usa Gemini Vision para leer métricas de imágenes subidas localmente."""
     try:
         img = Image.open(image_file)
         prompt_vision = (
@@ -333,6 +346,34 @@ def analizar_imagen_con_ia(image_file):
         return int(texto_limpio) if texto_limpio else 0
     except Exception as e_vision:
         return 0
+
+def analizar_imagen_drive_con_ia(url_drive):
+    """Módulo Vision Avanzado: Descarga capturas desde Google Drive público y extrae vistas con IA."""
+    try:
+        # Extraer el ID único del archivo de Google Drive usando expresiones regulares
+        file_id = re.findall(r'[-\w]{25,}', url_drive)
+        if not file_id: 
+            return 0, "ID de Drive no encontrado en la URL"
+        
+        # Construir endpoint oficial de descarga directa de assets de Google Drive
+        url_download = f"https://drive.google.com/uc?export=download&id={file_id[0]}"
+        response = requests.get(url_download, timeout=15)
+        
+        if response.status_code == 200:
+            img = Image.open(BytesIO(response.content))
+            prompt_vision = (
+                "Actúa como un validador experto en auditoría visual de BS LATAM. "
+                "Analiza esta captura de pantalla de métricas de redes sociales. "
+                "Localiza y extrae únicamente el número total de VISTAS (Views o Reproducciones). "
+                "Responde de forma estricta el número entero puro, sin letras, espacios, ni caracteres adicionales."
+            )
+            res = model_ia.generate_content([prompt_vision, img])
+            texto_limpio = re.sub(r'[^0-9]', '', res.text)
+            return int(texto_limpio) if texto_limpio else 0, "Éxito"
+        else:
+            return 0, f"Error de descarga: Código HTTP {response.status_code}. Asegúrate de que el enlace sea público."
+    except Exception as e:
+        return 0, str(e)
 
 def motor_auditor_universal_v32(urls):
     """Core de scraping masivo con soporte para FACEBOOK, YT y TIKTOK."""
@@ -350,7 +391,7 @@ def motor_auditor_universal_v32(urls):
 
     for i, raw_url in enumerate(urls):
         url = limpiar_url_táctica(raw_url)
-        status_text.markdown(f"🔍 **AUDITANDO (#{i+1}):** `{url[:50]}...`")
+        status_text.markdown(f"🔍 **AUDITANDO (#(i+1}):** `{url[:50]}...`")
         
         ydl_opts = {
             'quiet': True,
@@ -384,11 +425,9 @@ def motor_auditor_universal_v32(urls):
                         "Link": url
                     })
                 else:
-                    # FIX: Guardamos el ID y el enlace completo original
                     fallidos.append({"ID": i + 1, "Link": raw_url, "Error": "Sin respuesta / Privado"})
         
         except Exception as e_scrap:
-            # FIX: Guardamos el ID y el error real
             fallidos.append({"ID": i + 1, "Link": raw_url, "Error": str(e_scrap)[:50]})
         
         p_bar.progress((i + 1) / len(urls))
@@ -425,7 +464,6 @@ def motor_busqueda_temporal(urls_canales, f_start, f_end, min_views):
         url = url.strip()
         if not url: continue
         
-        # --- ADAPTACIÓN DE ENLACES PARA FB Y YOUTUBE ---
         url_lower = url.lower()
         if "facebook.com" in url_lower and "/videos" not in url_lower and "watch" not in url_lower:
             if not url.endswith("/"):
@@ -435,7 +473,6 @@ def motor_busqueda_temporal(urls_canales, f_start, f_end, min_views):
             if not url.endswith("/"):
                 url += "/"
             url += "videos"
-        # -----------------------------------------------
 
         status.markdown(f"🛰️ **ESCANEO RADAR:** Analizando feed de `{url[:40]}...`")
         
@@ -513,7 +550,7 @@ if modulo == "🚀 EXTRACTOR ELITE":
     texto_entrada = st.text_area(
         "Pega los enlaces (uno por línea o separados por espacios):", 
         height=250, 
-        placeholder="www.tiktok.com/... \nhttps://fb.watch/..."
+        placeholder="www.tiktok.com/... \nhttps://web.facebook.com/reel/..."
     )
     
     c_btn1, c_btn2 = st.columns([1, 4])
@@ -521,14 +558,12 @@ if modulo == "🚀 EXTRACTOR ELITE":
         ejecutar = st.button("🔥 EJECUTAR AUDITORÍA")
     
     if ejecutar:
-        # MEJORA: Reconocimiento inteligente de enlaces (Filtro por dominios reales para evitar capturar texto como "TikTok:")
         raw_words = texto_entrada.replace(',', ' ').replace('\n', ' ').split()
         urls_detectadas = []
         for word in raw_words:
             word = word.strip('"\'()[]')
             wl = word.lower()
-            # FIX: Solo acepta si contiene partes de dominios reales de video
-            if any(domain in wl for domain in ['tiktok.com', 'facebook.com', 'fb.watch', 'fb.com', 'youtube.com', 'youtu.be', '/shorts/']):
+            if any(domain in wl for domain in ['tiktok.com', 'facebook.com', 'fb.watch', 'fb.com', 'youtube.com', 'youtu.be', '/shorts/', '/photo/']):
                 if not word.startswith('http'):
                     word = 'https://' + word
                 urls_detectadas.append(word)
@@ -550,7 +585,6 @@ if modulo == "🚀 EXTRACTOR ELITE":
     if not st.session_state.db_fallidos.empty:
         with st.expander("⚠️ VER ENLACES NO PROCESADOS / ERRORES"):
             st.markdown('<div class="error-card">', unsafe_allow_html=True)
-            # FIX: Se muestra el ID y el Link completo para identificar el fallo
             st.dataframe(st.session_state.db_fallidos, use_container_width=True, hide_index=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -565,7 +599,6 @@ if modulo == "🚀 EXTRACTOR ELITE":
         
         st.divider()
         st.markdown('<div class="sub-header">📊 DATOS EXTRAÍDOS (MULTI-PLATAFORMA)</div>', unsafe_allow_html=True)
-        # Se muestra la tabla con el ID para referencia rápida
         st.dataframe(df.drop(columns=['Vistas_Calc']), use_container_width=True, hide_index=True)
 
         st.markdown('<div class="module-header">📋 CENTRO DE COPIADO Y FÓRMULAS</div>', unsafe_allow_html=True)
@@ -652,23 +685,23 @@ if modulo == "🚀 EXTRACTOR ELITE":
             """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 7. MÓDULO 2: DRIVE AUDITOR (VISION IA + NAVEGACIÓN)
+# 7. MÓDULO 2: DRIVE AUDITOR (VISION IA + NAVEGACIÓN INTEGRADAS)
 # ==============================================================================
 
 elif modulo == "📂 DRIVE AUDITOR (VISION)":
     st.markdown('<div class="module-header">👁️ Auditor Visual y de Enlaces</div>', unsafe_allow_html=True)
     
-    st.markdown('<div class="sub-header">🔗 Auditoría por Navegación IA (Lectura de Link)</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sub-header">🔗 Auditoría Automatizada de Capturas por Enlace de Google Drive</div>', unsafe_allow_html=True)
     entrada_enlaces_drive = st.text_area(
-        "Pega aquí los enlaces (La IA 'entrará' a leer la data):", 
+        "Pega aquí los enlaces de Google Drive (La IA descargará el contenido y procesará la métrica mediante visión artificial):", 
         height=150, 
-        placeholder="Pega múltiples enlaces aquí..."
+        placeholder="Pega múltiples enlaces de Drive públicos aquí (uno por línea)..."
     )
     
     st.divider()
     
-    st.markdown('<div class="sub-header">📸 Auditoría por Evidencia Visual (OCR)</div>', unsafe_allow_html=True)
-    up_files = st.file_uploader("Arrastra las evidencias aquí:", type=['png', 'jpg', 'jpeg', 'webp'], accept_multiple_files=True)
+    st.markdown('<div class="sub-header">📸 Auditoría por Evidencia Visual Local (OCR)</div>', unsafe_allow_html=True)
+    up_files = st.file_uploader("Arrastra las evidencias locales aquí:", type=['png', 'jpg', 'jpeg', 'webp'], accept_multiple_files=True)
     
     if st.button("🧠 INICIAR AUDITORÍA PROFUNDA"):
         v_results_final = []
@@ -676,24 +709,39 @@ elif modulo == "📂 DRIVE AUDITOR (VISION)":
         urls_drive = re.findall(r"(https?://[^\s\"\'\)\],]+)", entrada_enlaces_drive)
         if urls_drive:
             for u in urls_drive:
-                with st.spinner(f"IA Navegando en {u[:30]}..."):
-                    texto_web = navegar_ia_en_enlace(u)
-                    prompt_ia_link = f"Analiza este texto extraído de una web y busca el número de VISTAS o REPRODUCCIONES. Solo responde el número: {texto_web}"
-                    res_ia_link = model_ia.generate_content(prompt_ia_link)
-                    vistas_final = re.sub(r'[^0-9]', '', res_ia_link.text)
-                    
-                    v_results_final.append({
-                        "Fecha": "Enlace IA", "Plataforma": "LINK", "Tipo": "Scraping IA", 
-                        "Creador": "N/A", "Título": u[:50], 
-                        "Vistas": int(vistas_final) if vistas_final else 0, "Link": u
-                    })
+                # Comprobación inteligente para procesar URLs de Drive mediante el motor Vision
+                if "drive.google.com" in u.lower():
+                    with st.spinner(f"IA Descargando y escaneando captura de Drive..."):
+                        vistas_drive, status_drive = analizar_imagen_drive_con_ia(u)
+                        v_results_final.append({
+                            "Fecha": "Drive Vision IA", 
+                            "Plataforma": "DRIVE", 
+                            "Tipo": "Captura Automática", 
+                            "Creador": "N/A", 
+                            "Título": f"Asset Drive Visual", 
+                            "Vistas": vistas_drive, 
+                            "Link": u
+                        })
+                else:
+                    # Fallback de navegación textual para enlaces web estándar
+                    with st.spinner(f"IA Navegando en {u[:30]}..."):
+                        texto_web = navegar_ia_en_enlace(u)
+                        prompt_ia_link = f"Analiza este texto extraído de una web y busca el número de VISTAS o REPRODUCCIONES. Solo responde el número: {texto_web}"
+                        res_ia_link = model_ia.generate_content(prompt_ia_link)
+                        vistas_final = re.sub(r'[^0-9]', '', res_ia_link.text)
+                        
+                        v_results_final.append({
+                            "Fecha": "Enlace IA", "Plataforma": "LINK", "Tipo": "Scraping IA", 
+                            "Creador": "N/A", "Título": u[:50], 
+                            "Vistas": int(vistas_final) if vistas_final else 0, "Link": u
+                        })
 
         if up_files:
             v_bar = st.progress(0)
             for idx, f in enumerate(up_files):
                 v_img = analizar_imagen_con_ia(f)
                 v_results_final.append({
-                    "Fecha": "OCR IA", "Plataforma": "VISION", "Tipo": "Captura", 
+                    "Fecha": "OCR IA", "Plataforma": "VISION", "Tipo": "Captura Local", 
                     "Creador": "N/A", "Título": f.name, "Vistas": v_img, "Link": "Archivo Local"
                 })
                 v_bar.progress((idx + 1) / len(up_files))
@@ -709,24 +757,37 @@ elif modulo == "📂 DRIVE AUDITOR (VISION)":
         st.code(f_ia, language="text")
 
 # ==============================================================================
-# 8. MÓDULO 3: PARTNER IA
+# 8. MÓDULO 3: PARTNER IA (ENTORNO NEURAL CON MEMORIA PERMANENTE)
 # ==============================================================================
 
 elif modulo == "🤖 PARTNER IA":
     st.markdown('<div class="module-header">🤖 Partner IA - Consultor Estratégico</div>', unsafe_allow_html=True)
     
+    # Renderizado visual del historial completo guardado en memoria de sesión
     for msg in st.session_state.chat_log:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
     
     if p_user := st.chat_input("Instrucción técnica..."):
+        # Registrar y pintar la entrada del usuario de inmediato
         st.session_state.chat_log.append({"role": "user", "content": p_user})
         with st.chat_message("user"): 
             st.markdown(p_user)
         
         with st.chat_message("assistant"):
             try:
-                response = model_ia.generate_content(p_user)
+                # Reconstruir el historial adaptándolo a la estructura de chat nativa de Gemini (user / model)
+                gemini_history = []
+                for msg in st.session_state.chat_log[:-1]: # Excluir el mensaje actual para pasarlo mediante send_message
+                    if "SISTEMA OPERATIVO V32.9 LISTO" in msg["content"]:
+                        continue
+                    rol_gemini = "user" if msg["role"] == "user" else "model"
+                    gemini_history.append({"role": rol_gemini, "parts": [msg["content"]]})
+                
+                # Iniciar sesión de chat vinculando toda la persistencia temporal de datos
+                chat_session = model_ia.start_chat(history=gemini_history)
+                response = chat_session.send_message(p_user)
+                
                 if response and response.text:
                     texto_ia = response.text
                     st.markdown(texto_ia)
@@ -735,7 +796,7 @@ elif modulo == "🤖 PARTNER IA":
                 st.error(f"FALLO EN LA CONEXIÓN NEURAL: {str(e_chat)}")
 
 # ==============================================================================
-# 9. MÓDULO 4: SEARCH PRO 
+# 9. MÓDULO 4: SEARCH PRO (SISTEMA RADAR TEMPORAL)
 # ==============================================================================
 
 elif modulo == "🛰️ SEARCH PRO":
@@ -783,8 +844,5 @@ elif modulo == "🛰️ SEARCH PRO":
 # PIE DE PÁGINA Y METADATOS
 # ==============================================================================
 
-
-
 st.markdown("---")
-
-st.caption(f"BS LATAM TOOls • {fecha_actual_global} • Blood Strike")
+st.caption(f"BS LATAM Tools • {fecha_actual_global} • Blood Strike")
