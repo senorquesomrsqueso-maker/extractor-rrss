@@ -58,8 +58,8 @@ try:
         "NUNCA uses frases robóticas ni disculpas innecesarias."
     )
 
-    model_ia = genai.GenerativeModel(
-        model_name='gemini-1.5-flash',
+  model_ia = genai.GenerativeModel(
+        model_name='gemini-1.5-flash', # Si tras actualizar sigue fallando, cambia a 'gemini-1.5-pro'
         generation_config=generation_config,
         system_instruction=system_instruction_core
     )
@@ -329,8 +329,13 @@ def navegar_ia_en_enlace(url):
         return f"Error de conexión: {str(e)}"
 
 def analizar_imagen_con_ia(image_file):
-    """Usa Gemini Vision para leer métricas de imágenes subidas localmente."""
+    """Usa Gemini Vision para leer métricas de imágenes (CON REPORTE DE ERRORES)."""
     try:
+        # Validar si el modelo principal colapsó en el bloque inicial
+        if 'model_ia' not in globals():
+            st.error("🚨 NÚCLEO IA OFFLINE: El modelo no se inicializó. Revisa tu API Key o el nombre del modelo.")
+            return 0
+            
         img = Image.open(image_file)
         prompt_vision = (
             "Actúa como un extractor de datos OCR de alta precisión para BS LATAM. "
@@ -341,7 +346,10 @@ def analizar_imagen_con_ia(image_file):
         response = model_ia.generate_content([prompt_vision, img])
         texto_limpio = re.sub(r'[^0-9]', '', response.text)
         return int(texto_limpio) if texto_limpio else 0
+        
     except Exception as e_vision:
+        # AQUÍ ESTÁ LA MAGIA: Si falla, te lo mostrará en pantalla grande y rojo
+        st.error(f"❌ FALLO EN LECTURA ÓPTICA (VISION): {str(e_vision)}")
         return 0
 
 def analizar_imagen_drive_con_ia(url_drive):
