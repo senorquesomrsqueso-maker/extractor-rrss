@@ -391,7 +391,7 @@ def motor_auditor_universal_v32(urls):
 
     for i, raw_url in enumerate(urls):
         url = limpiar_url_táctica(raw_url)
-        status_text.markdown(f"🔍 **AUDITANDO (#(i+1}):** `{url[:50]}...`")
+        status_text.markdown(f"🔍 **AUDITANDO (#{i+1}):** `{url[:50]}...`")
         
         ydl_opts = {
             'quiet': True,
