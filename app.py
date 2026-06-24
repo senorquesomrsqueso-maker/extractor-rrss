@@ -36,15 +36,33 @@ st.set_page_config(
 try:
     genai.configure(api_key=GEMINI_API_KEY)
     
-    model_name_target = 'gemini-1.5-flash' 
+    # Marcador de tiempo
+    fecha_actual_global = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
+    # Configuración de generación
     generation_config = {
         "temperature": 0.85,
         "top_p": 0.95,
         "top_k": 45,
         "max_output_tokens": 4096,
     }
+    
+    # Instrucción Maestra del Sistema - Identidad Corporativa
+    system_instruction_core = (
+        f"Eres el Consultor Senior y Partner Estratégico de BS LATAM. "
+        f"HOY ES: {fecha_actual_global}. "
+        "Tu misión es asistir al usuario en TODO: auditoría de métricas, programación, "
+        "redacción de reportes, matemáticas complejas y análisis de mercado. "
+        "Eres una IA de PROPÓSITO GENERAL. "
+        "Mantén siempre un tono profesional, con autoridad técnica. "
+        "Estilo visual: Cyberpunk Industrial / Corporativo de Élite. "
+        "NUNCA uses frases robóticas ni disculpas innecesarias."
+    )
 
+    # Configuramos el modelo sin forzar rutas largas
+    model_name_target = 'gemini-1.5-flash' 
+    
+    # Inicializamos el modelo vinculando la instrucción que acabamos de crear
     model_ia = genai.GenerativeModel(
         model_name=model_name_target,
         generation_config=generation_config,
