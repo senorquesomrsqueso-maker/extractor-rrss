@@ -36,8 +36,7 @@ st.set_page_config(
 try:
     genai.configure(api_key=GEMINI_API_KEY)
     
-    # Marcador de tiempo para el registro de auditoría
-    fecha_actual_global = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    model_name_target = 'gemini-1.5-flash' 
     
     generation_config = {
         "temperature": 0.85,
@@ -45,24 +44,14 @@ try:
         "top_k": 45,
         "max_output_tokens": 4096,
     }
-    
-    # Instrucción Maestra del Sistema - Identidad Corporativa
-    system_instruction_core = (
-        f"Eres el Consultor Senior y Partner Estratégico de BS LATAM. "
-        f"HOY ES: {fecha_actual_global}. "
-        "Tu misión es asistir al usuario en TODO: auditoría de métricas, programación, "
-        "redacción de reportes, matemáticas complejas y análisis de mercado. "
-        "Eres una IA de PROPÓSITO GENERAL. "
-        "Mantén siempre un tono profesional, con autoridad técnica. "
-        "Estilo visual: Cyberpunk Industrial / Corporativo de Élite. "
-        "NUNCA uses frases robóticas ni disculpas innecesarias."
-    )
 
-  model_ia = genai.GenerativeModel(
-        model_name='gemini-1.5-flash', # Si tras actualizar sigue fallando, cambia a 'gemini-1.5-pro'
+    model_ia = genai.GenerativeModel(
+        model_name=model_name_target,
         generation_config=generation_config,
         system_instruction=system_instruction_core
     )
+    
+    st.sidebar.success("Núcleo Neuronal: ONLINE")
 
 except Exception as e_ia_init:
     st.error(f"FALLA CRÍTICA EN NÚCLEO NEURAL: {e_ia_init}")
