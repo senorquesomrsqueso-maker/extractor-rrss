@@ -786,43 +786,51 @@ elif modulo == "📂 DRIVE AUDITOR (VISION)":
         st.code(f_ia, language="text")
 
 # ==============================================================================
-# 8. MÓDULO 3: PARTNER IA (ENTORNO NEURAL CON MEMORIA PERMANENTE)
+# 8. MÓDULO 3: PARTNER IA (CON VALIDACIÓN DE CONEXIÓN)
 # ==============================================================================
 
 elif modulo == "🤖 PARTNER IA":
     st.markdown('<div class="module-header">🤖 Partner IA - Consultor Estratégico</div>', unsafe_allow_html=True)
     
-    # Renderizado visual del historial completo guardado en memoria de sesión
+    # Renderizado visual del historial
     for msg in st.session_state.chat_log:
         with st.chat_message(msg["role"]):
             st.markdown(msg["content"])
     
     if p_user := st.chat_input("Instrucción técnica..."):
-        # Registrar y pintar la entrada del usuario de inmediato
+        # Registrar entrada del usuario
         st.session_state.chat_log.append({"role": "user", "content": p_user})
         with st.chat_message("user"): 
             st.markdown(p_user)
         
         with st.chat_message("assistant"):
             try:
-                # Reconstruir el historial adaptándolo a la estructura de chat nativa de Gemini (user / model)
-                gemini_history = []
-                for msg in st.session_state.chat_log[:-1]: # Excluir el mensaje actual para pasarlo mediante send_message
-                    if "SISTEMA OPERATIVO V32.9 LISTO" in msg["content"]:
-                        continue
-                    rol_gemini = "user" if msg["role"] == "user" else "model"
-                    gemini_history.append({"role": rol_gemini, "parts": [msg["content"]]})
-                
-                # Iniciar sesión de chat vinculando toda la persistencia temporal de datos
-                chat_session = model_ia.start_chat(history=gemini_history)
-                response = chat_session.send_message(p_user)
-                
-                if response and response.text:
-                    texto_ia = response.text
-                    st.markdown(texto_ia)
-                    st.session_state.chat_log.append({"role": "assistant", "content": texto_ia})
+                # 1. Validación de Conexión
+                if not GEMINI_API_KEY or GEMINI_API_KEY == "TU_LLAVE_AQUI":
+                    st.error("ERROR: API KEY no configurada. Verifica tus Secretos.")
+                else:
+                    # 2. Reconstrucción segura del historial
+                    ventana = st.session_state.chat_log[-6:] # Ventana más pequeña aún
+                    gemini_history = []
+                    for msg in ventana[:-1]: 
+                        if "SISTEMA OPERATIVO" in msg["content"]: continue
+                        rol = "user" if msg["role"] == "user" else "model"
+                        gemini_history.append({"role": rol, "parts": [msg["content"]]})
+                    
+                    # 3. Lanzamiento del chat
+                    chat = model_ia.start_chat(history=gemini_history)
+                    response = chat.send_message(p_user)
+                    
+                    if response and response.text:
+                        texto_ia = response.text
+                        st.markdown(texto_ia)
+                        st.session_state.chat_log.append({"role": "assistant", "content": texto_ia})
+                    else:
+                        st.warning("La IA respondió vacío. Reintenta.")
+            
             except Exception as e_chat:
-                st.error(f"FALLO EN LA CONEXIÓN NEURAL: {str(e_chat)}")
+                st.error(f"FALLO DE CONEXIÓN CON GEMINI: {str(e_chat)}")
+                st.info("💡 Tip: Verifica que tu API Key sea válida en los 'Secrets' de Streamlit.")
 
 # ==============================================================================
 # 9. MÓDULO 4: SEARCH PRO (SISTEMA RADAR TEMPORAL)
