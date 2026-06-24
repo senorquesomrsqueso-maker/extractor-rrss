@@ -335,30 +335,49 @@ def navegar_ia_en_enlace(url):
     except Exception as e:
         return f"Error de conexión: {str(e)}"
 
+import re
+
 def analizar_imagen_con_ia(image_file):
-    """Usa Gemini Vision para leer métricas de imágenes (CON REPORTE DE ERRORES)."""
+    """Usa Gemini Vision para leer métricas, maneja Ks/Ms y muestra reportes en pantalla."""
     try:
-        # Validar si el modelo principal colapsó en el bloque inicial
+        # Validar si el modelo está inicializado
         if 'model_ia' not in globals():
-            st.error("🚨 NÚCLEO IA OFFLINE: El modelo no se inicializó. Revisa tu API Key o el nombre del modelo.")
+            st.error("🚨 NÚCLEO IA OFFLINE: El modelo no cargó.")
             return 0
             
         img = Image.open(image_file)
-        prompt_vision = (
-            "Actúa como un extractor de datos OCR de alta precisión para BS LATAM. "
-            "Analiza esta imagen de métricas de redes sociales. "
-            "Identifica el número TOTAL de VISTAS (Views). "
-            "Devuelve SOLO EL NÚMERO entero crudo sin puntos ni letras."
-        )
-        response = model_ia.generate_content([prompt_vision, img])
-        texto_limpio = re.sub(r'[^0-9]', '', response.text)
-        return int(texto_limpio) if texto_limpio else 0
+        # Hacemos el prompt a prueba de fallos
+        prompt_vision = "Analiza esta imagen. Dime ÚNICAMENTE el número total de vistas (views). Si ves una 'K' o 'M', inclúyela (ejemplo: 5.9K, 1.2M). No agregues texto adicional, solo el número."
         
+        response = model_ia.generate_content([prompt_vision, img])
+        texto_ia = response.text.strip().lower()
+        
+        # 🔍 RAYOS X: Mostrar en la interfaz qué leyó exactamente Gemini
+        st.warning(f"👁️ Lectura Cruda de la IA: '{texto_ia}'") 
+        
+        # PROCESAMIENTO INTELIGENTE DE DATOS
+        texto_limpio = texto_ia.replace(',', '.') # Normalizar comas a puntos
+        
+        # Buscar el primer bloque numérico en la respuesta
+        numeros = re.findall(r'[0-9.]+', texto_limpio)
+        
+        if not numeros:
+            return 0 # Si definitivamente no hay números, devuelve 0
+            
+        valor_base = float(numeros[0])
+        
+        # Multiplicadores de Redes Sociales
+        if 'k' in texto_limpio:
+            return int(valor_base * 1000)
+        elif 'm' in texto_limpio:
+            return int(valor_base * 1000000)
+        else:
+            return int(valor_base)
+            
     except Exception as e_vision:
-        # AQUÍ ESTÁ LA MAGIA: Si falla, te lo mostrará en pantalla grande y rojo
+        # Ahora cualquier fallo técnico será visible
         st.error(f"❌ FALLO EN LECTURA ÓPTICA (VISION): {str(e_vision)}")
         return 0
-
 def analizar_imagen_drive_con_ia(url_drive):
     """Módulo Vision Avanzado: Descarga capturas desde Google Drive público y extrae vistas con IA."""
     try:
